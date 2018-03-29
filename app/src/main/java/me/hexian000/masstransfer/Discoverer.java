@@ -22,7 +22,6 @@ final class Discoverer {
 		try {
 			announce = new DatagramSocket(port);
 			announce.setBroadcast(true);
-			announce.setSoTimeout(2000);
 		} catch (IOException e) {
 			Log.e(TransferApp.LOG_TAG, "broadcast init error", e);
 		}
