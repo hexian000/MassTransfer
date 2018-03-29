@@ -8,6 +8,12 @@ import java.io.InputStream;
  */
 
 class RobustSocketInputStream extends InputStream {
+	private RobustSocket socket;
+
+	RobustSocketInputStream(RobustSocket socket) {
+		this.socket = socket;
+	}
+
 	@Override
 	public int read() {
 		return 0;

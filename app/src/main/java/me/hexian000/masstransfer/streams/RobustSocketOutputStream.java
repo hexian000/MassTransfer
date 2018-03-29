@@ -8,6 +8,12 @@ import java.io.OutputStream;
  */
 
 class RobustSocketOutputStream extends OutputStream {
+	private RobustSocket socket;
+
+	RobustSocketOutputStream(RobustSocket socket) {
+		this.socket = socket;
+	}
+
 	@Override
 	public void write(int b) {
 
