@@ -7,7 +7,7 @@ import java.io.InputStream;
  * TODO 实现数据传输、窗缓存和ACK
  */
 
-class RobustSocketInputStream extends InputStream {
+public class RobustSocketInputStream extends InputStream {
 	private RobustSocket socket;
 
 	RobustSocketInputStream(RobustSocket socket) {
