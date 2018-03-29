@@ -104,24 +104,25 @@ public class MainActivity extends Activity {
 		if (resultCode == RESULT_OK && requestCode == REQUEST_OPEN_DOCUMENT_TREE) {
 			Uri uriTree = data.getData();
 			if (uriTree != null) {
+				DocumentFile root = DocumentFile.fromTreeUri(this, uriTree);
+				List<DocumentFile> files = new ArrayList<>();
+				listTree(root, files);
 				StringBuilder sb = new StringBuilder();
-				sb.append(uriTree.toString()).append('\n');
-				DocumentFile documentFile = DocumentFile.fromTreeUri(this, uriTree);
-				for (DocumentFile file : documentFile.listFiles()) {
+				for (DocumentFile file : files) {
 					sb.append(file.getName()).append('\n');
-					if (file.isDirectory()) {
-						sb.append("is a Directory\n");
-					} else {
-						sb.append(file.getType()).append('\n');
-					}
-
-					sb.append("file.canRead(): ").append(file.canRead()).append('\n');
-					sb.append("file.canWrite(): ").append(file.canWrite()).append('\n');
-
-					sb.append(file.getUri()).append('\n');
-					//InputStream is = this.getContentResolver().openInputStream(file.getUri());
 				}
-				Log.d(TransferApp.LOG_TAG, sb.toString());
+				Toast.makeText(this, sb.toString(), Toast.LENGTH_LONG).show();
+			}
+		}
+	}
+
+	private void listTree(DocumentFile root, List<DocumentFile> files) {
+		if (files.size() > 20) return;
+		for (DocumentFile file : root.listFiles()) {
+			if (file.isDirectory()) {
+				listTree(file, files);
+			} else if (file.canRead()) {
+				files.add(file);
 			}
 		}
 	}
