@@ -36,9 +36,9 @@ public class TransferService extends Service {
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		discoverer = new Discoverer(14644);
+		discoverer = new Discoverer(TransferApp.UDP_PORT);
 		try {
-			listener = new ServerSocket(14645);
+			listener = new ServerSocket(TransferApp.TCP_PORT);
 		} catch (IOException e) {
 			Log.e(TransferApp.LOG_TAG, "listener init error", e);
 		}
