@@ -17,37 +17,29 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 final class Pump {
 	private BlockingQueue<byte[]> q;
-	private boolean success;
+	private boolean readSuccess, writeSuccess;
 	private long readPos, writePos, size;
 	private Thread read, write;
 	private InputStream in;
 	private OutputStream out;
 
-	void start(InputStream in, OutputStream out, long size) {
-		q = new LinkedBlockingQueue<>(1024);
+	Pump(InputStream in, OutputStream out, int buffer, long size) {
+		q = new LinkedBlockingQueue<>(buffer);
 		this.in = in;
 		this.out = out;
 		this.size = size;
-		success = true;
+		readSuccess = false;
+		writeSuccess = false;
 
 		// in -> queue
-		read = new ReadThread();
+		read = new Thread(new ReadThread());
 		// queue -> out
-		write = new WriteThread();
+		write = new Thread(new WriteThread());
+	}
 
+	void start() {
 		read.start();
 		write.start();
-
-		new Thread(() -> { // cleanups
-			try {
-				read.join();
-				write.join();
-				read = null;
-				write = null;
-				q = null;
-			} catch (InterruptedException ignored) {
-			}
-		}).start();
 	}
 
 	int getBufferSize() {
@@ -62,12 +54,12 @@ final class Pump {
 		return writePos;
 	}
 
-	boolean isAlive() {
+	boolean isRunning() {
 		return (read != null && read.isAlive()) || (write != null && write.isAlive());
 	}
 
 	boolean isSuccess() {
-		return success;
+		return readSuccess && writeSuccess;
 	}
 
 	void cancel() {
@@ -75,8 +67,7 @@ final class Pump {
 		if (write != null) write.interrupt();
 	}
 
-	private class ReadThread extends Thread {
-		@Override
+	private class ReadThread implements Runnable {
 		public void run() {
 			try {
 				byte[] buf = new byte[1024 * 1024];
@@ -97,22 +88,21 @@ final class Pump {
 					} else break;
 					readPos += read;
 				}
+				q.put(new byte[0]);
 				if (readPos != size) {
-					success = false;
 					Log.d(TransferApp.LOG_TAG, "pump read size mismatch");
+				} else {
+					readSuccess = true;
 				}
-				write.interrupt();
 			} catch (InterruptedException ignored) {
 			} catch (IOException e) {
-				success = false;
 				write.interrupt();
 				Log.e(TransferApp.LOG_TAG, "pump read error", e);
 			}
 		}
 	}
 
-	private class WriteThread extends Thread {
-		@Override
+	private class WriteThread implements Runnable {
 		public void run() {
 			try {
 				while (true) {
@@ -122,9 +112,10 @@ final class Pump {
 					} else break;
 					writePos += buf.length;
 				}
+				if (writePos == size)
+					writeSuccess = true;
 			} catch (InterruptedException ignored) {
 			} catch (IOException e) {
-				success = false;
 				read.interrupt();
 				Log.e(TransferApp.LOG_TAG, "pump write error", e);
 			}
