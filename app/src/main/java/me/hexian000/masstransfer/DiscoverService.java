@@ -10,7 +10,7 @@ import android.util.Log;
 import java.io.IOException;
 import java.net.ServerSocket;
 
-public class TransferService extends Service {
+public class DiscoverService extends Service {
 	private final IBinder mBinder = new TransferServiceBinder();
 	ServerSocket listener = null;
 	Discoverer discoverer = null;
@@ -58,8 +58,8 @@ public class TransferService extends Service {
 	}
 
 	public class TransferServiceBinder extends Binder {
-		TransferService getService() {
-			return TransferService.this;
+		DiscoverService getService() {
+			return DiscoverService.this;
 		}
 	}
 }

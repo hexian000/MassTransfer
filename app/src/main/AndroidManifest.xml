@@ -21,7 +21,7 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".TransferService"/>
+        <service android:name=".DiscoverService"/>
 
     </application>
 </manifest>
