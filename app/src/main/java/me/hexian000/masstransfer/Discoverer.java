@@ -10,6 +10,8 @@ import java.net.NetworkInterface;
 import java.util.*;
 
 final class Discoverer {
+	private final static int BROADCAST_INTERVAL = 1000;
+	private final static int BROADCAST_TIMEOUT = 2000;
 	private final byte[] magic = "MassTransfer".getBytes();
 	private DatagramSocket announce;
 	private int port;
@@ -46,9 +48,9 @@ final class Discoverer {
 					Log.e(TransferApp.LOG_TAG, "broadcast error", e);
 				}
 				long now = System.currentTimeMillis();
-				peers.entrySet().removeIf(entry -> now - entry.getValue() > 4000);
+				peers.entrySet().removeIf(entry -> now - entry.getValue() > BROADCAST_TIMEOUT);
 			}
-		}, 0, 2000);
+		}, 0, BROADCAST_INTERVAL);
 		new Thread(() -> {
 			byte[] buffer = new byte[magic.length];
 			DatagramPacket p = new DatagramPacket(buffer, buffer.length);
