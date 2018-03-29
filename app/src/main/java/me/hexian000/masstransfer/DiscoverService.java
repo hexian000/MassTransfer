@@ -2,17 +2,12 @@ package me.hexian000.masstransfer;
 
 import android.app.Service;
 import android.content.Intent;
-import android.os.Binder;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import java.io.IOException;
-import java.net.ServerSocket;
-
 public class DiscoverService extends Service {
-	private final IBinder mBinder = new TransferServiceBinder();
-	ServerSocket listener = null;
+	private final IBinder mBinder = new Binder();
 	Discoverer discoverer = null;
 
 	@Override
@@ -22,14 +17,6 @@ public class DiscoverService extends Service {
 			discoverer.close();
 			discoverer = null;
 		}
-		if (listener != null) {
-			try {
-				listener.close();
-			} catch (IOException e) {
-				Log.e(TransferApp.LOG_TAG, "listener close error", e);
-			}
-			listener = null;
-		}
 		super.onDestroy();
 	}
 
@@ -37,11 +24,6 @@ public class DiscoverService extends Service {
 	public void onCreate() {
 		super.onCreate();
 		discoverer = new Discoverer(TransferApp.UDP_PORT);
-		try {
-			listener = new ServerSocket(TransferApp.TCP_PORT);
-		} catch (IOException e) {
-			Log.e(TransferApp.LOG_TAG, "listener init error", e);
-		}
 	}
 
 	@Override
@@ -57,7 +39,7 @@ public class DiscoverService extends Service {
 		return mBinder;
 	}
 
-	public class TransferServiceBinder extends Binder {
+	public class Binder extends android.os.Binder {
 		DiscoverService getService() {
 			return DiscoverService.this;
 		}
