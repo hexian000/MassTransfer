@@ -5,9 +5,11 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.support.v4.provider.DocumentFile;
 import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -19,7 +21,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class MainActivity extends Activity {
-	private static final int READ_REQUEST_CODE = 42;
+	private static final int REQUEST_OPEN_DOCUMENT_TREE = 421;
 	DiscoverService mService;
 	Timer timer;
 	Handler refresh = new Handler();
@@ -93,10 +95,35 @@ public class MainActivity extends Activity {
 	}
 
 	private void pickFolder() {
-		Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-		intent.addCategory(Intent.CATEGORY_OPENABLE);
-		intent.setType("*/*");
-		startActivityForResult(intent, READ_REQUEST_CODE);
+		Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+		startActivityForResult(intent, REQUEST_OPEN_DOCUMENT_TREE);
+	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if (resultCode == RESULT_OK && requestCode == REQUEST_OPEN_DOCUMENT_TREE) {
+			Uri uriTree = data.getData();
+			if (uriTree != null) {
+				StringBuilder sb = new StringBuilder();
+				sb.append(uriTree.toString()).append('\n');
+				DocumentFile documentFile = DocumentFile.fromTreeUri(this, uriTree);
+				for (DocumentFile file : documentFile.listFiles()) {
+					sb.append(file.getName()).append('\n');
+					if (file.isDirectory()) {
+						sb.append("is a Directory\n");
+					} else {
+						sb.append(file.getType()).append('\n');
+					}
+
+					sb.append("file.canRead(): ").append(file.canRead()).append('\n');
+					sb.append("file.canWrite(): ").append(file.canWrite()).append('\n');
+
+					sb.append(file.getUri()).append('\n');
+					//InputStream is = this.getContentResolver().openInputStream(file.getUri());
+				}
+				Log.d(TransferApp.LOG_TAG, sb.toString());
+			}
+		}
 	}
 
 	@Override
