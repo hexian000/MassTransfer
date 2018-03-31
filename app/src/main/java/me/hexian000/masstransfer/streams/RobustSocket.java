@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Timer;
@@ -16,29 +17,41 @@ public class RobustSocket {
 	DataFrame frame;
 	InputStream in;
 	OutputStream out;
-	byte[] window;
+	byte[][] window;
 	int p = 0;
 	long pos = 0, ack = 0;
-	private Socket socket;
-	private Timer timer;
+	SocketAddress endpoint;
+	Socket socket;
+	Timer timer;
 
-	RobustSocket(Socket socket, int windowSize) throws IOException {
-		this.socket = socket;
+	RobustSocket(SocketAddress endpoint, int windowSize) throws IOException {
+		reconnect();
 		in = socket.getInputStream();
 		out = socket.getOutputStream();
-		window = new byte[windowSize];
+		window = new byte[windowSize][];
 		frame = new DataFrame();
+	}
+
+	void reconnect() throws IOException {
+		if (socket != null) {
+			try {
+				socket.close();
+			} catch (IOException ignored) {
+			}
+		}
+		socket = new Socket();
+		socket.connect(endpoint, 4000);
 	}
 
 	public void close() {
 
 	}
 
-	public RobustSocketInputStream getInputStream() {
+	public InputStream getInputStream() {
 		return new RobustSocketInputStream(this);
 	}
 
-	public RobustSocketOutputStream getOutputStream() {
+	public OutputStream getOutputStream() {
 		return new RobustSocketOutputStream(this);
 	}
 

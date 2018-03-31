@@ -1,5 +1,6 @@
 package me.hexian000.masstransfer.streams;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 /*
@@ -15,7 +16,13 @@ public class RobustSocketInputStream extends InputStream {
 	}
 
 	@Override
-	public int read() {
-		return 0;
+	public int read() throws IOException {
+		while (true) {
+			try {
+				return socket.in.read();
+			} catch (IOException e) {
+				socket.reconnect();
+			}
+		}
 	}
 }
