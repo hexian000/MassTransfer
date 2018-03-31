@@ -1,11 +1,13 @@
 package me.hexian000.masstransfer;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -110,6 +112,12 @@ public class MainActivity extends Activity {
 					sb.append(file.getName()).append('\n');
 				}
 				Toast.makeText(this, sb.toString(), Toast.LENGTH_LONG).show();
+				Intent intent = new Intent(this, TransferService.class);
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+					startForegroundService(intent);
+				} else {
+					startService(intent);
+				}
 			}
 		}
 	}
@@ -123,6 +131,18 @@ public class MainActivity extends Activity {
 				files.add(file);
 			}
 		}
+	}
+
+	private boolean isServiceRunning(Class<?> serviceClass) {
+		ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+		if (manager != null) {
+			for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+				if (serviceClass.getName().equals(service.service.getClassName())) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	@Override
