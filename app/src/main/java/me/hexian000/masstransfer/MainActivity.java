@@ -105,6 +105,7 @@ public class MainActivity extends Activity {
 			Uri uriTree = data.getData();
 			if (uriTree != null) {
 				DocumentFile root = DocumentFile.fromTreeUri(this, uriTree);
+
 				List<DocumentFile> files = new ArrayList<>();
 				listTree(root, files);
 				StringBuilder sb = new StringBuilder();
