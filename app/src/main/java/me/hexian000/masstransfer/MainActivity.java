@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
+
 public class MainActivity extends Activity {
 	private static final int REQUEST_OPEN_DOCUMENT_TREE = 421;
 	DiscoverService mService;
@@ -41,23 +43,21 @@ public class MainActivity extends Activity {
 
 	@Override
 	protected void onPause() {
-		Intent intent1 = new Intent(MainActivity.this, DiscoverService.class);
+		super.onPause();
 		unbindService(mConnection);
-		stopService(intent1);
-		Log.d(TransferApp.LOG_TAG, "stop DiscoverService");
+		Log.d(LOG_TAG, "stop DiscoverService");
 		if (timer != null) {
 			timer.cancel();
 			timer = null;
 		}
-		super.onPause();
 	}
 
 	@Override
 	protected void onResume() {
-		Intent intent1 = new Intent(MainActivity.this, DiscoverService.class);
+		super.onResume();
+		Intent intent1 = new Intent(this, DiscoverService.class);
 		bindService(intent1, mConnection, Context.BIND_AUTO_CREATE);
-		startService(intent1);
-		Log.d(TransferApp.LOG_TAG, "start DiscoverService");
+		Log.d(LOG_TAG, "start DiscoverService");
 
 		timer = new Timer();
 		timer.scheduleAtFixedRate(new TimerTask() {
@@ -90,8 +90,6 @@ public class MainActivity extends Activity {
 				}
 			}
 		}, 0, 500);
-
-		super.onResume();
 	}
 
 	private void pickFolder() {
