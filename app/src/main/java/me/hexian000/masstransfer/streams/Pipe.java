@@ -8,8 +8,8 @@ class Pipe implements Reader, Writer {
 	private byte[] current = null;
 	private int offset = 0;
 
-	Pipe() {
-		q = new LinkedBlockingQueue<>();
+	Pipe(int size) {
+		q = new LinkedBlockingQueue<>(size);
 	}
 
 	@Override
