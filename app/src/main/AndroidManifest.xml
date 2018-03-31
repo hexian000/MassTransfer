@@ -20,8 +20,6 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".TransferActivity" />
-
         <service android:name=".DiscoverService"/>
         <service android:name=".TransferService"/>
 
