@@ -4,8 +4,6 @@ import android.util.Log;
 import me.hexian000.masstransfer.TransferApp;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -20,10 +18,10 @@ final class Pump {
 	private boolean readSuccess, writeSuccess;
 	private long readPos, writePos, size;
 	private Thread read, write;
-	private InputStream in;
-	private OutputStream out;
+	private Reader in;
+	private Writer out;
 
-	Pump(InputStream in, OutputStream out, int buffer, long size) {
+	Pump(Reader in, Writer out, int buffer, long size) {
 		q = new LinkedBlockingQueue<>(buffer);
 		this.in = in;
 		this.out = out;
