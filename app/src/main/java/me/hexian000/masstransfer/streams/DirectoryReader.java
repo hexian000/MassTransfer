@@ -2,12 +2,15 @@ package me.hexian000.masstransfer.streams;
 
 import android.content.ContentResolver;
 import android.support.v4.provider.DocumentFile;
+import android.util.Log;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+
+import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
 
 /*
  * DirectoryReader 是对系统自带的 DocumentFile 的封装
@@ -65,8 +68,13 @@ class DirectoryReader implements Runnable {
 	public void run() {
 		try {
 			sendFile(root, "");
+			ByteBuffer lengths = ByteBuffer.allocate(Integer.BYTES + Long.BYTES).
+					order(ByteOrder.BIG_ENDIAN);
+			lengths.putInt(0);
+			lengths.putLong(0);
+			out.write(lengths.array()); // bye
 		} catch (IOException | InterruptedException e) {
-			e.printStackTrace();
+			Log.e(LOG_TAG, "DirectoryWriter", e);
 		}
 	}
 }
