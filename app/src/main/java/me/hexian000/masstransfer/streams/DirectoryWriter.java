@@ -8,17 +8,20 @@ package me.hexian000.masstransfer.streams;
 import android.content.ContentResolver;
 import android.support.v4.provider.DocumentFile;
 import android.util.Log;
+import android.webkit.MimeTypeMap;
 
+import java.io.EOFException;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
 
 class DirectoryWriter implements Runnable {
-	ContentResolver resolver;
-	DocumentFile root;
-	Reader in;
+	private ContentResolver resolver;
+	private DocumentFile root;
+	private Reader in;
 
 	DirectoryWriter(ContentResolver resolver,
 	                DocumentFile root,
@@ -46,21 +49,54 @@ class DirectoryWriter implements Runnable {
 		return parent;
 	}
 
-	private void writeFile(String path, long length) {
+	private void writeFile(String path, long length) throws IOException, InterruptedException {
 		if (length == 0) { // is directory
 			makePath(path.split("/"));
 			return;
 		}
 		// is File
+		String name;
+		DocumentFile parent = root;
 		String[] pathSegments = path.split("/");
 		if (pathSegments.length > 1) {
 			String[] parentSegments = new String[pathSegments.length - 1];
 			System.arraycopy(pathSegments, 0,
 					parentSegments, 0,
 					pathSegments.length - 1);
-			makePath(parentSegments);
+			parent = makePath(parentSegments);
+			name = pathSegments[pathSegments.length - 1];
+		} else {
+			name = pathSegments[0];
 		}
-		// TODO writeFile
+		DocumentFile file = parent.findFile(name);
+		if (file != null) {
+			file.delete();
+		}
+		String mime = "application/*";
+		if (name.contains("."))
+			mime = MimeTypeMap.getSingleton().
+					getMimeTypeFromExtension(
+							name.substring(name.lastIndexOf("."))
+					);
+
+		file = parent.createFile(mime, name);
+		OutputStream out = null;
+		try {
+			out = resolver.openOutputStream(file.getUri());
+			while (length > 0) {
+				byte[] buffer = new byte[(int) Math.min(length, 1048576)];
+				int read = in.read(buffer);
+				if (read != buffer.length)
+					throw new EOFException();
+				out.write(buffer);
+				length -= read;
+			}
+
+		} finally {
+			if (out != null) {
+				out.close();
+			}
+		}
 	}
 
 	@Override

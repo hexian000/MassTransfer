@@ -17,9 +17,9 @@ import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
  */
 
 class DirectoryReader implements Runnable {
-	ContentResolver resolver;
-	DocumentFile root;
-	Writer out;
+	private ContentResolver resolver;
+	private DocumentFile root;
+	private Writer out;
 
 	DirectoryReader(ContentResolver resolver,
 	                DocumentFile root,
