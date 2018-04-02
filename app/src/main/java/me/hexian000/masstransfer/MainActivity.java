@@ -79,6 +79,13 @@ public class MainActivity extends Activity {
 								items);
 						peersList.setAdapter(adapter);
 						peersList.setOnItemClickListener((adapterView, view, i, l) -> {
+							if (isServiceRunning(TransferService.class)) {
+								Toast.makeText(MainActivity.this,
+										R.string.transfer_service_is_already_running,
+										Toast.LENGTH_SHORT).show();
+								return;
+							}
+
 							String s = (String) adapter.getItem(i);
 							Toast.makeText(MainActivity.this, s, Toast.LENGTH_SHORT).show();
 							pickFolder();
