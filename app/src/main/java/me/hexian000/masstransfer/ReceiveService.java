@@ -7,8 +7,15 @@ import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
-public class TransferService extends Service {
+import java.io.IOException;
+import java.net.ServerSocket;
+
+import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
+
+public class ReceiveService extends Service {
+	ServerSocket listener = null;
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
@@ -22,7 +29,7 @@ public class TransferService extends Service {
 		builder.setContentIntent(null)
 				.setLargeIcon(BitmapFactory.decodeResource(this.getResources(),
 						R.mipmap.ic_launcher))
-				.setContentTitle("传输状态")
+				.setContentTitle("接收状态")
 				.setSmallIcon(R.mipmap.ic_launcher)
 				.setContentText("<文件名>")
 				.setWhen(System.currentTimeMillis())
@@ -38,7 +45,7 @@ public class TransferService extends Service {
 					(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 			if (manager != null) {
 				NotificationChannel channel = new NotificationChannel(
-						"transfer_state", "传输状态",
+						"receive_state", "接收状态",
 						NotificationManager.IMPORTANCE_DEFAULT
 				);
 				channel.enableLights(false);
@@ -48,12 +55,12 @@ public class TransferService extends Service {
 				manager.createNotificationChannel(channel);
 			}
 
-			Intent cancel = new Intent(this, TransferService.class);
+			Intent cancel = new Intent(this, ReceiveService.class);
 			cancel.setAction("cancel");
 			cancelIntent = PendingIntent.getForegroundService(this, startId, cancel, 0);
 		} else {
 			// Android 7.1
-			Intent cancel = new Intent(this, TransferService.class);
+			Intent cancel = new Intent(this, ReceiveService.class);
 			cancel.setAction("cancel");
 			cancelIntent = PendingIntent.getService(this, startId, cancel, 0);
 
@@ -68,11 +75,28 @@ public class TransferService extends Service {
 		).build());
 		Notification notification = builder.build();
 		startForeground(startId, notification);
+
+
+		try {
+			listener = new ServerSocket(TransferApp.TCP_PORT);
+			Log.d(LOG_TAG, "ReceiveService begins to listen");
+		} catch (IOException e) {
+			Log.e(LOG_TAG, "listener init error", e);
+		}
 		return super.onStartCommand(intent, flags, startId);
 	}
 
 	@Override
 	public void onDestroy() {
+		if (listener != null) {
+			try {
+				listener.close();
+			} catch (IOException e) {
+				Log.e(LOG_TAG, "listener close error", e);
+			}
+			listener = null;
+		}
+		Log.d(LOG_TAG, "ReceiveService closed");
 		super.onDestroy();
 	}
 

@@ -155,6 +155,18 @@ public class MainActivity extends Activity {
 
 		final Button receiveButton = findViewById(R.id.ReceiveButton);
 		receiveButton.setOnClickListener((View v) -> {
+			if (isServiceRunning(ReceiveService.class)) {
+				Toast.makeText(MainActivity.this, R.string.receive_service_is_already_running, Toast.LENGTH_SHORT).show();
+				return;
+			}
+
+			Intent intent = new Intent(this, ReceiveService.class);
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+				startForegroundService(intent);
+			} else {
+				startService(intent);
+			}
+			Toast.makeText(MainActivity.this, R.string.start_receive_service, Toast.LENGTH_SHORT).show();
 			finish();
 		});
 	}
