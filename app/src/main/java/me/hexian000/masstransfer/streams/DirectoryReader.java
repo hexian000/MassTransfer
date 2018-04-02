@@ -16,14 +16,14 @@ import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
  * DirectoryReader 是对系统自带的 DocumentFile 的封装
  */
 
-class DirectoryReader implements Runnable {
+public class DirectoryReader implements Runnable {
 	private ContentResolver resolver;
 	private DocumentFile root;
 	private Writer out;
 
-	DirectoryReader(ContentResolver resolver,
-	                DocumentFile root,
-	                Writer out) {
+	public DirectoryReader(ContentResolver resolver,
+	                       DocumentFile root,
+	                       Writer out) {
 		this.resolver = resolver;
 		this.root = root;
 		this.out = out;
@@ -59,7 +59,8 @@ class DirectoryReader implements Runnable {
 			int read;
 			do {
 				read = s.read(buf);
-				out.write(buf);
+				if (read > 0)
+					out.write(buf);
 			} while (read == buf.length);
 		}
 	}

@@ -18,7 +18,7 @@ import java.nio.ByteOrder;
 
 import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
 
-class DirectoryWriter implements Runnable {
+public class DirectoryWriter implements Runnable {
 	private ContentResolver resolver;
 	private DocumentFile root;
 	private Reader in;

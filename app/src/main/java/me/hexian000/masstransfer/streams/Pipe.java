@@ -3,12 +3,12 @@ package me.hexian000.masstransfer.streams;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-class Pipe implements Reader, Writer {
+public class Pipe implements Reader, Writer {
 	private BlockingQueue<byte[]> q;
 	private byte[] current = null;
 	private int offset = 0;
 
-	Pipe(int size) {
+	public Pipe(int size) {
 		q = new LinkedBlockingQueue<>(size);
 	}
 

@@ -13,7 +13,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * 接收方：[网络] -> [RobustSocketInputStream] -> [Pump] -> [DirectoryOutputStream] -> [文件夹]
  */
 
-final class Pump {
+public final class Pump {
 	private BlockingQueue<byte[]> q;
 	private boolean readSuccess, writeSuccess;
 	private long readPos, writePos, size;
@@ -21,7 +21,7 @@ final class Pump {
 	private Reader in;
 	private Writer out;
 
-	Pump(Reader in, Writer out, int buffer, long size) {
+	public Pump(Reader in, Writer out, int buffer, long size) {
 		q = new LinkedBlockingQueue<>(buffer);
 		this.in = in;
 		this.out = out;
