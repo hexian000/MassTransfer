@@ -17,12 +17,15 @@ import me.hexian000.masstransfer.streams.Pipe;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 
 import static me.hexian000.masstransfer.TransferApp.*;
 
 
 public class TransferService extends Service implements Runnable {
+	Socket socket;
 	Thread thread = null;
 	DocumentFile root = null;
 
@@ -87,6 +90,21 @@ public class TransferService extends Service implements Runnable {
 		root = DocumentFile.fromTreeUri(this, intent.getData());
 		thread = new Thread(this);
 		thread.start();
+		if (socket != null) {
+			try {
+				socket.close();
+			} catch (IOException ignored) {
+			}
+		}
+		socket = new Socket();
+		try {
+			socket.connect(new InetSocketAddress(
+					InetAddress.getByName(intent.getAction()),
+					TCP_PORT), 4000);
+		} catch (IOException e) {
+			Log.e(LOG_TAG, "connect failed", e);
+			stopSelf();
+		}
 		return super.onStartCommand(intent, flags, startId);
 	}
 

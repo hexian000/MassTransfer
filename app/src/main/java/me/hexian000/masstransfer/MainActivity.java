@@ -28,6 +28,8 @@ import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
 
 public class MainActivity extends Activity {
 	private static final int REQUEST_OPEN_DOCUMENT_TREE = 421;
+
+	String host;
 	DiscoverService mService;
 	Timer timer;
 	Handler refresh = new Handler();
@@ -86,8 +88,7 @@ public class MainActivity extends Activity {
 								return;
 							}
 
-							String s = (String) adapter.getItem(i);
-							Toast.makeText(MainActivity.this, s, Toast.LENGTH_SHORT).show();
+							host = (String) adapter.getItem(i);
 							pickFolder();
 						});
 					});
@@ -114,6 +115,7 @@ public class MainActivity extends Activity {
 			Uri uriTree = data.getData();
 			if (uriTree != null) {
 				Intent intent = new Intent(this, TransferService.class);
+				intent.setAction(host);
 				intent.setData(uriTree);
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 					startForegroundService(intent);
