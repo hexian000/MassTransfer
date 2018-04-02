@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.provider.DocumentFile;
@@ -24,6 +25,7 @@ import static me.hexian000.masstransfer.TransferApp.CHANNEL_TRANSFER_STATE;
 import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
 
 public class ReceiveService extends Service implements Runnable {
+	Handler handler = new Handler();
 	Thread thread = null;
 	ServerSocket listener = null;
 	DocumentFile root = null;
@@ -87,12 +89,6 @@ public class ReceiveService extends Service implements Runnable {
 		startForeground(startId, notification);
 
 		root = DocumentFile.fromTreeUri(this, intent.getData());
-		try {
-			listener = new ServerSocket(TransferApp.TCP_PORT);
-			Log.d(LOG_TAG, "ReceiveService begins to listen");
-		} catch (IOException e) {
-			Log.e(LOG_TAG, "listener init error", e);
-		}
 
 		thread = new Thread(this);
 		thread.start();
@@ -102,6 +98,17 @@ public class ReceiveService extends Service implements Runnable {
 
 	@Override
 	public void run() {
+		try {
+			listener = new ServerSocket(TransferApp.TCP_PORT);
+			Log.d(LOG_TAG, "ReceiveService begins to listen");
+		} catch (IOException e) {
+			Log.e(LOG_TAG, "listener init error", e);
+			handler.post(() -> {
+				thread = null;
+				stopSelf();
+			});
+			return;
+		}
 		try {
 			Socket socket = listener.accept();
 			InputStream in = socket.getInputStream();

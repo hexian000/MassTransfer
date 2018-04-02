@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.provider.DocumentFile;
@@ -25,7 +26,8 @@ import static me.hexian000.masstransfer.TransferApp.*;
 
 
 public class TransferService extends Service implements Runnable {
-	Socket socket;
+	Handler handler = new Handler();
+	String host;
 	Thread thread = null;
 	DocumentFile root = null;
 
@@ -87,29 +89,28 @@ public class TransferService extends Service implements Runnable {
 		Notification notification = builder.build();
 		startForeground(startId, notification);
 
+		host = intent.getAction();
 		root = DocumentFile.fromTreeUri(this, intent.getData());
 		thread = new Thread(this);
 		thread.start();
-		if (socket != null) {
-			try {
-				socket.close();
-			} catch (IOException ignored) {
-			}
-		}
-		socket = new Socket();
-		try {
-			socket.connect(new InetSocketAddress(
-					InetAddress.getByName(intent.getAction()),
-					TCP_PORT), 4000);
-		} catch (IOException e) {
-			Log.e(LOG_TAG, "connect failed", e);
-			stopSelf();
-		}
 		return super.onStartCommand(intent, flags, startId);
 	}
 
 	@Override
 	public void run() {
+		Socket socket = new Socket();
+		try {
+			socket.connect(new InetSocketAddress(
+					InetAddress.getByName(host),
+					TCP_PORT), 4000);
+		} catch (IOException e) {
+			Log.e(LOG_TAG, "connect failed", e);
+			handler.post(() -> {
+				thread = null;
+				stopSelf();
+			});
+			return;
+		}
 		Pipe pipe = new Pipe(64);
 		DirectoryReader reader = new DirectoryReader(
 				getContentResolver(),
