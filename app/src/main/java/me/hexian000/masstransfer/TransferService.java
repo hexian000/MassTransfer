@@ -117,7 +117,6 @@ public class TransferService extends Service implements Runnable {
 		Thread readerThread = new Thread(reader);
 		readerThread.start();
 		try {
-			Socket socket = new Socket("", TCP_PORT);
 			OutputStream out = socket.getOutputStream();
 			while (true) {
 				byte[] buffer = new byte[1024 * 1024];
