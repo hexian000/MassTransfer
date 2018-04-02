@@ -23,9 +23,9 @@ public class DirectoryWriter implements Runnable {
 	private DocumentFile root;
 	private Reader in;
 
-	DirectoryWriter(ContentResolver resolver,
-	                DocumentFile root,
-	                Reader in) {
+	public DirectoryWriter(ContentResolver resolver,
+	                       DocumentFile root,
+	                       Reader in) {
 		this.resolver = resolver;
 		this.root = root;
 		this.in = in;

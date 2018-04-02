@@ -128,6 +128,8 @@ public class TransferService extends Service implements Runnable {
 					out.write(buffer, 0, read);
 				else break;
 			}
+			out.close();
+			socket.close();
 		} catch (InterruptedException ignored) {
 			readerThread.interrupt();
 		} catch (IOException e) {

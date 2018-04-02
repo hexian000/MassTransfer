@@ -10,20 +10,31 @@ import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.support.v4.provider.DocumentFile;
 import android.util.Log;
+import me.hexian000.masstransfer.streams.DirectoryWriter;
+import me.hexian000.masstransfer.streams.Pipe;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.ServerSocket;
+import java.net.Socket;
 
 import static me.hexian000.masstransfer.TransferApp.CHANNEL_TRANSFER_STATE;
 import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
 
-public class ReceiveService extends Service {
+public class ReceiveService extends Service implements Runnable {
+	Thread thread = null;
 	ServerSocket listener = null;
+	DocumentFile root = null;
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if ("cancel".equals(intent.getAction())) {
+			if (thread != null) {
+				thread.interrupt();
+				thread = null;
+			}
 			stopSelf();
 			return super.onStartCommand(intent, flags, startId);
 		}
@@ -75,14 +86,55 @@ public class ReceiveService extends Service {
 		Notification notification = builder.build();
 		startForeground(startId, notification);
 
-
+		root = DocumentFile.fromTreeUri(this, intent.getData());
 		try {
 			listener = new ServerSocket(TransferApp.TCP_PORT);
 			Log.d(LOG_TAG, "ReceiveService begins to listen");
 		} catch (IOException e) {
 			Log.e(LOG_TAG, "listener init error", e);
 		}
+
+		thread = new Thread(this);
+		thread.start();
+
 		return super.onStartCommand(intent, flags, startId);
+	}
+
+	@Override
+	public void run() {
+		try {
+			Socket socket = listener.accept();
+			InputStream in = socket.getInputStream();
+			Pipe pipe = new Pipe(64);
+			DirectoryWriter writer = new DirectoryWriter(
+					getContentResolver(),
+					root, pipe);
+			Thread writerThread = new Thread(writer);
+			writerThread.start();
+			try {
+				while (true) {
+					byte[] buffer = new byte[1024 * 1024];
+					int read = in.read(buffer);
+					if (read == buffer.length)
+						pipe.write(buffer);
+					else if (read > 0) {
+						byte[] data = new byte[read];
+						System.arraycopy(buffer, 0, data, 0, read);
+						pipe.write(data);
+					} else break;
+				}
+				pipe.write(new byte[0]);
+				in.close();
+				socket.close();
+			} catch (InterruptedException ignored) {
+				writerThread.interrupt();
+			} catch (IOException e) {
+				Log.e(LOG_TAG, "TransferService", e);
+			}
+		} catch (IOException e) {
+			Log.e(LOG_TAG, "listener accept error", e);
+		}
+
 	}
 
 	@Override

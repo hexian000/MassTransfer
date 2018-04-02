@@ -27,7 +27,8 @@ import java.util.TimerTask;
 import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
 
 public class MainActivity extends Activity {
-	private static final int REQUEST_OPEN_DOCUMENT_TREE = 421;
+	private static final int REQUEST_SEND = 1;
+	private static final int REQUEST_RECEIVE = 2;
 
 	String host;
 	DiscoverService mService;
@@ -89,7 +90,8 @@ public class MainActivity extends Activity {
 							}
 
 							host = (String) adapter.getItem(i);
-							pickFolder();
+							Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+							startActivityForResult(intent, REQUEST_SEND);
 						});
 					});
 				} else {
@@ -104,14 +106,10 @@ public class MainActivity extends Activity {
 		}, 0, 500);
 	}
 
-	private void pickFolder() {
-		Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-		startActivityForResult(intent, REQUEST_OPEN_DOCUMENT_TREE);
-	}
-
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if (resultCode == RESULT_OK && requestCode == REQUEST_OPEN_DOCUMENT_TREE) {
+		if (resultCode != RESULT_OK) return;
+		if (requestCode == REQUEST_SEND) {
 			Uri uriTree = data.getData();
 			if (uriTree != null) {
 				Intent intent = new Intent(this, TransferService.class);
@@ -122,7 +120,19 @@ public class MainActivity extends Activity {
 				} else {
 					startService(intent);
 				}
-
+				finish();
+			}
+		} else if (requestCode == REQUEST_RECEIVE) {
+			Uri uriTree = data.getData();
+			if (uriTree != null) {
+				Intent intent = new Intent(this, ReceiveService.class);
+				intent.setData(uriTree);
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+					startForegroundService(intent);
+				} else {
+					startService(intent);
+				}
+				Toast.makeText(MainActivity.this, R.string.start_receive_service, Toast.LENGTH_SHORT).show();
 				finish();
 			}
 		}
@@ -163,14 +173,8 @@ public class MainActivity extends Activity {
 				return;
 			}
 
-			Intent intent = new Intent(this, ReceiveService.class);
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-				startForegroundService(intent);
-			} else {
-				startService(intent);
-			}
-			Toast.makeText(MainActivity.this, R.string.start_receive_service, Toast.LENGTH_SHORT).show();
-			finish();
+			Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+			startActivityForResult(intent, REQUEST_RECEIVE);
 		});
 	}
 }
