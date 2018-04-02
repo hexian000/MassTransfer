@@ -74,7 +74,7 @@ public class DirectoryReader implements Runnable {
 			lengths.putInt(0);
 			lengths.putLong(0);
 			out.write(lengths.array()); // bye
-			out.write(new byte[0]);
+			out.close();
 		} catch (IOException | InterruptedException e) {
 			Log.e(LOG_TAG, "DirectoryWriter", e);
 		}

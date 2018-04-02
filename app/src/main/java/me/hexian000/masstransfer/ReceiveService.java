@@ -123,7 +123,7 @@ public class ReceiveService extends Service implements Runnable {
 						pipe.write(data);
 					} else break;
 				}
-				pipe.write(new byte[0]);
+				pipe.close();
 				in.close();
 				socket.close();
 			} catch (InterruptedException ignored) {
