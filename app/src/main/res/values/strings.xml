@@ -4,4 +4,5 @@
     <string name="start_receive_service">启动接收服务</string>
     <string name="receive_service_is_already_running">接收服务已在运行</string>
     <string name="cancel">取消</string>
+    <string name="channel_transfer_state">传输状态</string>
 </resources>

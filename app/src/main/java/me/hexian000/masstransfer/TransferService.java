@@ -1,12 +1,17 @@
 package me.hexian000.masstransfer;
 
-import android.app.*;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+
+import static me.hexian000.masstransfer.TransferApp.CHANNEL_TRANSFER_STATE;
 
 public class TransferService extends Service {
 
@@ -37,18 +42,13 @@ public class TransferService extends Service {
 			NotificationManager manager =
 					(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 			if (manager != null) {
-				NotificationChannel channel = new NotificationChannel(
-						"transfer_state", "传输状态",
-						NotificationManager.IMPORTANCE_DEFAULT
+				TransferApp.createNotificationChannels(
+						manager,
+						getResources()
 				);
-				channel.enableLights(false);
-				channel.enableVibration(false);
-				channel.setSound(null, null);
-
-				manager.createNotificationChannel(channel);
+				builder.setChannelId(CHANNEL_TRANSFER_STATE);
 			}
-
-			Intent cancel = new Intent(this, TransferService.class);
+			Intent cancel = new Intent(this, ReceiveService.class);
 			cancel.setAction("cancel");
 			cancelIntent = PendingIntent.getForegroundService(this, startId, cancel, 0);
 		} else {
