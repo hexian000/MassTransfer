@@ -18,6 +18,8 @@ public class Pipe implements Reader, Writer {
 		while (read < buffer.length) {
 			if (current == null) {
 				current = q.take();
+				if (current.length == 0)
+					break;
 			} else {
 				int count = Math.min(current.length - offset, buffer.length - read);
 				System.arraycopy(current, offset, buffer, read, count);

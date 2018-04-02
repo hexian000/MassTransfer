@@ -59,8 +59,8 @@ public class DirectoryReader implements Runnable {
 			int read;
 			do {
 				read = s.read(buf);
-				if (read > 0)
-					out.write(buf);
+				if (read == 0) break;
+				out.write(buf);
 			} while (read == buf.length);
 		}
 	}
@@ -74,6 +74,7 @@ public class DirectoryReader implements Runnable {
 			lengths.putInt(0);
 			lengths.putLong(0);
 			out.write(lengths.array()); // bye
+			out.write(new byte[0]);
 		} catch (IOException | InterruptedException e) {
 			Log.e(LOG_TAG, "DirectoryWriter", e);
 		}

@@ -113,21 +113,15 @@ public class MainActivity extends Activity {
 		if (resultCode == RESULT_OK && requestCode == REQUEST_OPEN_DOCUMENT_TREE) {
 			Uri uriTree = data.getData();
 			if (uriTree != null) {
-				DocumentFile root = DocumentFile.fromTreeUri(this, uriTree);
-
-				List<DocumentFile> files = new ArrayList<>();
-				listTree(root, files);
-				StringBuilder sb = new StringBuilder();
-				for (DocumentFile file : files) {
-					sb.append(file.getName()).append('\n');
-				}
-				Toast.makeText(this, sb.toString(), Toast.LENGTH_LONG).show();
 				Intent intent = new Intent(this, TransferService.class);
+				intent.setData(uriTree);
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 					startForegroundService(intent);
 				} else {
 					startService(intent);
 				}
+
+				finish();
 			}
 		}
 	}
