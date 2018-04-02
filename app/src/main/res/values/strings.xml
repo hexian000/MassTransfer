@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">MassTransfer</string>
+    <string name="receive_button">接收</string>
 </resources>

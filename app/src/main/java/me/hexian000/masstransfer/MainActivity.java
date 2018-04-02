@@ -13,7 +13,9 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.provider.DocumentFile;
 import android.util.Log;
+import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -150,5 +152,10 @@ public class MainActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+
+		final Button receiveButton = findViewById(R.id.ReceiveButton);
+		receiveButton.setOnClickListener((View v) -> {
+			finish();
+		});
 	}
 }

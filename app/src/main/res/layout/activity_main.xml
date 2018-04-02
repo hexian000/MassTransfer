@@ -7,6 +7,12 @@
               android:orientation="vertical"
               tools:context="me.hexian000.masstransfer.MainActivity">
 
+    <Button
+        android:id="@+id/ReceiveButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/receive_button" />
+
     <ListView
             android:id="@+id/PeersList"
             android:layout_width="match_parent"
