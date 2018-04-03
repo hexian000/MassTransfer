@@ -106,7 +106,7 @@ public class TransferService extends Service implements Runnable {
 					InetAddress.getByName(host),
 					TCP_PORT), 4000);
 			socket.setSendBufferSize(16 * 1024 * 1024);
-			socket.setSoLinger(true, 10);
+			socket.setSoLinger(true, 30);
 			socket.setSoTimeout(10 * 1000);
 		} catch (IOException e) {
 			Log.e(LOG_TAG, "connect failed", e);

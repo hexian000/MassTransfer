@@ -144,7 +144,7 @@ public class ReceiveService extends Service implements Runnable {
 		try {
 			socket = listener.accept();
 			socket.setReceiveBufferSize(16 * 1024 * 1024);
-			socket.setSoLinger(true, 10);
+			socket.setSoLinger(true, 30);
 			socket.setSoTimeout(10 * 1000);
 			in = socket.getInputStream();
 		} catch (IOException e) {
