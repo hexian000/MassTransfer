@@ -49,7 +49,7 @@ public class DirectoryWriter implements Runnable {
 		return parent;
 	}
 
-	private void writeFile(String path, long length) throws IOException, InterruptedException {
+	private void writeFile(String path, long length) throws IOException {
 		if (length == 0) { // is directory
 			makePath(path.split("/"));
 			return;
@@ -83,6 +83,9 @@ public class DirectoryWriter implements Runnable {
 		OutputStream out = null;
 		try {
 			out = resolver.openOutputStream(file.getUri());
+			if (out == null) {
+				throw new NullPointerException();
+			}
 			while (length > 0) {
 				byte[] buffer = new byte[(int) Math.min(length, 1048576)];
 				int read = in.read(buffer);
@@ -91,7 +94,8 @@ public class DirectoryWriter implements Runnable {
 				out.write(buffer);
 				length -= read;
 			}
-
+		} catch (Throwable e) {
+			Log.e(LOG_TAG, "writing file", e);
 		} finally {
 			if (out != null) {
 				out.close();
