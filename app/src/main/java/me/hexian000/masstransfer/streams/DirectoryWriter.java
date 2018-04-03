@@ -92,6 +92,8 @@ public class DirectoryWriter implements Runnable {
 			while (length > 0) {
 				byte[] buffer = new byte[(int) Math.min(length, 1048576)];
 				int read = in.read(buffer);
+				Log.d(LOG_TAG, "write " + read +
+						" bytes remaining " + length + " bytes");
 				if (read != buffer.length)
 					throw new EOFException();
 				out.write(buffer);
@@ -103,6 +105,8 @@ public class DirectoryWriter implements Runnable {
 			if (out != null) {
 				out.close();
 			}
+			Log.d(LOG_TAG, "writeFile: " + path +
+					" done");
 		}
 	}
 
@@ -115,12 +119,13 @@ public class DirectoryWriter implements Runnable {
 						order(ByteOrder.BIG_ENDIAN);
 				read = in.read(lengths.array());
 				if (read != Integer.BYTES + Long.BYTES) {
-					Log.e(LOG_TAG, "invalid header");
+					Log.e(LOG_TAG, "EOF when reading header");
 					return;
 				}
 				int nameLen = lengths.getInt();
 				long fileLen = lengths.getLong();
 				if (nameLen == 0 && fileLen == 0) {
+					Log.d(LOG_TAG, "protocol bye");
 					break; // bye
 				}
 				if (nameLen > 65535) {

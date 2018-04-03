@@ -10,7 +10,6 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.graphics.BitmapFactory;
 import android.os.Build;
-import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.provider.DocumentFile;
@@ -27,7 +26,6 @@ import static me.hexian000.masstransfer.TransferApp.CHANNEL_TRANSFER_STATE;
 import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
 
 public class ReceiveService extends Service implements Runnable {
-	Handler handler = new Handler();
 	Thread thread = null;
 	ServerSocket listener = null;
 	DocumentFile root = null;
@@ -47,8 +45,10 @@ public class ReceiveService extends Service implements Runnable {
 	};
 
 	private void stop() {
-		unbindService(mConnection);
-		Log.d(LOG_TAG, "unbind DiscoverService in ReceiveService");
+		if (mService != null) {
+			unbindService(mConnection);
+			Log.d(LOG_TAG, "unbind DiscoverService in ReceiveService");
+		}
 		stopSelf();
 	}
 
@@ -129,7 +129,7 @@ public class ReceiveService extends Service implements Runnable {
 			Log.d(LOG_TAG, "ReceiveService begins to listen");
 		} catch (IOException e) {
 			Log.e(LOG_TAG, "listener init error", e);
-			handler.post(this::stop);
+			stop();
 			return;
 		}
 		Socket socket;
@@ -139,7 +139,7 @@ public class ReceiveService extends Service implements Runnable {
 			in = socket.getInputStream();
 		} catch (IOException e) {
 			Log.e(LOG_TAG, "listener accept error", e);
-			handler.post(this::stop);
+			stop();
 			return;
 		}
 		Pipe pipe = new Pipe(64);
@@ -163,12 +163,14 @@ public class ReceiveService extends Service implements Runnable {
 			pipe.close();
 			in.close();
 			socket.close();
+			Log.d(LOG_TAG, "recv thread exited");
 		} catch (InterruptedException ignored) {
 			writerThread.interrupt();
 		} catch (IOException e) {
 			Log.e(LOG_TAG, "TransferService", e);
 		}
-		handler.post(this::stop);
+		stop();
+		//handler.post(this::stop);
 	}
 
 	@Override

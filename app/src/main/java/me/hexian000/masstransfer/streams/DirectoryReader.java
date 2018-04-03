@@ -62,11 +62,13 @@ public class DirectoryReader implements Runnable {
 			out.write(header.toByteArray());
 			byte[] buf = new byte[1024 * 1024];
 			int read;
-			do {
+			while (true) {
 				read = s.read(buf);
 				if (read == 0) break;
-				out.write(buf);
-			} while (read == buf.length);
+				byte[] buf2 = new byte[read];
+				System.arraycopy(buf, 0, buf2, 0, read);
+				out.write(buf2);
+			}
 		}
 	}
 

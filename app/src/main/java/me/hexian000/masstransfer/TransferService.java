@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.os.Build;
-import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.provider.DocumentFile;
@@ -26,7 +25,6 @@ import static me.hexian000.masstransfer.TransferApp.*;
 
 
 public class TransferService extends Service implements Runnable {
-	Handler handler = new Handler();
 	String host;
 	Thread thread = null;
 	DocumentFile root = null;
@@ -105,10 +103,8 @@ public class TransferService extends Service implements Runnable {
 					TCP_PORT), 4000);
 		} catch (IOException e) {
 			Log.e(LOG_TAG, "connect failed", e);
-			handler.post(() -> {
-				thread = null;
-				stopSelf();
-			});
+			thread = null;
+			stopSelf();
 			return;
 		}
 		Pipe pipe = new Pipe(64);
