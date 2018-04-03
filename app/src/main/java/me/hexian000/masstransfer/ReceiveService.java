@@ -159,8 +159,12 @@ public class ReceiveService extends Service implements Runnable {
 				root, pipe,
 				(text, now, max) -> {
 					if (builder != null && notificationManager != null) {
-						builder.setContentText(text).
-								setProgress(max, now, false);
+						if (text != null)
+							builder.setContentText(text).
+									setProgress(max, now, false);
+						else
+							builder.setContentText(getResources().getString(R.string.notification_flushing)).
+									setProgress(0, 0, true);
 						notificationManager.notify(startId, builder.build());
 					}
 				});
@@ -181,9 +185,6 @@ public class ReceiveService extends Service implements Runnable {
 			pipe.close();
 			in.close();
 			socket.close();
-			builder.setContentText(getResources().getString(R.string.notification_flushing)).
-					setProgress(0, 0, true);
-			notificationManager.notify(startId, builder.build());
 			writerThread.join();
 			Log.d(LOG_TAG, "ReceiveService finished normally");
 		} catch (InterruptedException ignored) {

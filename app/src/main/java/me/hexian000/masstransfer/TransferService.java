@@ -121,8 +121,12 @@ public class TransferService extends Service implements Runnable {
 				root, pipe,
 				(text, now, max) -> {
 					if (builder != null && notificationManager != null) {
-						builder.setContentText(text).
-								setProgress(max, now, false);
+						if (text != null)
+							builder.setContentText(text).
+									setProgress(max, now, false);
+						else
+							builder.setContentText(getResources().getString(R.string.notification_flushing)).
+									setProgress(0, 0, true);
 						notificationManager.notify(startId, builder.build());
 					}
 				});
@@ -141,10 +145,6 @@ public class TransferService extends Service implements Runnable {
 			}
 			out.close();
 			socket.close();
-			builder.setContentText(getResources().getString(R.string.notification_flushing)).
-					setProgress(0, 0, true);
-			notificationManager.notify(startId, builder.build());
-			readerThread.join();
 			Log.d(LOG_TAG, "TransferService finished normally");
 		} catch (InterruptedException ignored) {
 			Log.d(LOG_TAG, "TransferService interrupted");
