@@ -88,13 +88,13 @@ public class DirectoryReader implements Runnable {
 	public void run() {
 		try {
 			sendFile(root, "");
+			reporter.report(null, 0, 0);
 			ByteBuffer lengths = ByteBuffer.allocate(Integer.BYTES + Long.BYTES).
 					order(ByteOrder.BIG_ENDIAN);
 			lengths.putInt(0);
 			lengths.putLong(0);
 			out.write(lengths.array()); // bye
 			out.close();
-			reporter.report(null, 0, 0);
 			Log.d(LOG_TAG, "DirectoryReader finished normally");
 		} catch (InterruptedException e) {
 			Log.d(LOG_TAG, "DirectoryReader interrupted");
