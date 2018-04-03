@@ -49,6 +49,7 @@ public class DirectoryReader implements Runnable {
 				sendFile(f, basePath);
 			}
 		} else if (file.isFile() && file.canRead()) {
+			Log.d(LOG_TAG, "sendFile: " + file.getName());
 			InputStream s = resolver.openInputStream(file.getUri());
 			if (s == null) throw new IOException("can't open input stream");
 			lengths.putLong(file.length());

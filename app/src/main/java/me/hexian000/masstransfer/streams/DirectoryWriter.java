@@ -68,6 +68,7 @@ public class DirectoryWriter implements Runnable {
 		} else {
 			name = pathSegments[0];
 		}
+		Log.d(LOG_TAG, "writeFile: " + name);
 		DocumentFile file = parent.findFile(name);
 		if (file != null) {
 			file.delete();
@@ -119,6 +120,10 @@ public class DirectoryWriter implements Runnable {
 				long fileLen = lengths.getLong();
 				if (nameLen == 0 && fileLen == 0) {
 					return; // bye
+				}
+				if (nameLen > 65535) {
+					Log.e(LOG_TAG, "invalid header");
+					return;
 				}
 				byte[] name = new byte[nameLen];
 				read = in.read(name);
