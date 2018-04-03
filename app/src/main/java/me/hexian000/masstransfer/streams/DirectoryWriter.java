@@ -141,8 +141,10 @@ public class DirectoryWriter implements Runnable {
 				String path = new String(name, "UTF-8");
 				writeFile(path, fileLen);
 			} while (true);
-			Log.d(LOG_TAG, "Receive finished normally");
-		} catch (IOException | InterruptedException e) {
+			Log.d(LOG_TAG, "DirectoryWriter finished normally");
+		} catch (InterruptedException e) {
+			Log.d(LOG_TAG, "DirectoryWriter interrupted");
+		} catch (IOException e) {
 			Log.e(LOG_TAG, "DirectoryWriter", e);
 		}
 	}

@@ -64,10 +64,12 @@ public class DirectoryReader implements Runnable {
 			int read;
 			while (true) {
 				read = s.read(buf);
-				if (read == 0) break;
-				byte[] buf2 = new byte[read];
-				System.arraycopy(buf, 0, buf2, 0, read);
-				out.write(buf2);
+				if (read == -1) break;
+				if (read > 0) {
+					byte[] buf2 = new byte[read];
+					System.arraycopy(buf, 0, buf2, 0, read);
+					out.write(buf2);
+				}
 			}
 		}
 	}
@@ -82,9 +84,9 @@ public class DirectoryReader implements Runnable {
 			lengths.putLong(0);
 			out.write(lengths.array()); // bye
 			out.close();
-			Log.d(LOG_TAG, "Send finished normally");
+			Log.d(LOG_TAG, "DirectoryReader finished normally");
 		} catch (IOException | InterruptedException e) {
-			Log.e(LOG_TAG, "DirectoryWriter", e);
+			Log.e(LOG_TAG, "DirectoryReader", e);
 		}
 	}
 }

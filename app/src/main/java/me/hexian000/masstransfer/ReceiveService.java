@@ -163,14 +163,14 @@ public class ReceiveService extends Service implements Runnable {
 			pipe.close();
 			in.close();
 			socket.close();
-			Log.d(LOG_TAG, "recv thread exited");
+			Log.e(LOG_TAG, "ReceiveService finished normally");
 		} catch (InterruptedException ignored) {
+			Log.e(LOG_TAG, "ReceiveService interrupted");
 			writerThread.interrupt();
 		} catch (IOException e) {
-			Log.e(LOG_TAG, "TransferService", e);
+			Log.e(LOG_TAG, "ReceiveService", e);
 		}
 		stop();
-		//handler.post(this::stop);
 	}
 
 	@Override
