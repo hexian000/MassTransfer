@@ -99,8 +99,6 @@ public class DirectoryWriter implements Runnable {
 			while (length > 0) {
 				byte[] buffer = new byte[(int) Math.min(length, bufferSize)];
 				int read = in.read(buffer);
-				Log.d(LOG_TAG, "write " + read +
-						" bytes remaining " + length + " bytes");
 				if (read != buffer.length)
 					throw new EOFException();
 				out.write(buffer);
@@ -109,13 +107,11 @@ public class DirectoryWriter implements Runnable {
 				reporter.report(name, (int) (pos / bufferSize), maxProgress);
 			}
 		} catch (Throwable e) {
-			Log.e(LOG_TAG, "writing file", e);
+			Log.e(LOG_TAG, "writing file error: ", e);
 		} finally {
 			if (out != null) {
 				out.close();
 			}
-			Log.d(LOG_TAG, "writeFile: " + path +
-					" done");
 		}
 	}
 

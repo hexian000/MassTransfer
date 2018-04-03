@@ -180,12 +180,14 @@ public class ReceiveService extends Service implements Runnable {
 			pipe.close();
 			in.close();
 			socket.close();
+			writerThread.join();
 			Log.d(LOG_TAG, "ReceiveService finished normally");
 		} catch (InterruptedException ignored) {
 			Log.d(LOG_TAG, "ReceiveService interrupted");
 			writerThread.interrupt();
 		} catch (IOException e) {
 			Log.e(LOG_TAG, "ReceiveService", e);
+			writerThread.interrupt();
 		} finally {
 			stop();
 		}

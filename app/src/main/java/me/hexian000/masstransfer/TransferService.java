@@ -140,12 +140,14 @@ public class TransferService extends Service implements Runnable {
 			}
 			out.close();
 			socket.close();
+			readerThread.join();
 			Log.d(LOG_TAG, "TransferService finished normally");
 		} catch (InterruptedException ignored) {
 			Log.d(LOG_TAG, "TransferService interrupted");
 			readerThread.interrupt();
 		} catch (IOException e) {
 			Log.e(LOG_TAG, "TransferService", e);
+			readerThread.interrupt();
 		} finally {
 			notificationManager = null;
 			builder = null;
