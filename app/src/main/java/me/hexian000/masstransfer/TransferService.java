@@ -34,15 +34,6 @@ public class TransferService extends Service implements Runnable {
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		if ("cancel".equals(intent.getAction())) {
-			if (thread != null) {
-				thread.interrupt();
-				thread = null;
-			}
-			stopSelf();
-			return super.onStartCommand(intent, flags, startId);
-		}
-
 		this.startId = startId;
 		notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
@@ -92,11 +83,20 @@ public class TransferService extends Service implements Runnable {
 		Notification notification = builder.build();
 		startForeground(startId, notification);
 
+		if ("cancel".equals(intent.getAction())) {
+			if (thread != null) {
+				thread.interrupt();
+				thread = null;
+			}
+			stopSelf();
+			return START_NOT_STICKY;
+		}
+
 		host = intent.getAction();
 		root = DocumentFile.fromTreeUri(this, intent.getData());
 		thread = new Thread(this);
 		thread.start();
-		return super.onStartCommand(intent, flags, startId);
+		return START_NOT_STICKY;
 	}
 
 	@Override

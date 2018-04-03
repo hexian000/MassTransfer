@@ -59,15 +59,6 @@ public class ReceiveService extends Service implements Runnable {
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		if ("cancel".equals(intent.getAction())) {
-			if (thread != null) {
-				thread.interrupt();
-				thread = null;
-			}
-			stop();
-			return super.onStartCommand(intent, flags, startId);
-		}
-
 		this.startId = startId;
 		notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
@@ -118,6 +109,15 @@ public class ReceiveService extends Service implements Runnable {
 		Notification notification = builder.build();
 		startForeground(startId, notification);
 
+		if ("cancel".equals(intent.getAction())) {
+			if (thread != null) {
+				thread.interrupt();
+				thread = null;
+			}
+			stop();
+			return START_NOT_STICKY;
+		}
+
 		root = DocumentFile.fromTreeUri(this, intent.getData());
 
 		thread = new Thread(this);
@@ -127,7 +127,7 @@ public class ReceiveService extends Service implements Runnable {
 		bindService(discover, mConnection, Context.BIND_AUTO_CREATE);
 		Log.d(LOG_TAG, "bind DiscoverService in ReceiveService");
 
-		return super.onStartCommand(intent, flags, startId);
+		return START_NOT_STICKY;
 	}
 
 	@Override
