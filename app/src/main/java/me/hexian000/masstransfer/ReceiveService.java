@@ -77,6 +77,7 @@ public class ReceiveService extends Service implements Runnable {
 				.setLargeIcon(BitmapFactory.decodeResource(this.getResources(),
 						R.mipmap.ic_launcher))
 				.setContentTitle(getResources().getString(R.string.notification_receiving))
+				.setContentText(getResources().getString(R.string.notification_starting))
 				.setSmallIcon(R.mipmap.ic_launcher)
 				.setWhen(System.currentTimeMillis())
 				.setProgress(100, 0, true)
@@ -180,6 +181,9 @@ public class ReceiveService extends Service implements Runnable {
 			pipe.close();
 			in.close();
 			socket.close();
+			builder.setContentText(getResources().getString(R.string.notification_flushing)).
+					setProgress(0, 0, true);
+			notificationManager.notify(startId, builder.build());
 			writerThread.join();
 			Log.d(LOG_TAG, "ReceiveService finished normally");
 		} catch (InterruptedException ignored) {

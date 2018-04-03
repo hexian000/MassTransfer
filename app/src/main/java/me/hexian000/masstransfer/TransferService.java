@@ -51,6 +51,7 @@ public class TransferService extends Service implements Runnable {
 				.setLargeIcon(BitmapFactory.decodeResource(getResources(),
 						R.mipmap.ic_launcher))
 				.setContentTitle(getResources().getString(R.string.notification_sending))
+				.setContentText(getResources().getString(R.string.notification_starting))
 				.setSmallIcon(R.mipmap.ic_launcher)
 				.setWhen(System.currentTimeMillis())
 				.setProgress(100, 0, true)
@@ -140,6 +141,9 @@ public class TransferService extends Service implements Runnable {
 			}
 			out.close();
 			socket.close();
+			builder.setContentText(getResources().getString(R.string.notification_flushing)).
+					setProgress(0, 0, true);
+			notificationManager.notify(startId, builder.build());
 			readerThread.join();
 			Log.d(LOG_TAG, "TransferService finished normally");
 		} catch (InterruptedException ignored) {
