@@ -46,6 +46,12 @@ public class ReceiveService extends Service implements Runnable {
 		}
 	};
 
+	private void stop() {
+		unbindService(mConnection);
+		Log.d(LOG_TAG, "unbind DiscoverService in ReceiveService");
+		stopSelf();
+	}
+
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if ("cancel".equals(intent.getAction())) {
@@ -53,9 +59,7 @@ public class ReceiveService extends Service implements Runnable {
 				thread.interrupt();
 				thread = null;
 			}
-			unbindService(mConnection);
-			Log.d(LOG_TAG, "bind DiscoverService in ReceiveService");
-			stopSelf();
+			stop();
 			return super.onStartCommand(intent, flags, startId);
 		}
 
@@ -125,10 +129,7 @@ public class ReceiveService extends Service implements Runnable {
 			Log.d(LOG_TAG, "ReceiveService begins to listen");
 		} catch (IOException e) {
 			Log.e(LOG_TAG, "listener init error", e);
-			handler.post(() -> {
-				thread = null;
-				stopSelf();
-			});
+			handler.post(this::stop);
 			return;
 		}
 		try {
@@ -162,8 +163,9 @@ public class ReceiveService extends Service implements Runnable {
 			}
 		} catch (IOException e) {
 			Log.e(LOG_TAG, "listener accept error", e);
+		} finally {
+			handler.post(this::stop);
 		}
-
 	}
 
 	@Override

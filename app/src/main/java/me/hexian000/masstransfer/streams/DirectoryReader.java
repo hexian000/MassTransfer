@@ -37,13 +37,13 @@ public class DirectoryReader implements Runnable {
 			pathStr = basePath + "/" + file.getName();
 		else
 			pathStr = file.getName();
-		Log.d(LOG_TAG, "Now at: " + pathStr);
 		path = pathStr.getBytes("UTF-8");
 		ByteArrayOutputStream header = new ByteArrayOutputStream();
 		ByteBuffer lengths = ByteBuffer.allocate(Integer.BYTES + Long.BYTES).
 				order(ByteOrder.BIG_ENDIAN);
 		lengths.putInt(path.length);
 		if (file.isDirectory()) {
+			Log.d(LOG_TAG, "Now at: " + pathStr);
 			lengths.putLong(-1); // directory
 			header.write(lengths.array());
 			header.write(path);
@@ -52,7 +52,7 @@ public class DirectoryReader implements Runnable {
 				sendFile(f, basePath);
 			}
 		} else if (file.isFile() && file.canRead()) {
-			Log.d(LOG_TAG, "sendFile: " + file.getName());
+			Log.d(LOG_TAG, "sendFile: " + pathStr);
 			InputStream s = resolver.openInputStream(file.getUri());
 			if (s == null) throw new IOException("can't open input stream");
 			lengths.putLong(file.length());
