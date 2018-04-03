@@ -118,10 +118,6 @@ public class ReceiveService extends Service implements Runnable {
 			startForeground(startId, notification);
 			if (thread != null) {
 				thread.interrupt();
-				try {
-					thread.join();
-				} catch (InterruptedException ignored) {
-				}
 				thread = null;
 			}
 			stop();
