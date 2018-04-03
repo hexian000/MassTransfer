@@ -132,40 +132,43 @@ public class ReceiveService extends Service implements Runnable {
 			handler.post(this::stop);
 			return;
 		}
+		Socket socket;
+		InputStream in;
 		try {
-			Socket socket = listener.accept();
-			InputStream in = socket.getInputStream();
-			Pipe pipe = new Pipe(64);
-			DirectoryWriter writer = new DirectoryWriter(
-					getContentResolver(),
-					root, pipe);
-			Thread writerThread = new Thread(writer);
-			writerThread.start();
-			try {
-				while (true) {
-					byte[] buffer = new byte[1024 * 1024];
-					int read = in.read(buffer);
-					if (read == buffer.length)
-						pipe.write(buffer);
-					else if (read > 0) {
-						byte[] data = new byte[read];
-						System.arraycopy(buffer, 0, data, 0, read);
-						pipe.write(data);
-					} else break;
-				}
-				pipe.close();
-				in.close();
-				socket.close();
-			} catch (InterruptedException ignored) {
-				writerThread.interrupt();
-			} catch (IOException e) {
-				Log.e(LOG_TAG, "TransferService", e);
-			}
+			socket = listener.accept();
+			in = socket.getInputStream();
 		} catch (IOException e) {
 			Log.e(LOG_TAG, "listener accept error", e);
-		} finally {
 			handler.post(this::stop);
+			return;
 		}
+		Pipe pipe = new Pipe(64);
+		DirectoryWriter writer = new DirectoryWriter(
+				getContentResolver(),
+				root, pipe);
+		Thread writerThread = new Thread(writer);
+		writerThread.start();
+		try {
+			while (true) {
+				byte[] buffer = new byte[1024 * 1024];
+				int read = in.read(buffer);
+				if (read == buffer.length)
+					pipe.write(buffer);
+				else if (read > 0) {
+					byte[] data = new byte[read];
+					System.arraycopy(buffer, 0, data, 0, read);
+					pipe.write(data);
+				} else break;
+			}
+			pipe.close();
+			in.close();
+			socket.close();
+		} catch (InterruptedException ignored) {
+			writerThread.interrupt();
+		} catch (IOException e) {
+			Log.e(LOG_TAG, "TransferService", e);
+		}
+		handler.post(this::stop);
 	}
 
 	@Override

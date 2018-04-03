@@ -56,7 +56,8 @@ public class DirectoryWriter implements Runnable {
 			return;
 		}
 		// is File
-		Log.d(LOG_TAG, "writeFile: " + path);
+		Log.d(LOG_TAG, "writeFile: " + path +
+				" length=" + length);
 		String name;
 		DocumentFile parent = root;
 		String[] pathSegments = path.split("/");
