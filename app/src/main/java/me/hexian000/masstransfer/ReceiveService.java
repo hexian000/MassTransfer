@@ -136,6 +136,9 @@ public class ReceiveService extends Service implements Runnable {
 		InputStream in;
 		try {
 			socket = listener.accept();
+			socket.setReceiveBufferSize(1024 * 1024);
+			socket.setSoLinger(true, 10);
+			socket.setSoTimeout(120 * 1000);
 			in = socket.getInputStream();
 		} catch (IOException e) {
 			Log.e(LOG_TAG, "listener accept error", e);
