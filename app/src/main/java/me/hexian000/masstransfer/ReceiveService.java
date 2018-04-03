@@ -26,6 +26,9 @@ import static me.hexian000.masstransfer.TransferApp.CHANNEL_TRANSFER_STATE;
 import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
 
 public class ReceiveService extends Service implements Runnable {
+	Notification.Builder builder;
+	int startId = 0;
+	NotificationManager notificationManager = null;
 	Thread thread = null;
 	ServerSocket listener = null;
 	DocumentFile root = null;
@@ -49,6 +52,8 @@ public class ReceiveService extends Service implements Runnable {
 			unbindService(mConnection);
 			Log.d(LOG_TAG, "unbind DiscoverService in ReceiveService");
 		}
+		notificationManager = null;
+		builder = null;
 		stopSelf();
 	}
 
@@ -63,14 +68,16 @@ public class ReceiveService extends Service implements Runnable {
 			return super.onStartCommand(intent, flags, startId);
 		}
 
-		Notification.Builder builder = new Notification.Builder(
+		this.startId = startId;
+		notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+		builder = new Notification.Builder(
 				this.getApplicationContext());
 		builder.setContentIntent(null)
 				.setLargeIcon(BitmapFactory.decodeResource(this.getResources(),
 						R.mipmap.ic_launcher))
-				.setContentTitle("接收状态")
+				.setContentTitle(getResources().getString(R.string.notification_receiving))
 				.setSmallIcon(R.mipmap.ic_launcher)
-				.setContentText("<文件名>")
 				.setWhen(System.currentTimeMillis())
 				.setProgress(100, 0, true)
 				.setOngoing(true)
@@ -145,10 +152,17 @@ public class ReceiveService extends Service implements Runnable {
 			stop();
 			return;
 		}
-		Pipe pipe = new Pipe(64);
+		Pipe pipe = new Pipe(16);
 		DirectoryWriter writer = new DirectoryWriter(
 				getContentResolver(),
-				root, pipe);
+				root, pipe,
+				(text, now, max) -> {
+					if (builder != null && notificationManager != null) {
+						builder.setContentText(text).
+								setProgress(max, now, false);
+						notificationManager.notify(startId, builder.build());
+					}
+				});
 		Thread writerThread = new Thread(writer);
 		writerThread.start();
 		try {
@@ -172,8 +186,9 @@ public class ReceiveService extends Service implements Runnable {
 			writerThread.interrupt();
 		} catch (IOException e) {
 			Log.e(LOG_TAG, "ReceiveService", e);
+		} finally {
+			stop();
 		}
-		stop();
 	}
 
 	@Override

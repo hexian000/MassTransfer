@@ -25,9 +25,12 @@ import static me.hexian000.masstransfer.TransferApp.*;
 
 
 public class TransferService extends Service implements Runnable {
+	Notification.Builder builder;
+	int startId = 0;
 	String host;
 	Thread thread = null;
 	DocumentFile root = null;
+	NotificationManager notificationManager = null;
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
@@ -40,14 +43,15 @@ public class TransferService extends Service implements Runnable {
 			return super.onStartCommand(intent, flags, startId);
 		}
 
-		Notification.Builder builder = new Notification.Builder(
-				this.getApplicationContext());
+		this.startId = startId;
+		notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+		builder = new Notification.Builder(this.getApplicationContext());
 		builder.setContentIntent(null)
-				.setLargeIcon(BitmapFactory.decodeResource(this.getResources(),
+				.setLargeIcon(BitmapFactory.decodeResource(getResources(),
 						R.mipmap.ic_launcher))
-				.setContentTitle("传输状态")
+				.setContentTitle(getResources().getString(R.string.notification_sending))
 				.setSmallIcon(R.mipmap.ic_launcher)
-				.setContentText("<文件名>")
 				.setWhen(System.currentTimeMillis())
 				.setProgress(100, 0, true)
 				.setOngoing(true)
@@ -110,10 +114,17 @@ public class TransferService extends Service implements Runnable {
 			stopSelf();
 			return;
 		}
-		Pipe pipe = new Pipe(64);
+		Pipe pipe = new Pipe(16);
 		DirectoryReader reader = new DirectoryReader(
 				getContentResolver(),
-				root, pipe);
+				root, pipe,
+				(text, now, max) -> {
+					if (builder != null && notificationManager != null) {
+						builder.setContentText(text).
+								setProgress(max, now, false);
+						notificationManager.notify(startId, builder.build());
+					}
+				});
 		Thread readerThread = new Thread(reader);
 		readerThread.start();
 		try {
@@ -135,8 +146,11 @@ public class TransferService extends Service implements Runnable {
 			readerThread.interrupt();
 		} catch (IOException e) {
 			Log.e(LOG_TAG, "TransferService", e);
+		} finally {
+			notificationManager = null;
+			builder = null;
+			stopSelf();
 		}
-		stopSelf();
 	}
 
 	@Override

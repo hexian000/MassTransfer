@@ -19,16 +19,19 @@ import java.nio.ByteOrder;
 import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
 
 public class DirectoryWriter implements Runnable {
+	private ProgressReporter reporter;
 	private ContentResolver resolver;
 	private DocumentFile root;
 	private Reader in;
 
 	public DirectoryWriter(ContentResolver resolver,
 	                       DocumentFile root,
-	                       Reader in) {
+	                       Reader in,
+	                       ProgressReporter reporter) {
 		this.resolver = resolver;
 		this.root = root;
 		this.in = in;
+		this.reporter = reporter;
 	}
 
 	private DocumentFile makePath(String[] segments) {
@@ -89,8 +92,12 @@ public class DirectoryWriter implements Runnable {
 			if (out == null) {
 				throw new NullPointerException();
 			}
+			final int bufferSize = 1024 * 1024;
+			long pos = 0;
+			int maxProgress = (int) (length / bufferSize);
+			reporter.report(name, (int) (pos / bufferSize), maxProgress);
 			while (length > 0) {
-				byte[] buffer = new byte[(int) Math.min(length, 1048576)];
+				byte[] buffer = new byte[(int) Math.min(length, bufferSize)];
 				int read = in.read(buffer);
 				Log.d(LOG_TAG, "write " + read +
 						" bytes remaining " + length + " bytes");
@@ -98,6 +105,8 @@ public class DirectoryWriter implements Runnable {
 					throw new EOFException();
 				out.write(buffer);
 				length -= read;
+				pos += read;
+				reporter.report(name, (int) (pos / bufferSize), maxProgress);
 			}
 		} catch (Throwable e) {
 			Log.e(LOG_TAG, "writing file", e);

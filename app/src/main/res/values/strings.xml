@@ -6,4 +6,6 @@
     <string name="transfer_service_is_already_running">发送服务已在运行</string>
     <string name="cancel">取消</string>
     <string name="channel_transfer_state">传输状态</string>
+    <string name="notification_sending">正在发送文件</string>
+    <string name="notification_receiving">正在接收文件</string>
 </resources>

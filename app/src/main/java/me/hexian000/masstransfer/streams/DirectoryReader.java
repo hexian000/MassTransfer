@@ -17,16 +17,19 @@ import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
  */
 
 public class DirectoryReader implements Runnable {
+	private ProgressReporter reporter;
 	private ContentResolver resolver;
 	private DocumentFile root;
 	private Writer out;
 
 	public DirectoryReader(ContentResolver resolver,
 	                       DocumentFile root,
-	                       Writer out) {
+	                       Writer out,
+	                       ProgressReporter reporter) {
 		this.resolver = resolver;
 		this.root = root;
 		this.out = out;
+		this.reporter = reporter;
 	}
 
 	private void sendFile(DocumentFile file, String basePath) throws IOException, InterruptedException {
@@ -52,7 +55,8 @@ public class DirectoryReader implements Runnable {
 				sendFile(f, pathStr);
 			}
 		} else if (file.isFile() && file.canRead()) {
-			Log.d(LOG_TAG, "sendFile: " + file.getName() +
+			final String name = file.getName();
+			Log.d(LOG_TAG, "sendFile: " + name +
 					" length=" + file.length());
 			InputStream s = resolver.openInputStream(file.getUri());
 			if (s == null) throw new IOException("can't open input stream");
@@ -60,15 +64,21 @@ public class DirectoryReader implements Runnable {
 			header.write(lengths.array());
 			header.write(path);
 			out.write(header.toByteArray());
-			byte[] buf = new byte[1024 * 1024];
+			final int bufferSize = 1024 * 1024;
+			byte[] buf = new byte[bufferSize];
+			int maxProgress = (int) (file.length() / bufferSize);
+			long pos = 0;
 			int read;
+			reporter.report(name, (int) (pos / bufferSize), maxProgress);
 			while (true) {
 				read = s.read(buf);
 				if (read == -1) break;
 				if (read > 0) {
+					pos += read;
 					byte[] buf2 = new byte[read];
 					System.arraycopy(buf, 0, buf2, 0, read);
 					out.write(buf2);
+					reporter.report(name, (int) (pos / bufferSize), maxProgress);
 				}
 			}
 		}
