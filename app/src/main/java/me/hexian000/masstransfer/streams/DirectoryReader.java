@@ -85,7 +85,9 @@ public class DirectoryReader implements Runnable {
 			out.write(lengths.array()); // bye
 			out.close();
 			Log.d(LOG_TAG, "DirectoryReader finished normally");
-		} catch (IOException | InterruptedException e) {
+		} catch (InterruptedException e) {
+			Log.d(LOG_TAG, "DirectoryReader interrupted");
+		} catch (IOException e) {
 			Log.e(LOG_TAG, "DirectoryReader", e);
 		}
 	}
