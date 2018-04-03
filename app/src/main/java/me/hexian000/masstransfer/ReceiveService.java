@@ -19,8 +19,11 @@ import me.hexian000.masstransfer.streams.Pipe;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import static me.hexian000.masstransfer.TransferApp.CHANNEL_TRANSFER_STATE;
 import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
@@ -141,13 +144,11 @@ public class ReceiveService extends Service implements Runnable {
 			return;
 		}
 		Socket socket;
-		InputStream in;
 		try {
 			socket = listener.accept();
 			socket.setReceiveBufferSize(16 * 1024 * 1024);
 			socket.setSoLinger(true, 30);
 			socket.setSoTimeout(10 * 1000);
-			in = socket.getInputStream();
 		} catch (IOException e) {
 			Log.e(LOG_TAG, "listener accept error", e);
 			stop();
@@ -171,9 +172,18 @@ public class ReceiveService extends Service implements Runnable {
 		Thread writerThread = new Thread(writer);
 		writerThread.start();
 		try {
+			InputStream in = socket.getInputStream();
+			OutputStream out = socket.getOutputStream();
+			long lastPos = 0, pos = 0;
 			while (true) {
 				byte[] buffer = new byte[1024 * 1024];
 				int read = in.read(buffer);
+				pos += read;
+				if (pos - lastPos > 8 * 1024 * 1024) {
+					ByteBuffer ack = ByteBuffer.allocate(Long.BYTES).order(ByteOrder.BIG_ENDIAN);
+					ack.putLong(pos);
+					out.write(ack.array());
+				}
 				if (read == buffer.length)
 					pipe.write(buffer);
 				else if (read > 0) {
@@ -182,8 +192,14 @@ public class ReceiveService extends Service implements Runnable {
 					pipe.write(data);
 				} else break;
 			}
+			{
+				ByteBuffer ack = ByteBuffer.allocate(Long.BYTES).order(ByteOrder.BIG_ENDIAN);
+				ack.putLong(pos);
+				out.write(ack.array());
+			}
 			pipe.close();
 			in.close();
+			out.close();
 			socket.close();
 			writerThread.join();
 			Log.d(LOG_TAG, "ReceiveService finished normally");

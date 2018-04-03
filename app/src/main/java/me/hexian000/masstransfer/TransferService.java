@@ -14,12 +14,16 @@ import android.support.v4.provider.DocumentFile;
 import android.util.Log;
 import me.hexian000.masstransfer.streams.DirectoryReader;
 import me.hexian000.masstransfer.streams.Pipe;
+import me.hexian000.masstransfer.streams.StreamWindow;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import static me.hexian000.masstransfer.TransferApp.*;
 
@@ -133,16 +137,37 @@ public class TransferService extends Service implements Runnable {
 		Thread readerThread = new Thread(reader);
 		readerThread.start();
 		try {
+			StreamWindow window = new StreamWindow(64 * 1024 * 1024);
+			InputStream in = socket.getInputStream();
+			Thread ackThread = new Thread(() -> {
+				try {
+					while (true) {
+						ByteBuffer ack = ByteBuffer.allocate(Long.BYTES).order(ByteOrder.BIG_ENDIAN);
+						int read = in.read(ack.array());
+						if (read == 0 || read == -1) break;
+						if (read != Long.BYTES) continue;
+						long pos = ack.getLong();
+						window.ack(pos);
+					}
+				} catch (IOException ignored) {
+				}
+			});
+			ackThread.start();
 			OutputStream out = socket.getOutputStream();
 			while (true) {
 				byte[] buffer = new byte[1024 * 1024];
+				byte[] writeBuffer;
 				int read = pipe.read(buffer);
-				if (read == buffer.length)
-					out.write(buffer);
-				else if (read > 0)
-					out.write(buffer, 0, read);
-				else break;
+				if (read == buffer.length) {
+					writeBuffer = buffer;
+				} else if (read > 0) {
+					writeBuffer = new byte[read];
+					System.arraycopy(buffer, 0, writeBuffer, 0, read);
+				} else break;
+				window.send(writeBuffer);
+				out.write(writeBuffer);
 			}
+			in.close();
 			out.close();
 			socket.close();
 			Log.d(LOG_TAG, "TransferService finished normally");
