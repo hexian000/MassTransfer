@@ -22,13 +22,11 @@ final class Discoverer {
 		try {
 			for (Enumeration<NetworkInterface> i = NetworkInterface.getNetworkInterfaces(); i.hasMoreElements(); ) {
 				NetworkInterface nic = i.nextElement();
-				if (nic.isLoopback() ||
-						!nic.isUp() ||
-						!nic.supportsMulticast()) continue;
+				if (nic.isLoopback() || !nic.isUp()) continue;
 				for (InterfaceAddress interfaceAddress : nic.getInterfaceAddresses()) {
 					InetAddress broadcast = interfaceAddress.getBroadcast();
 					if (broadcast == null) continue;
-					Log.d(TransferApp.LOG_TAG, "broadcast init broadcast=" + broadcast.toString());
+					Log.d(TransferApp.LOG_TAG, "broadcast init at " + broadcast.toString());
 					DatagramSocket socket = new DatagramSocket(port);
 					socket.setBroadcast(true);
 					AnnounceInterface item = new AnnounceInterface();
