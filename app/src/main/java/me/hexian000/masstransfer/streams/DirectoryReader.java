@@ -31,12 +31,14 @@ public class DirectoryReader implements Runnable {
 
 	private void sendFile(DocumentFile file, String basePath) throws IOException, InterruptedException {
 		if (!file.exists()) return;
+		String pathStr;
 		byte[] path;
 		if (basePath.length() > 0)
-			path = (basePath + "/" + file.getName()).getBytes("UTF-8");
+			pathStr = basePath + "/" + file.getName();
 		else
-			path = file.getName().getBytes("UTF-8");
-		Log.d(LOG_TAG, "Now at: " + path);
+			pathStr = file.getName();
+		Log.d(LOG_TAG, "Now at: " + pathStr);
+		path = pathStr.getBytes("UTF-8");
 		ByteArrayOutputStream header = new ByteArrayOutputStream();
 		ByteBuffer lengths = ByteBuffer.allocate(Integer.BYTES + Long.BYTES).
 				order(ByteOrder.BIG_ENDIAN);
