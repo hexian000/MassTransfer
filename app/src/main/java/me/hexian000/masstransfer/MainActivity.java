@@ -31,9 +31,9 @@ public class MainActivity extends Activity {
 	private static final int REQUEST_RECEIVE = 2;
 
 	String host;
-	DiscoverService mService;
 	Timer timer;
 	Handler refresh = new Handler();
+	DiscoverService mService;
 	private ServiceConnection mConnection = new ServiceConnection() {
 		@Override
 		public void onServiceConnected(ComponentName className, IBinder service) {
@@ -52,7 +52,7 @@ public class MainActivity extends Activity {
 	protected void onPause() {
 		super.onPause();
 		unbindService(mConnection);
-		Log.d(LOG_TAG, "stop DiscoverService");
+		Log.d(LOG_TAG, "unbind DiscoverService in MainActivity");
 		if (timer != null) {
 			timer.cancel();
 			timer = null;
@@ -64,7 +64,7 @@ public class MainActivity extends Activity {
 		super.onResume();
 		Intent intent1 = new Intent(this, DiscoverService.class);
 		bindService(intent1, mConnection, Context.BIND_AUTO_CREATE);
-		Log.d(LOG_TAG, "start DiscoverService");
+		Log.d(LOG_TAG, "bind DiscoverService in MainActivity");
 
 		timer = new Timer();
 		timer.scheduleAtFixedRate(new TimerTask() {

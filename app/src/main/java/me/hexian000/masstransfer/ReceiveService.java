@@ -4,8 +4,10 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Handler;
@@ -29,6 +31,20 @@ public class ReceiveService extends Service implements Runnable {
 	Thread thread = null;
 	ServerSocket listener = null;
 	DocumentFile root = null;
+	DiscoverService mService;
+	private ServiceConnection mConnection = new ServiceConnection() {
+		@Override
+		public void onServiceConnected(ComponentName className, IBinder service) {
+			DiscoverService.Binder binder =
+					(DiscoverService.Binder) service;
+			mService = binder.getService();
+		}
+
+		@Override
+		public void onServiceDisconnected(ComponentName arg0) {
+			mService = null;
+		}
+	};
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
@@ -37,6 +53,8 @@ public class ReceiveService extends Service implements Runnable {
 				thread.interrupt();
 				thread = null;
 			}
+			unbindService(mConnection);
+			Log.d(LOG_TAG, "bind DiscoverService in ReceiveService");
 			stopSelf();
 			return super.onStartCommand(intent, flags, startId);
 		}
@@ -92,6 +110,10 @@ public class ReceiveService extends Service implements Runnable {
 
 		thread = new Thread(this);
 		thread.start();
+
+		Intent discover = new Intent(this, DiscoverService.class);
+		bindService(discover, mConnection, Context.BIND_AUTO_CREATE);
+		Log.d(LOG_TAG, "bind DiscoverService in ReceiveService");
 
 		return super.onStartCommand(intent, flags, startId);
 	}
