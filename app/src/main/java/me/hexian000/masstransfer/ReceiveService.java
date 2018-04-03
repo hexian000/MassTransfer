@@ -35,19 +35,7 @@ public class ReceiveService extends Service implements Runnable {
 	Thread thread = null;
 	DocumentFile root = null;
 	DiscoverService mService;
-	private ServiceConnection mConnection = new ServiceConnection() {
-		@Override
-		public void onServiceConnected(ComponentName className, IBinder service) {
-			DiscoverService.Binder binder =
-					(DiscoverService.Binder) service;
-			mService = binder.getService();
-		}
-
-		@Override
-		public void onServiceDisconnected(ComponentName arg0) {
-			mService = null;
-		}
-	};
+	private ServiceConnection mConnection;
 
 	private void initNotification() {
 		if (builder == null)
@@ -63,8 +51,6 @@ public class ReceiveService extends Service implements Runnable {
 				.setOngoing(true)
 				.setVisibility(Notification.VISIBILITY_PUBLIC);
 
-		PendingIntent cancelIntent;
-
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 			// Android 8.0+
 			NotificationManager manager =
@@ -76,30 +62,27 @@ public class ReceiveService extends Service implements Runnable {
 				);
 				builder.setChannelId(CHANNEL_TRANSFER_STATE);
 			}
-			Intent cancel = new Intent(this, ReceiveService.class);
-			cancel.setAction("cancel");
-			cancelIntent = PendingIntent.getForegroundService(this, startId, cancel, 0);
 		} else {
 			// Android 7.1
-			Intent cancel = new Intent(this, ReceiveService.class);
-			cancel.setAction("cancel");
-			cancelIntent = PendingIntent.getService(this, startId, cancel, 0);
-
 			builder.setPriority(Notification.PRIORITY_DEFAULT)
 					.setLights(0, 0, 0)
 					.setVibrate(null)
 					.setSound(null);
 		}
-
+		Intent cancel = new Intent(this, ReceiveService.class);
+		cancel.setAction("cancel");
 		builder.addAction(new Notification.Action.Builder(
-				null, getResources().getString(R.string.cancel), cancelIntent
-		).build());
+				null, getResources().getString(R.string.cancel),
+				PendingIntent.getService(this, startId, cancel, 0)
+		).build()).
+				setContentText(getResources().getString(R.string.notification_starting));
 	}
 
 	private void stop() {
-		if (mService != null) {
-			unbindService(mConnection);
-			Log.d(LOG_TAG, "unbind DiscoverService in ReceiveService");
+		if (thread != null) {
+			if (thread.isAlive())
+				thread.interrupt();
+			thread = null;
 		}
 		notificationManager = null;
 		builder = null;
@@ -108,23 +91,15 @@ public class ReceiveService extends Service implements Runnable {
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		this.startId = startId;
-		notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-		initNotification();
-
 		if ("cancel".equals(intent.getAction())) {
 			Log.d(LOG_TAG, "ReceiveService user cancelled");
-			builder.setContentText(getResources().getString(R.string.notification_finishing));
-			Notification notification = builder.build();
-			startForeground(startId, notification);
-			if (thread != null) {
-				thread.interrupt();
-				thread = null;
-			}
 			stop();
 			return START_NOT_STICKY;
 		}
-		builder.setContentText(getResources().getString(R.string.notification_starting));
+
+		this.startId = startId;
+		notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+		initNotification();
 		Notification notification = builder.build();
 		startForeground(startId, notification);
 
@@ -132,10 +107,6 @@ public class ReceiveService extends Service implements Runnable {
 
 		thread = new Thread(this);
 		thread.start();
-
-		Intent discover = new Intent(this, DiscoverService.class);
-		bindService(discover, mConnection, Context.BIND_AUTO_CREATE);
-		Log.d(LOG_TAG, "bind DiscoverService in ReceiveService");
 
 		return START_NOT_STICKY;
 	}
@@ -205,18 +176,44 @@ public class ReceiveService extends Service implements Runnable {
 				out.write(ack.array());
 			}
 			pipe.close();
+			writerThread.join();
 			Log.d(LOG_TAG, "ReceiveService finished normally");
 		} catch (InterruptedException ignored) {
 			Log.d(LOG_TAG, "ReceiveService interrupted");
 		} catch (IOException e) {
 			Log.e(LOG_TAG, "ReceiveService", e);
 		} finally {
-			if (writerThread.isAlive()) writerThread.interrupt();
-			try {
-				writerThread.join();
-			} catch (InterruptedException ignored) {
+			if (writerThread.isAlive()) {
+				writerThread.interrupt();
+			}
+		}
+	}
+
+	@Override
+	public void onCreate() {
+		mConnection = new ServiceConnection() {
+			@Override
+			public void onServiceConnected(ComponentName className, IBinder service) {
+				DiscoverService.Binder binder = (DiscoverService.Binder) service;
+				mService = binder.getService();
 			}
 
+			@Override
+			public void onServiceDisconnected(ComponentName arg0) {
+				mService = null;
+			}
+		};
+		Intent discover = new Intent(this, DiscoverService.class);
+		bindService(discover, mConnection, Context.BIND_AUTO_CREATE);
+		Log.d(LOG_TAG, "bind DiscoverService in ReceiveService");
+	}
+
+	@Override
+	public void onDestroy() {
+		if (mService != null) {
+			unbindService(mConnection);
+			mService = null;
+			Log.d(LOG_TAG, "unbind DiscoverService in ReceiveService");
 		}
 	}
 

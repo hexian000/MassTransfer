@@ -11,7 +11,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.support.v4.provider.DocumentFile;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -37,8 +36,7 @@ public class MainActivity extends Activity {
 	private ServiceConnection mConnection = new ServiceConnection() {
 		@Override
 		public void onServiceConnected(ComponentName className, IBinder service) {
-			DiscoverService.Binder binder =
-					(DiscoverService.Binder) service;
+			DiscoverService.Binder binder = (DiscoverService.Binder) service;
 			mService = binder.getService();
 		}
 
@@ -134,17 +132,6 @@ public class MainActivity extends Activity {
 				}
 				Toast.makeText(MainActivity.this, R.string.start_receive_service, Toast.LENGTH_SHORT).show();
 				finish();
-			}
-		}
-	}
-
-	private void listTree(DocumentFile root, List<DocumentFile> files) {
-		if (files.size() > 20) return;
-		for (DocumentFile file : root.listFiles()) {
-			if (file.isDirectory()) {
-				listTree(file, files);
-			} else if (file.canRead()) {
-				files.add(file);
 			}
 		}
 	}

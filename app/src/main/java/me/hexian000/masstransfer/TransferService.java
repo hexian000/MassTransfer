@@ -49,8 +49,6 @@ public class TransferService extends Service implements Runnable {
 				.setOngoing(true)
 				.setVisibility(Notification.VISIBILITY_PUBLIC);
 
-		PendingIntent cancelIntent;
-
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 			// Android 8.0+
 			NotificationManager manager =
@@ -62,27 +60,28 @@ public class TransferService extends Service implements Runnable {
 				);
 				builder.setChannelId(CHANNEL_TRANSFER_STATE);
 			}
-			Intent cancel = new Intent(this, ReceiveService.class);
-			cancel.setAction("cancel");
-			cancelIntent = PendingIntent.getForegroundService(this, startId, cancel, 0);
 		} else {
 			// Android 7.1
-			Intent cancel = new Intent(this, TransferService.class);
-			cancel.setAction("cancel");
-			cancelIntent = PendingIntent.getService(this, startId, cancel, 0);
-
 			builder.setPriority(Notification.PRIORITY_DEFAULT)
 					.setLights(0, 0, 0)
 					.setVibrate(null)
 					.setSound(null);
 		}
-
+		Intent cancel = new Intent(this, TransferService.class);
+		cancel.setAction("cancel");
 		builder.addAction(new Notification.Action.Builder(
-				null, getResources().getString(R.string.cancel), cancelIntent
-		).build());
+				null, getResources().getString(R.string.cancel),
+				PendingIntent.getService(this, startId, cancel, 0)
+		).build()).
+				setContentText(getResources().getString(R.string.notification_starting));
 	}
 
 	private void stop() {
+		if (thread != null) {
+			Log.d(LOG_TAG, "try interrupt transfer thread");
+			thread.interrupt();
+			thread = null;
+		}
 		notificationManager = null;
 		builder = null;
 		stopSelf();
@@ -90,23 +89,15 @@ public class TransferService extends Service implements Runnable {
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		this.startId = startId;
-		notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-		initNotification();
-
 		if ("cancel".equals(intent.getAction())) {
 			Log.d(LOG_TAG, "TransferService user cancelled");
-			builder.setContentText(getResources().getString(R.string.notification_finishing));
-			Notification notification = builder.build();
-			startForeground(startId, notification);
-			if (thread != null) {
-				thread.interrupt();
-				thread = null;
-			}
 			stop();
 			return START_NOT_STICKY;
 		}
-		builder.setContentText(getResources().getString(R.string.notification_starting));
+
+		this.startId = startId;
+		notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+		initNotification();
 		Notification notification = builder.build();
 		startForeground(startId, notification);
 
@@ -153,9 +144,10 @@ public class TransferService extends Service implements Runnable {
 				});
 		Thread readerThread = new Thread(reader);
 		readerThread.start();
+		Thread ackThread = null;
 		StreamWindow window = new StreamWindow(64 * 1024 * 1024);
 		try (InputStream in = socket.getInputStream(); OutputStream out = socket.getOutputStream()) {
-			Thread ackThread = new Thread(() -> {
+			ackThread = new Thread(() -> {
 				try {
 					while (true) {
 						ByteBuffer ack = ByteBuffer.allocate(Long.BYTES).order(ByteOrder.BIG_ENDIAN);
@@ -167,6 +159,7 @@ public class TransferService extends Service implements Runnable {
 					}
 				} catch (IOException ignored) {
 				}
+				Log.d(LOG_TAG, "ack thread exited");
 			});
 			ackThread.start();
 			while (true) {
@@ -183,13 +176,19 @@ public class TransferService extends Service implements Runnable {
 				out.write(writeBuffer);
 			}
 			readerThread.join();
+			ackThread.join();
 			Log.d(LOG_TAG, "TransferService finished normally");
-		} catch (InterruptedException ignored) {
+		} catch (InterruptedException e) {
 			Log.d(LOG_TAG, "TransferService interrupted");
-			if (readerThread.isAlive()) readerThread.interrupt();
 		} catch (IOException e) {
 			Log.e(LOG_TAG, "TransferService", e);
-			readerThread.interrupt();
+		} finally {
+			if (ackThread != null && ackThread.isAlive()) {
+				ackThread.interrupt();
+			}
+			if (readerThread.isAlive()) {
+				readerThread.interrupt();
+			}
 		}
 	}
 
