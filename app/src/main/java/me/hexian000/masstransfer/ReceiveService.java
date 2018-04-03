@@ -113,6 +113,7 @@ public class ReceiveService extends Service implements Runnable {
 		initNotification();
 
 		if ("cancel".equals(intent.getAction())) {
+			Log.d(LOG_TAG, "ReceiveService user cancelled");
 			builder.setContentText(getResources().getString(R.string.notification_finishing));
 			Notification notification = builder.build();
 			startForeground(startId, notification);
