@@ -14,6 +14,7 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.provider.DocumentFile;
 import android.util.Log;
+import android.widget.Toast;
 import me.hexian000.masstransfer.streams.DirectoryWriter;
 import me.hexian000.masstransfer.streams.Pipe;
 
@@ -35,6 +36,7 @@ public class ReceiveService extends Service implements Runnable {
 	Thread thread = null;
 	DocumentFile root = null;
 	DiscoverService mService;
+	boolean result;
 	private ServiceConnection mConnection;
 
 	private void initNotification() {
@@ -121,9 +123,11 @@ public class ReceiveService extends Service implements Runnable {
 				socket.setSoTimeout(10 * 1000);
 				runPipe(socket);
 			} catch (IOException e) {
+				result = false;
 				Log.e(LOG_TAG, "listener accept error", e);
 			}
 		} catch (IOException e) {
+			result = false;
 			Log.e(LOG_TAG, "listener init error", e);
 		} finally {
 			Log.d(LOG_TAG, "ReceiveService closed");
@@ -179,11 +183,14 @@ public class ReceiveService extends Service implements Runnable {
 			writerThread.join();
 			Log.d(LOG_TAG, "ReceiveService finished normally");
 		} catch (InterruptedException ignored) {
+			result = false;
 			Log.d(LOG_TAG, "ReceiveService interrupted");
 		} catch (IOException e) {
+			result = false;
 			Log.e(LOG_TAG, "ReceiveService", e);
 		} finally {
 			if (writerThread.isAlive()) {
+				result = false;
 				writerThread.interrupt();
 			}
 		}
@@ -191,6 +198,7 @@ public class ReceiveService extends Service implements Runnable {
 
 	@Override
 	public void onCreate() {
+		result = true;
 		mConnection = new ServiceConnection() {
 			@Override
 			public void onServiceConnected(ComponentName className, IBinder service) {
@@ -214,6 +222,11 @@ public class ReceiveService extends Service implements Runnable {
 			unbindService(mConnection);
 			mService = null;
 			Log.d(LOG_TAG, "unbind DiscoverService in ReceiveService");
+		}
+		if (result) {
+			Toast.makeText(this, R.string.transfer_success, Toast.LENGTH_SHORT).show();
+		} else {
+			Toast.makeText(this, R.string.transfer_failed, Toast.LENGTH_SHORT).show();
 		}
 	}
 

@@ -12,6 +12,7 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.provider.DocumentFile;
 import android.util.Log;
+import android.widget.Toast;
 import me.hexian000.masstransfer.streams.DirectoryReader;
 import me.hexian000.masstransfer.streams.Pipe;
 import me.hexian000.masstransfer.streams.StreamWindow;
@@ -35,6 +36,7 @@ public class TransferService extends Service implements Runnable {
 	Thread thread = null;
 	DocumentFile root = null;
 	NotificationManager notificationManager = null;
+	boolean result;
 
 	private void initNotification() {
 		if (builder == null)
@@ -119,8 +121,8 @@ public class TransferService extends Service implements Runnable {
 			socket.setSoTimeout(10 * 1000);
 			runPipe(socket);
 		} catch (IOException e) {
+			result = false;
 			Log.e(LOG_TAG, "connect failed", e);
-			stopSelf();
 		} finally {
 			stop();
 		}
@@ -179,16 +181,34 @@ public class TransferService extends Service implements Runnable {
 			ackThread.join();
 			Log.d(LOG_TAG, "TransferService finished normally");
 		} catch (InterruptedException e) {
+			result = false;
 			Log.d(LOG_TAG, "TransferService interrupted");
 		} catch (IOException e) {
+			result = false;
 			Log.e(LOG_TAG, "TransferService", e);
 		} finally {
 			if (ackThread != null && ackThread.isAlive()) {
+				result = false;
 				ackThread.interrupt();
 			}
 			if (readerThread.isAlive()) {
+				result = false;
 				readerThread.interrupt();
 			}
+		}
+	}
+
+	@Override
+	public void onCreate() {
+		result = true;
+	}
+
+	@Override
+	public void onDestroy() {
+		if (result) {
+			Toast.makeText(this, R.string.transfer_success, Toast.LENGTH_SHORT).show();
+		} else {
+			Toast.makeText(this, R.string.transfer_failed, Toast.LENGTH_SHORT).show();
 		}
 	}
 

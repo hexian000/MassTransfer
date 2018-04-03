@@ -10,4 +10,6 @@
     <string name="notification_receiving">正在接收文件</string>
     <string name="notification_starting">正在等待数据</string>
     <string name="notification_finishing">正在完成</string>
+    <string name="transfer_success">传输成功</string>
+    <string name="transfer_failed">传输失败</string>
 </resources>
