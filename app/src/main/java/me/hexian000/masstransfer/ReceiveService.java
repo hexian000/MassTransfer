@@ -20,11 +20,8 @@ import me.hexian000.masstransfer.streams.Pipe;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 import static me.hexian000.masstransfer.TransferApp.CHANNEL_TRANSFER_STATE;
 import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
@@ -95,6 +92,7 @@ public class ReceiveService extends Service implements Runnable {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if ("cancel".equals(intent.getAction())) {
 			Log.d(LOG_TAG, "ReceiveService user cancelled");
+			result = false;
 			stop();
 			return START_NOT_STICKY;
 		}
@@ -119,8 +117,8 @@ public class ReceiveService extends Service implements Runnable {
 			Log.d(LOG_TAG, "ReceiveService begins to listen");
 			try (Socket socket = listener.accept()) {
 				socket.setReceiveBufferSize(16 * 1024 * 1024);
-				socket.setSoLinger(true, 30);
-				socket.setSoTimeout(10 * 1000);
+				socket.setSoLinger(true, 60);
+				socket.setSoTimeout(30 * 1000);
 				runPipe(socket);
 			} catch (IOException e) {
 				result = false;
@@ -136,7 +134,7 @@ public class ReceiveService extends Service implements Runnable {
 	}
 
 	private void runPipe(Socket socket) {
-		Pipe pipe = new Pipe(16);
+		Pipe pipe = new Pipe(256);
 		DirectoryWriter writer = new DirectoryWriter(
 				getContentResolver(),
 				root, pipe,
@@ -153,19 +151,11 @@ public class ReceiveService extends Service implements Runnable {
 				});
 		Thread writerThread = new Thread(writer);
 		writerThread.start();
-		try (
-				InputStream in = socket.getInputStream();
-				OutputStream out = socket.getOutputStream()) {
-			long lastPos = 0, pos = 0;
+		try (InputStream in = socket.getInputStream()/*; OutputStream out = socket.getOutputStream()*/) {
+			//long lastPos = 0, pos = 0;
 			while (true) {
 				byte[] buffer = new byte[1024 * 1024];
 				int read = in.read(buffer);
-				pos += read;
-				if (pos - lastPos > 8 * 1024 * 1024) {
-					ByteBuffer ack = ByteBuffer.allocate(Long.BYTES).order(ByteOrder.BIG_ENDIAN);
-					ack.putLong(pos);
-					out.write(ack.array());
-				}
 				if (read == buffer.length)
 					pipe.write(buffer);
 				else if (read > 0) {
@@ -173,12 +163,20 @@ public class ReceiveService extends Service implements Runnable {
 					System.arraycopy(buffer, 0, data, 0, read);
 					pipe.write(data);
 				} else break;
+				/*pos += read;
+				if (pos - lastPos > 8 * 1024 * 1024) {
+					ByteBuffer ack = ByteBuffer.allocate(Long.BYTES).order(ByteOrder.BIG_ENDIAN);
+					ack.putLong(pos);
+					out.write(ack.array());
+					Log.d(LOG_TAG, "sending ack at " + pos);
+					lastPos = pos;
+				}*/
 			}
-			{
+			/*{
 				ByteBuffer ack = ByteBuffer.allocate(Long.BYTES).order(ByteOrder.BIG_ENDIAN);
 				ack.putLong(pos);
 				out.write(ack.array());
-			}
+			}*/
 			pipe.close();
 			writerThread.join();
 			Log.d(LOG_TAG, "ReceiveService finished normally");

@@ -15,16 +15,12 @@ import android.util.Log;
 import android.widget.Toast;
 import me.hexian000.masstransfer.streams.DirectoryReader;
 import me.hexian000.masstransfer.streams.Pipe;
-import me.hexian000.masstransfer.streams.StreamWindow;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 import static me.hexian000.masstransfer.TransferApp.*;
 
@@ -93,6 +89,7 @@ public class TransferService extends Service implements Runnable {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if ("cancel".equals(intent.getAction())) {
 			Log.d(LOG_TAG, "TransferService user cancelled");
+			result = false;
 			stop();
 			return START_NOT_STICKY;
 		}
@@ -117,8 +114,8 @@ public class TransferService extends Service implements Runnable {
 					InetAddress.getByName(host),
 					TCP_PORT), 4000);
 			socket.setSendBufferSize(16 * 1024 * 1024);
-			socket.setSoLinger(true, 30);
-			socket.setSoTimeout(10 * 1000);
+			socket.setSoLinger(true, 60);
+			socket.setSoTimeout(30 * 1000);
 			runPipe(socket);
 		} catch (IOException e) {
 			result = false;
@@ -146,10 +143,10 @@ public class TransferService extends Service implements Runnable {
 				});
 		Thread readerThread = new Thread(reader);
 		readerThread.start();
-		Thread ackThread = null;
-		StreamWindow window = new StreamWindow(64 * 1024 * 1024);
-		try (InputStream in = socket.getInputStream(); OutputStream out = socket.getOutputStream()) {
-			ackThread = new Thread(() -> {
+		//Thread ackThread = null;
+		//StreamWindow window = new StreamWindow(64 * 1024 * 1024);
+		try (/*InputStream in = socket.getInputStream(); */OutputStream out = socket.getOutputStream()) {
+			/*ackThread = new Thread(() -> {
 				try {
 					while (true) {
 						ByteBuffer ack = ByteBuffer.allocate(Long.BYTES).order(ByteOrder.BIG_ENDIAN);
@@ -157,13 +154,14 @@ public class TransferService extends Service implements Runnable {
 						if (read == 0 || read == -1) break;
 						if (read != Long.BYTES) continue;
 						long pos = ack.getLong();
+						Log.d(LOG_TAG, "receiving ack at " + pos);
 						window.ack(pos);
 					}
 				} catch (IOException ignored) {
 				}
 				Log.d(LOG_TAG, "ack thread exited");
 			});
-			ackThread.start();
+			ackThread.start();*/
 			while (true) {
 				byte[] buffer = new byte[1024 * 1024];
 				byte[] writeBuffer;
@@ -174,11 +172,11 @@ public class TransferService extends Service implements Runnable {
 					writeBuffer = new byte[read];
 					System.arraycopy(buffer, 0, writeBuffer, 0, read);
 				} else break;
-				window.send(writeBuffer);
+				//window.send(writeBuffer);
 				out.write(writeBuffer);
 			}
 			readerThread.join();
-			ackThread.join();
+			//ackThread.join();
 			Log.d(LOG_TAG, "TransferService finished normally");
 		} catch (InterruptedException e) {
 			result = false;
@@ -187,10 +185,10 @@ public class TransferService extends Service implements Runnable {
 			result = false;
 			Log.e(LOG_TAG, "TransferService", e);
 		} finally {
-			if (ackThread != null && ackThread.isAlive()) {
+			/*if (ackThread != null && ackThread.isAlive()) {
 				result = false;
 				ackThread.interrupt();
-			}
+			}*/
 			if (readerThread.isAlive()) {
 				result = false;
 				readerThread.interrupt();
