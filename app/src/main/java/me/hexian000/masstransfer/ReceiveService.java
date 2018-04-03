@@ -33,7 +33,6 @@ public class ReceiveService extends Service implements Runnable {
 	int startId = 0;
 	NotificationManager notificationManager = null;
 	Thread thread = null;
-	ServerSocket listener = null;
 	DocumentFile root = null;
 	DiscoverService mService;
 	private ServiceConnection mConnection = new ServiceConnection() {
@@ -50,28 +49,14 @@ public class ReceiveService extends Service implements Runnable {
 		}
 	};
 
-	private void stop() {
-		if (mService != null) {
-			unbindService(mConnection);
-			Log.d(LOG_TAG, "unbind DiscoverService in ReceiveService");
-		}
-		notificationManager = null;
-		builder = null;
-		stopSelf();
-	}
-
-	@Override
-	public int onStartCommand(Intent intent, int flags, int startId) {
-		this.startId = startId;
-		notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-
-		builder = new Notification.Builder(
-				this.getApplicationContext());
+	private void initNotification() {
+		if (builder == null)
+			builder = new Notification.Builder(
+					this.getApplicationContext());
 		builder.setContentIntent(null)
 				.setLargeIcon(BitmapFactory.decodeResource(this.getResources(),
 						R.mipmap.ic_launcher))
 				.setContentTitle(getResources().getString(R.string.notification_receiving))
-				.setContentText(getResources().getString(R.string.notification_starting))
 				.setSmallIcon(R.mipmap.ic_launcher)
 				.setWhen(System.currentTimeMillis())
 				.setProgress(100, 0, true)
@@ -109,17 +94,42 @@ public class ReceiveService extends Service implements Runnable {
 		builder.addAction(new Notification.Action.Builder(
 				null, getResources().getString(R.string.cancel), cancelIntent
 		).build());
-		Notification notification = builder.build();
-		startForeground(startId, notification);
+	}
+
+	private void stop() {
+		if (mService != null) {
+			unbindService(mConnection);
+			Log.d(LOG_TAG, "unbind DiscoverService in ReceiveService");
+		}
+		notificationManager = null;
+		builder = null;
+		stopSelf();
+	}
+
+	@Override
+	public int onStartCommand(Intent intent, int flags, int startId) {
+		this.startId = startId;
+		notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+		initNotification();
 
 		if ("cancel".equals(intent.getAction())) {
+			builder.setContentText(getResources().getString(R.string.notification_finishing));
+			Notification notification = builder.build();
+			startForeground(startId, notification);
 			if (thread != null) {
 				thread.interrupt();
+				try {
+					thread.join();
+				} catch (InterruptedException ignored) {
+				}
 				thread = null;
 			}
 			stop();
 			return START_NOT_STICKY;
 		}
+		builder.setContentText(getResources().getString(R.string.notification_starting));
+		Notification notification = builder.build();
+		startForeground(startId, notification);
 
 		root = DocumentFile.fromTreeUri(this, intent.getData());
 
@@ -135,25 +145,25 @@ public class ReceiveService extends Service implements Runnable {
 
 	@Override
 	public void run() {
-		try {
-			listener = new ServerSocket(TransferApp.TCP_PORT);
+		try (ServerSocket listener = new ServerSocket(TransferApp.TCP_PORT)) {
 			Log.d(LOG_TAG, "ReceiveService begins to listen");
+			try (Socket socket = listener.accept()) {
+				socket.setReceiveBufferSize(16 * 1024 * 1024);
+				socket.setSoLinger(true, 30);
+				socket.setSoTimeout(10 * 1000);
+				runPipe(socket);
+			} catch (IOException e) {
+				Log.e(LOG_TAG, "listener accept error", e);
+			}
 		} catch (IOException e) {
 			Log.e(LOG_TAG, "listener init error", e);
+		} finally {
+			Log.d(LOG_TAG, "ReceiveService closed");
 			stop();
-			return;
 		}
-		Socket socket;
-		try {
-			socket = listener.accept();
-			socket.setReceiveBufferSize(16 * 1024 * 1024);
-			socket.setSoLinger(true, 30);
-			socket.setSoTimeout(10 * 1000);
-		} catch (IOException e) {
-			Log.e(LOG_TAG, "listener accept error", e);
-			stop();
-			return;
-		}
+	}
+
+	private void runPipe(Socket socket) {
 		Pipe pipe = new Pipe(16);
 		DirectoryWriter writer = new DirectoryWriter(
 				getContentResolver(),
@@ -164,16 +174,16 @@ public class ReceiveService extends Service implements Runnable {
 							builder.setContentText(text).
 									setProgress(max, now, false);
 						else
-							builder.setContentText(getResources().getString(R.string.notification_flushing)).
+							builder.setContentText(getResources().getString(R.string.notification_finishing)).
 									setProgress(0, 0, true);
 						notificationManager.notify(startId, builder.build());
 					}
 				});
 		Thread writerThread = new Thread(writer);
 		writerThread.start();
-		try {
-			InputStream in = socket.getInputStream();
-			OutputStream out = socket.getOutputStream();
+		try (
+				InputStream in = socket.getInputStream();
+				OutputStream out = socket.getOutputStream()) {
 			long lastPos = 0, pos = 0;
 			while (true) {
 				byte[] buffer = new byte[1024 * 1024];
@@ -198,34 +208,19 @@ public class ReceiveService extends Service implements Runnable {
 				out.write(ack.array());
 			}
 			pipe.close();
-			in.close();
-			out.close();
-			socket.close();
-			writerThread.join();
 			Log.d(LOG_TAG, "ReceiveService finished normally");
 		} catch (InterruptedException ignored) {
 			Log.d(LOG_TAG, "ReceiveService interrupted");
-			writerThread.interrupt();
 		} catch (IOException e) {
 			Log.e(LOG_TAG, "ReceiveService", e);
-			writerThread.interrupt();
 		} finally {
-			stop();
-		}
-	}
-
-	@Override
-	public void onDestroy() {
-		if (listener != null) {
+			if (writerThread.isAlive()) writerThread.interrupt();
 			try {
-				listener.close();
-			} catch (IOException e) {
-				Log.e(LOG_TAG, "listener close error", e);
+				writerThread.join();
+			} catch (InterruptedException ignored) {
 			}
-			listener = null;
+
 		}
-		Log.d(LOG_TAG, "ReceiveService closed");
-		super.onDestroy();
 	}
 
 	@Nullable

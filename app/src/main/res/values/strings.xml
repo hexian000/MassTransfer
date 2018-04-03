@@ -9,5 +9,5 @@
     <string name="notification_sending">正在发送文件</string>
     <string name="notification_receiving">正在接收文件</string>
     <string name="notification_starting">正在等待数据</string>
-    <string name="notification_flushing">正在完成</string>
+    <string name="notification_finishing">正在完成</string>
 </resources>

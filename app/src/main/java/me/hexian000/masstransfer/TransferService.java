@@ -36,17 +36,13 @@ public class TransferService extends Service implements Runnable {
 	DocumentFile root = null;
 	NotificationManager notificationManager = null;
 
-	@Override
-	public int onStartCommand(Intent intent, int flags, int startId) {
-		this.startId = startId;
-		notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-
-		builder = new Notification.Builder(this.getApplicationContext());
+	private void initNotification() {
+		if (builder == null)
+			builder = new Notification.Builder(this.getApplicationContext());
 		builder.setContentIntent(null)
 				.setLargeIcon(BitmapFactory.decodeResource(getResources(),
 						R.mipmap.ic_launcher))
 				.setContentTitle(getResources().getString(R.string.notification_sending))
-				.setContentText(getResources().getString(R.string.notification_starting))
 				.setSmallIcon(R.mipmap.ic_launcher)
 				.setWhen(System.currentTimeMillis())
 				.setProgress(100, 0, true)
@@ -84,17 +80,38 @@ public class TransferService extends Service implements Runnable {
 		builder.addAction(new Notification.Action.Builder(
 				null, getResources().getString(R.string.cancel), cancelIntent
 		).build());
-		Notification notification = builder.build();
-		startForeground(startId, notification);
+	}
+
+	private void stop() {
+		notificationManager = null;
+		builder = null;
+		stopSelf();
+	}
+
+	@Override
+	public int onStartCommand(Intent intent, int flags, int startId) {
+		this.startId = startId;
+		notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+		initNotification();
 
 		if ("cancel".equals(intent.getAction())) {
+			builder.setContentText(getResources().getString(R.string.notification_finishing));
+			Notification notification = builder.build();
+			startForeground(startId, notification);
 			if (thread != null) {
 				thread.interrupt();
+				try {
+					thread.join();
+				} catch (InterruptedException ignored) {
+				}
 				thread = null;
 			}
 			stopSelf();
 			return START_NOT_STICKY;
 		}
+		builder.setContentText(getResources().getString(R.string.notification_starting));
+		Notification notification = builder.build();
+		startForeground(startId, notification);
 
 		host = intent.getAction();
 		root = DocumentFile.fromTreeUri(this, intent.getData());
@@ -105,20 +122,24 @@ public class TransferService extends Service implements Runnable {
 
 	@Override
 	public void run() {
-		Socket socket = new Socket();
-		try {
+		try (Socket socket = new Socket()) {
 			socket.connect(new InetSocketAddress(
 					InetAddress.getByName(host),
 					TCP_PORT), 4000);
 			socket.setSendBufferSize(16 * 1024 * 1024);
 			socket.setSoLinger(true, 30);
 			socket.setSoTimeout(10 * 1000);
+			runPipe(socket);
 		} catch (IOException e) {
 			Log.e(LOG_TAG, "connect failed", e);
 			thread = null;
 			stopSelf();
-			return;
+		} finally {
+			stop();
 		}
+	}
+
+	private void runPipe(Socket socket) {
 		Pipe pipe = new Pipe(16);
 		DirectoryReader reader = new DirectoryReader(
 				getContentResolver(),
@@ -129,16 +150,15 @@ public class TransferService extends Service implements Runnable {
 							builder.setContentText(text).
 									setProgress(max, now, false);
 						else
-							builder.setContentText(getResources().getString(R.string.notification_flushing)).
+							builder.setContentText(getResources().getString(R.string.notification_finishing)).
 									setProgress(0, 0, true);
 						notificationManager.notify(startId, builder.build());
 					}
 				});
 		Thread readerThread = new Thread(reader);
 		readerThread.start();
-		try {
-			StreamWindow window = new StreamWindow(64 * 1024 * 1024);
-			InputStream in = socket.getInputStream();
+		StreamWindow window = new StreamWindow(64 * 1024 * 1024);
+		try (InputStream in = socket.getInputStream(); OutputStream out = socket.getOutputStream()) {
 			Thread ackThread = new Thread(() -> {
 				try {
 					while (true) {
@@ -153,7 +173,6 @@ public class TransferService extends Service implements Runnable {
 				}
 			});
 			ackThread.start();
-			OutputStream out = socket.getOutputStream();
 			while (true) {
 				byte[] buffer = new byte[1024 * 1024];
 				byte[] writeBuffer;
@@ -167,9 +186,6 @@ public class TransferService extends Service implements Runnable {
 				window.send(writeBuffer);
 				out.write(writeBuffer);
 			}
-			in.close();
-			out.close();
-			socket.close();
 			Log.d(LOG_TAG, "TransferService finished normally");
 		} catch (InterruptedException ignored) {
 			Log.d(LOG_TAG, "TransferService interrupted");
@@ -177,16 +193,7 @@ public class TransferService extends Service implements Runnable {
 		} catch (IOException e) {
 			Log.e(LOG_TAG, "TransferService", e);
 			readerThread.interrupt();
-		} finally {
-			notificationManager = null;
-			builder = null;
-			stopSelf();
 		}
-	}
-
-	@Override
-	public void onDestroy() {
-		super.onDestroy();
 	}
 
 	@Nullable
