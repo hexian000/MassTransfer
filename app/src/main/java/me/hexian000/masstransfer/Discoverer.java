@@ -3,17 +3,14 @@ package me.hexian000.masstransfer;
 import android.util.Log;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
+import java.net.*;
 import java.util.*;
 
 final class Discoverer {
 	private final static int BROADCAST_INTERVAL = 1000;
 	private final static int BROADCAST_TIMEOUT = 2000;
 	private final byte[] magic = "MassTransfer".getBytes();
-	private DatagramSocket announce;
+	private List<AnnounceInterface> announce;
 	private int port;
 	private Timer timer = null;
 	private Map<String, Long> peers;
@@ -21,9 +18,25 @@ final class Discoverer {
 	Discoverer(int port) {
 		this.port = port;
 		peers = Collections.synchronizedMap(new HashMap<>());
+		announce = new ArrayList<>();
 		try {
-			announce = new DatagramSocket(port);
-			announce.setBroadcast(true);
+			for (Enumeration<NetworkInterface> i = NetworkInterface.getNetworkInterfaces(); i.hasMoreElements(); ) {
+				NetworkInterface nic = i.nextElement();
+				if (nic.isLoopback() ||
+						!nic.isUp() ||
+						!nic.supportsMulticast()) continue;
+				for (InterfaceAddress interfaceAddress : nic.getInterfaceAddresses()) {
+					InetAddress broadcast = interfaceAddress.getBroadcast();
+					if (broadcast == null) continue;
+					Log.d(TransferApp.LOG_TAG, "broadcast init broadcast=" + broadcast.toString());
+					DatagramSocket socket = new DatagramSocket(port);
+					socket.setBroadcast(true);
+					AnnounceInterface item = new AnnounceInterface();
+					item.broadcast = broadcast;
+					item.socket = socket;
+					announce.add(item);
+				}
+			}
 		} catch (IOException e) {
 			Log.e(TransferApp.LOG_TAG, "broadcast init error", e);
 		}
@@ -40,10 +53,11 @@ final class Discoverer {
 			@Override
 			public void run() {
 				try {
-					DatagramPacket packet = new DatagramPacket(magic,
-							magic.length, InetAddress.getByName("255.255.255.255"),
-							port);
-					announce.send(packet);
+					for (AnnounceInterface item : announce) {
+						DatagramPacket packet = new DatagramPacket(magic,
+								magic.length, item.broadcast, port);
+						item.socket.send(packet);
+					}
 				} catch (IOException e) {
 					Log.e(TransferApp.LOG_TAG, "broadcast error", e);
 				}
@@ -51,26 +65,28 @@ final class Discoverer {
 				peers.entrySet().removeIf(entry -> now - entry.getValue() > BROADCAST_TIMEOUT);
 			}
 		}, 0, BROADCAST_INTERVAL);
-		new Thread(() -> {
-			byte[] buffer = new byte[magic.length];
-			DatagramPacket p = new DatagramPacket(buffer, buffer.length);
-			while (true) {
-				try {
-					announce.receive(p);
-					if (Arrays.equals(magic, buffer)) {
-						InetAddress ip = p.getAddress();
-						if (!ip.isAnyLocalAddress() && !ip.isLoopbackAddress() &&
-								NetworkInterface.getByInetAddress(ip) == null)
-							peers.put(ip.getHostAddress(), System.currentTimeMillis());
+		for (AnnounceInterface item : announce) {
+			new Thread(() -> {
+				byte[] buffer = new byte[magic.length];
+				DatagramPacket p = new DatagramPacket(buffer, buffer.length);
+				while (true) {
+					try {
+						item.socket.receive(p);
+						if (Arrays.equals(magic, buffer)) {
+							InetAddress ip = p.getAddress();
+							if (!ip.isAnyLocalAddress() && !ip.isLoopbackAddress() &&
+									NetworkInterface.getByInetAddress(ip) == null)
+								peers.put(ip.getHostAddress(), System.currentTimeMillis());
+						}
+					} catch (IOException e) {
+						if (item.socket.isClosed())
+							break;
+						Log.e(TransferApp.LOG_TAG, "broadcast receive error", e);
 					}
-				} catch (IOException e) {
-					if (announce == null || announce.isClosed())
-						break;
-					Log.e(TransferApp.LOG_TAG, "broadcast receive error", e);
 				}
-			}
-			Log.d(TransferApp.LOG_TAG, "broadcast receiver exited");
-		}).start();
+				Log.d(TransferApp.LOG_TAG, "broadcast receiver exited");
+			}).start();
+		}
 	}
 
 	void close() {
@@ -79,9 +95,16 @@ final class Discoverer {
 			timer = null;
 		}
 		if (announce != null) {
-			announce.close();
+			for (AnnounceInterface item : announce) {
+				item.socket.close();
+			}
 			announce = null;
 		}
 		peers.clear();
+	}
+
+	private class AnnounceInterface {
+		InetAddress broadcast;
+		DatagramSocket socket;
 	}
 }
