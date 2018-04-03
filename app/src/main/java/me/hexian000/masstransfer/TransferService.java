@@ -103,7 +103,7 @@ public class TransferService extends Service implements Runnable {
 				thread.interrupt();
 				thread = null;
 			}
-			stopSelf();
+			stop();
 			return START_NOT_STICKY;
 		}
 		builder.setContentText(getResources().getString(R.string.notification_starting));
@@ -129,7 +129,6 @@ public class TransferService extends Service implements Runnable {
 			runPipe(socket);
 		} catch (IOException e) {
 			Log.e(LOG_TAG, "connect failed", e);
-			thread = null;
 			stopSelf();
 		} finally {
 			stop();
@@ -183,10 +182,11 @@ public class TransferService extends Service implements Runnable {
 				window.send(writeBuffer);
 				out.write(writeBuffer);
 			}
+			readerThread.join();
 			Log.d(LOG_TAG, "TransferService finished normally");
 		} catch (InterruptedException ignored) {
 			Log.d(LOG_TAG, "TransferService interrupted");
-			readerThread.interrupt();
+			if (readerThread.isAlive()) readerThread.interrupt();
 		} catch (IOException e) {
 			Log.e(LOG_TAG, "TransferService", e);
 			readerThread.interrupt();
