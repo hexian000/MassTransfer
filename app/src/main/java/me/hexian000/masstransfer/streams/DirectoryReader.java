@@ -1,5 +1,10 @@
 package me.hexian000.masstransfer.streams;
 
+/*
+ * DirectoryReader 是对系统自带的 DocumentFile 的封装
+ * 基于系统接口，实现文件夹的流化
+ */
+
 import android.content.ContentResolver;
 import android.support.v4.provider.DocumentFile;
 import android.util.Log;
@@ -11,10 +16,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
-
-/*
- * DirectoryReader 是对系统自带的 DocumentFile 的封装
- */
 
 public class DirectoryReader implements Runnable {
 	private ProgressReporter reporter;
