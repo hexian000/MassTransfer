@@ -36,6 +36,7 @@ public class DirectoryReader implements Runnable {
 			path = (basePath + "/" + file.getName()).getBytes("UTF-8");
 		else
 			path = file.getName().getBytes("UTF-8");
+		Log.d(LOG_TAG, "Now at: " + path);
 		ByteArrayOutputStream header = new ByteArrayOutputStream();
 		ByteBuffer lengths = ByteBuffer.allocate(Integer.BYTES + Long.BYTES).
 				order(ByteOrder.BIG_ENDIAN);
@@ -76,6 +77,7 @@ public class DirectoryReader implements Runnable {
 			lengths.putLong(0);
 			out.write(lengths.array()); // bye
 			out.close();
+			Log.d(LOG_TAG, "Send finished normally");
 		} catch (IOException | InterruptedException e) {
 			Log.e(LOG_TAG, "DirectoryWriter", e);
 		}

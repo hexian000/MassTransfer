@@ -50,11 +50,13 @@ public class DirectoryWriter implements Runnable {
 	}
 
 	private void writeFile(String path, long length) throws IOException {
-		if (length == 0) { // is directory
+		if (length == -1) { // is directory
+			Log.d(LOG_TAG, "Now at: " + path);
 			makePath(path.split("/"));
 			return;
 		}
 		// is File
+		Log.d(LOG_TAG, "writeFile: " + path);
 		String name;
 		DocumentFile parent = root;
 		String[] pathSegments = path.split("/");
@@ -68,7 +70,6 @@ public class DirectoryWriter implements Runnable {
 		} else {
 			name = pathSegments[0];
 		}
-		Log.d(LOG_TAG, "writeFile: " + name);
 		DocumentFile file = parent.findFile(name);
 		if (file != null) {
 			file.delete();
@@ -119,7 +120,7 @@ public class DirectoryWriter implements Runnable {
 				int nameLen = lengths.getInt();
 				long fileLen = lengths.getLong();
 				if (nameLen == 0 && fileLen == 0) {
-					return; // bye
+					break; // bye
 				}
 				if (nameLen > 65535) {
 					Log.e(LOG_TAG, "invalid header");
@@ -134,6 +135,7 @@ public class DirectoryWriter implements Runnable {
 				String path = new String(name, "UTF-8");
 				writeFile(path, fileLen);
 			} while (true);
+			Log.d(LOG_TAG, "Receive finished normally");
 		} catch (IOException | InterruptedException e) {
 			Log.e(LOG_TAG, "DirectoryWriter", e);
 		}
