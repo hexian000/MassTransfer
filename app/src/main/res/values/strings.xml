@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">MassTransfer</string>
+    <string name="app_name">Mass Transfer</string>
     <string name="receive_button">接收</string>
     <string name="choose_storage_directory">选择保存位置</string>
     <string name="start_receive_service">启动接收服务</string>
