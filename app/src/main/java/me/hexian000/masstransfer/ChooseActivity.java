@@ -59,13 +59,13 @@ public class ChooseActivity extends ListActivity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 			case R.id.ok: {
-				List<String> chosenFiles = new ArrayList<>();
 				Intent intent = new Intent();
 				SparseBooleanArray positions = getListView().getCheckedItemPositions();
+				String[] chosenFiles = new String[positions.size()];
 				for (int i = 0; i < positions.size(); i++) {
-					chosenFiles.add(files.get(positions.keyAt(i)));
+					chosenFiles[i] = files.get(positions.keyAt(i));
 				}
-				intent.putExtra("files", chosenFiles.toArray());
+				intent.putExtra("files", chosenFiles);
 				setResult(RESULT_OK, intent);
 				finish();
 			}

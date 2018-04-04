@@ -112,7 +112,7 @@ public class MainActivity extends Activity {
 			case REQUEST_SEND: {
 				Uri uriTree = data.getData();
 				if (uriTree != null) {
-					Intent intent = new Intent(this, TransferService.class);
+					Intent intent = new Intent(this, ChooseActivity.class);
 					intent.setData(uriTree);
 					startActivityForResult(intent, REQUEST_CHOOSE);
 				}
@@ -136,9 +136,11 @@ public class MainActivity extends Activity {
 			case REQUEST_CHOOSE: {
 				Bundle extras = data.getExtras();
 				if (extras == null) break;
+				String[] files = extras.getStringArray("files");
+				if (files == null || files.length < 1) break;
 				Intent intent = new Intent(this, TransferService.class);
 				intent.putExtra("host", host);
-				intent.putExtra("files", extras.getStringArray("files"));
+				intent.putExtra("files", files);
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 					startForegroundService(intent);
 				} else {
