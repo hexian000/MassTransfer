@@ -8,7 +8,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
@@ -41,10 +40,8 @@ public class ReceiveService extends Service implements Runnable {
 			builder = new Notification.Builder(
 					this.getApplicationContext());
 		builder.setContentIntent(null)
-				.setLargeIcon(BitmapFactory.decodeResource(this.getResources(),
-						R.mipmap.ic_launcher))
 				.setContentTitle(getResources().getString(R.string.notification_receiving))
-				.setSmallIcon(R.mipmap.ic_launcher)
+				.setSmallIcon(R.drawable.ic_send_black_24dp)
 				.setWhen(System.currentTimeMillis())
 				.setProgress(100, 0, true)
 				.setOngoing(true)

@@ -6,7 +6,6 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -42,10 +41,8 @@ public class TransferService extends Service implements Runnable {
 		if (builder == null)
 			builder = new Notification.Builder(this.getApplicationContext());
 		builder.setContentIntent(null)
-				.setLargeIcon(BitmapFactory.decodeResource(getResources(),
-						R.mipmap.ic_launcher))
 				.setContentTitle(getResources().getString(R.string.notification_sending))
-				.setSmallIcon(R.mipmap.ic_launcher)
+				.setSmallIcon(R.drawable.ic_send_black_24dp)
 				.setWhen(System.currentTimeMillis())
 				.setProgress(100, 0, true)
 				.setOngoing(true)
