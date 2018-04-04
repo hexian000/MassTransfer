@@ -90,11 +90,12 @@ public class ChooseActivity extends ListActivity {
 		switch (item.getItemId()) {
 			case R.id.ok: {
 				Intent intent = new Intent();
+				intent.setData(getIntent().getData());
 				SparseBooleanArray positions = getListView().getCheckedItemPositions();
 				String[] chosenFiles = new String[positions.size()];
 				for (int i = 0; i < positions.size(); i++) {
-					chosenFiles[i] = ((DocumentFile) getListView().getItemAtPosition(positions.keyAt(i))).
-							getUri().toString();
+					DocumentFile file = ((DocumentFile) getListView().getItemAtPosition(positions.keyAt(i)));
+					chosenFiles[i] = file.getName();
 				}
 				intent.putExtra("files", chosenFiles);
 				setResult(RESULT_OK, intent);

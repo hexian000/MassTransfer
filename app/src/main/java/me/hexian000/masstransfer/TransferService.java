@@ -6,7 +6,6 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -22,8 +21,6 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
 
 import static me.hexian000.masstransfer.TransferApp.*;
 
@@ -33,7 +30,8 @@ public class TransferService extends Service implements Runnable {
 	int startId = 0;
 	String host;
 	Thread thread = null;
-	List<DocumentFile> files = null;
+	DocumentFile root = null;
+	String[] files = null;
 	NotificationManager notificationManager = null;
 	boolean result;
 
@@ -112,10 +110,8 @@ public class TransferService extends Service implements Runnable {
 			stopSelf();
 			return START_NOT_STICKY;
 		}
-		files = new ArrayList<>();
-		for (String uriString : uriStrings) {
-			files.add(DocumentFile.fromSingleUri(this, Uri.parse(uriString)));
-		}
+		root = DocumentFile.fromTreeUri(this, intent.getData());
+		files = extras.getStringArray("files");
 
 		thread = new Thread(this);
 		thread.start();
@@ -144,7 +140,7 @@ public class TransferService extends Service implements Runnable {
 		Pipe pipe = new Pipe(16);
 		DirectoryReader reader = new DirectoryReader(
 				getContentResolver(),
-				files, pipe,
+				root, files, pipe,
 				(text, now, max) -> {
 					if (builder != null && notificationManager != null) {
 						if (text != null)

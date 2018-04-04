@@ -139,6 +139,7 @@ public class MainActivity extends Activity {
 				String[] files = extras.getStringArray("files");
 				if (files == null || files.length < 1) break;
 				Intent intent = new Intent(this, TransferService.class);
+				intent.setData(data.getData());
 				intent.putExtra("host", host);
 				intent.putExtra("files", files);
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
