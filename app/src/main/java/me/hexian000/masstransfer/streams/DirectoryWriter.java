@@ -78,20 +78,21 @@ public class DirectoryWriter implements Runnable {
 		if (file != null) {
 			file.delete();
 		}
-		String mime = "application/*";
+		String mime = null;
 		if (name.contains("."))
 			mime = MimeTypeMap.getSingleton().
 					getMimeTypeFromExtension(
 							name.substring(name.lastIndexOf("."))
 					);
+		if (mime == null || "null".equals(mime))
+			mime = "application/*";
 
 		file = parent.createFile(mime, name);
 		OutputStream out = null;
 		try {
-			out = resolver.openOutputStream(file.getUri());
-			if (out == null) {
-				throw new NullPointerException();
-			}
+			if (file != null)
+				out = resolver.openOutputStream(file.getUri());
+			else Log.e(LOG_TAG, "Can't create file mime=" + mime + " name=" + name);
 			final int bufferSize = 1024 * 1024;
 			long pos = 0;
 			int maxProgress = (int) (length / bufferSize);
@@ -101,7 +102,8 @@ public class DirectoryWriter implements Runnable {
 				int read = in.read(buffer);
 				if (read != buffer.length)
 					throw new EOFException();
-				out.write(buffer);
+				if (out != null)
+					out.write(buffer);
 				length -= read;
 				pos += read;
 				reporter.report(name, (int) (pos / bufferSize), maxProgress);

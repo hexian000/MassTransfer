@@ -73,23 +73,19 @@ public class TransferService extends Service implements Runnable {
 				setContentText(getResources().getString(R.string.notification_starting));
 	}
 
-	private void stop() {
-		if (thread != null) {
-			Log.d(LOG_TAG, "try interrupt transfer thread");
-			thread.interrupt();
-			thread = null;
-		}
-		notificationManager = null;
-		builder = null;
-		stopSelf();
-	}
-
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if ("cancel".equals(intent.getAction())) {
 			Log.d(LOG_TAG, "TransferService user cancelled");
 			result = false;
-			stop();
+			if (thread != null) {
+				Log.d(LOG_TAG, "try interrupt transfer thread");
+				thread.interrupt();
+				thread = null;
+			}
+			notificationManager = null;
+			builder = null;
+			stopSelf();
 			return START_NOT_STICKY;
 		}
 
@@ -132,7 +128,10 @@ public class TransferService extends Service implements Runnable {
 			result = false;
 			Log.e(LOG_TAG, "connect failed", e);
 		} finally {
-			stop();
+			thread = null;
+			notificationManager = null;
+			builder = null;
+			stopSelf();
 		}
 	}
 
