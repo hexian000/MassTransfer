@@ -28,6 +28,7 @@ import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
 public class MainActivity extends Activity {
 	private static final int REQUEST_SEND = 1;
 	private static final int REQUEST_RECEIVE = 2;
+	private static final int REQUEST_CHOOSE = 3;
 
 	String host;
 	Timer timer;
@@ -73,7 +74,7 @@ public class MainActivity extends Activity {
 			public void run() {
 				if (adapter == null) {
 					refresh.post(() -> {
-						ListView peersList = findViewById(R.id.PeersList);
+						ListView peersList = findViewById(R.id.PeerList);
 						adapter = new ArrayAdapter<>(
 								MainActivity.this,
 								android.R.layout.simple_list_item_1,
@@ -107,12 +108,37 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (resultCode != RESULT_OK) return;
-		if (requestCode == REQUEST_SEND) {
-			Uri uriTree = data.getData();
-			if (uriTree != null) {
+		switch (requestCode) {
+			case REQUEST_SEND: {
+				Uri uriTree = data.getData();
+				if (uriTree != null) {
+					Intent intent = new Intent(this, TransferService.class);
+					intent.setData(uriTree);
+					startActivityForResult(intent, REQUEST_CHOOSE);
+				}
+			}
+			break;
+			case REQUEST_RECEIVE: {
+				Uri uriTree = data.getData();
+				if (uriTree != null) {
+					Intent intent = new Intent(this, ReceiveService.class);
+					intent.setData(uriTree);
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+						startForegroundService(intent);
+					} else {
+						startService(intent);
+					}
+					Toast.makeText(MainActivity.this, R.string.start_receive_service, Toast.LENGTH_SHORT).show();
+					finish();
+				}
+			}
+			break;
+			case REQUEST_CHOOSE: {
+				Bundle extras = data.getExtras();
+				if (extras == null) break;
 				Intent intent = new Intent(this, TransferService.class);
-				intent.setAction(host);
-				intent.setData(uriTree);
+				intent.putExtra("host", host);
+				intent.putExtra("files", extras.getStringArray("files"));
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 					startForegroundService(intent);
 				} else {
@@ -120,19 +146,7 @@ public class MainActivity extends Activity {
 				}
 				finish();
 			}
-		} else if (requestCode == REQUEST_RECEIVE) {
-			Uri uriTree = data.getData();
-			if (uriTree != null) {
-				Intent intent = new Intent(this, ReceiveService.class);
-				intent.setData(uriTree);
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-					startForegroundService(intent);
-				} else {
-					startService(intent);
-				}
-				Toast.makeText(MainActivity.this, R.string.start_receive_service, Toast.LENGTH_SHORT).show();
-				finish();
-			}
+			break;
 		}
 	}
 

@@ -7,7 +7,9 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.provider.DocumentFile;
@@ -21,6 +23,8 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 
 import static me.hexian000.masstransfer.TransferApp.*;
 
@@ -30,7 +34,7 @@ public class TransferService extends Service implements Runnable {
 	int startId = 0;
 	String host;
 	Thread thread = null;
-	DocumentFile root = null;
+	List<DocumentFile> files = null;
 	NotificationManager notificationManager = null;
 	boolean result;
 
@@ -100,8 +104,22 @@ public class TransferService extends Service implements Runnable {
 		Notification notification = builder.build();
 		startForeground(startId, notification);
 
-		host = intent.getAction();
-		root = DocumentFile.fromTreeUri(this, intent.getData());
+		Bundle extras = intent.getExtras();
+		if (extras == null) {
+			stopSelf();
+			return START_NOT_STICKY;
+		}
+		host = extras.getString("host");
+		String[] uriStrings = extras.getStringArray("files");
+		if (host == null || uriStrings == null) {
+			stopSelf();
+			return START_NOT_STICKY;
+		}
+		files = new ArrayList<>();
+		for (String uriString : uriStrings) {
+			files.add(DocumentFile.fromSingleUri(this, Uri.parse(uriString)));
+		}
+
 		thread = new Thread(this);
 		thread.start();
 		return START_NOT_STICKY;
@@ -129,7 +147,7 @@ public class TransferService extends Service implements Runnable {
 		Pipe pipe = new Pipe(16);
 		DirectoryReader reader = new DirectoryReader(
 				getContentResolver(),
-				root, pipe,
+				files, pipe,
 				(text, now, max) -> {
 					if (builder != null && notificationManager != null) {
 						if (text != null)

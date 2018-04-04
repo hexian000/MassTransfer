@@ -14,21 +14,22 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.List;
 
 import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
 
 public class DirectoryReader implements Runnable {
 	private ProgressReporter reporter;
 	private ContentResolver resolver;
-	private DocumentFile root;
+	private List<DocumentFile> files;
 	private Writer out;
 
 	public DirectoryReader(ContentResolver resolver,
-	                       DocumentFile root,
+	                       List<DocumentFile> files,
 	                       Writer out,
 	                       ProgressReporter reporter) {
 		this.resolver = resolver;
-		this.root = root;
+		this.files = files;
 		this.out = out;
 		this.reporter = reporter;
 	}
@@ -88,7 +89,9 @@ public class DirectoryReader implements Runnable {
 	@Override
 	public void run() {
 		try {
-			sendFile(root, "");
+			for (DocumentFile file : files) {
+				sendFile(file, "");
+			}
 			reporter.report(null, 0, 0);
 			ByteBuffer lengths = ByteBuffer.allocate(Integer.BYTES + Long.BYTES).
 					order(ByteOrder.BIG_ENDIAN);

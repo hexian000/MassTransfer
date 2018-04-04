@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:tools="http://schemas.android.com/tools"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
 
-              android:orientation="vertical"
-              tools:context="me.hexian000.masstransfer.MainActivity">
+    android:orientation="vertical"
+    tools:context="me.hexian000.masstransfer.MainActivity">
 
     <Button
         android:id="@+id/ReceiveButton"
@@ -14,8 +14,8 @@
         android:text="@string/receive_button" />
 
     <ListView
-            android:id="@+id/PeersList"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
+        android:id="@+id/PeerList"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
 </LinearLayout>
