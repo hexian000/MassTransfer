@@ -88,6 +88,7 @@ public class MainActivity extends Activity {
 								return;
 							}
 
+							Toast.makeText(MainActivity.this, R.string.choose_send_directory, Toast.LENGTH_SHORT).show();
 							host = (String) adapter.getItem(i);
 							Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
 							startActivityForResult(intent, REQUEST_SEND);
