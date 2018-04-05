@@ -167,6 +167,7 @@ public class ReceiveService extends Service implements Runnable {
 					System.arraycopy(buffer, 0, data, 0, read);
 					pipe.write(data);
 				} else break;
+				Log.v(LOG_TAG, "pipe size=" + pipe.getSize());
 				/*pos += read;
 				if (pos - lastPos > 8 * 1024 * 1024) {
 					ByteBuffer ack = ByteBuffer.allocate(Long.BYTES).order(ByteOrder.BIG_ENDIAN);

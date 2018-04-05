@@ -184,6 +184,7 @@ public class TransferService extends Service implements Runnable {
 				} else break;
 				//window.send(writeBuffer);
 				out.write(writeBuffer);
+				Log.v(LOG_TAG, "pipe size=" + pipe.getSize());
 			}
 			readerThread.join();
 			//ackThread.join();
