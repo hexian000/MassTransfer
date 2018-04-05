@@ -138,7 +138,7 @@ public class ReceiveService extends Service implements Runnable {
 	}
 
 	private void runPipe(Socket socket) {
-		Pipe pipe = new Pipe(256);
+		Pipe pipe = new Pipe(256 * 1024 * 1024);
 		DirectoryWriter writer = new DirectoryWriter(
 				getContentResolver(),
 				root, pipe,

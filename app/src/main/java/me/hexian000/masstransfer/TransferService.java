@@ -136,7 +136,7 @@ public class TransferService extends Service implements Runnable {
 	}
 
 	private void runPipe(Socket socket) {
-		Pipe pipe = new Pipe(16);
+		Pipe pipe = new Pipe(16 * 1024 * 1024);
 		DirectoryReader reader = new DirectoryReader(
 				getContentResolver(),
 				root, files, pipe,
