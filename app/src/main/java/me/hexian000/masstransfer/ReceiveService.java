@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 
 import static me.hexian000.masstransfer.TransferApp.CHANNEL_TRANSFER_STATE;
 import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
@@ -112,14 +113,20 @@ public class ReceiveService extends Service implements Runnable {
 	public void run() {
 		try (ServerSocket listener = new ServerSocket(TransferApp.TCP_PORT)) {
 			Log.d(LOG_TAG, "ReceiveService begins to listen");
-			try (Socket socket = listener.accept()) {
-				socket.setReceiveBufferSize(16 * 1024 * 1024);
-				socket.setSoLinger(true, 60);
-				socket.setSoTimeout(30 * 1000);
-				runPipe(socket);
-			} catch (IOException e) {
-				result = false;
-				Log.e(LOG_TAG, "listener accept error", e);
+			listener.setSoTimeout(4000); // prevent thread leak
+			while (thread != null) {
+				try (Socket socket = listener.accept()) {
+					socket.setReceiveBufferSize(16 * 1024 * 1024);
+					socket.setSoLinger(true, 60);
+					socket.setSoTimeout(30 * 1000);
+					runPipe(socket);
+				} catch (SocketTimeoutException e) {
+					continue;
+				} catch (IOException e) {
+					result = false;
+					Log.e(LOG_TAG, "listener accept error", e);
+				}
+				break;
 			}
 		} catch (IOException e) {
 			result = false;
