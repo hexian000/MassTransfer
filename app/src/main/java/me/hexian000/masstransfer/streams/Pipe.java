@@ -8,9 +8,14 @@ public class Pipe implements Reader, Writer {
 	private byte[] current = null;
 	private int offset = 0;
 	private boolean closed = false;
+	private long size = 0;
 
 	public Pipe(int size) {
 		q = new LinkedBlockingQueue<>(size);
+	}
+
+	public long getSize() {
+		return size;
 	}
 
 	@Override
@@ -32,6 +37,7 @@ public class Pipe implements Reader, Writer {
 				}
 			}
 		}
+		size -= read;
 		return read;
 	}
 
@@ -39,6 +45,7 @@ public class Pipe implements Reader, Writer {
 	public void write(byte[] buffer) throws InterruptedException {
 		if (buffer.length > 0)
 			q.put(buffer);
+		size += buffer.length;
 	}
 
 	@Override
