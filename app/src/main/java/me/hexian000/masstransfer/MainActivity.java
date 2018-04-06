@@ -103,7 +103,7 @@ public class MainActivity extends Activity {
 					});
 				}
 			}
-		}, 0, 500);
+		}, 0, 200);
 	}
 
 	@Override
