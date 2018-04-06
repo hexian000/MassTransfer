@@ -15,13 +15,11 @@ import android.widget.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
 
 public class ChooseActivity extends Activity {
-	List<DocumentFile> files;
+	List<String> files;
 	int dirCount;
 	private Handler handler = new Handler();
 	private ListView listView;
@@ -42,21 +40,24 @@ public class ChooseActivity extends Activity {
 		progressBar = findViewById(R.id.ListLoading);
 
 		files = new ArrayList<>();
-		ArrayAdapter adapter = new ArrayAdapter<DocumentFile>(this,
+		ArrayAdapter adapter = new ArrayAdapter<String>(this,
 				R.layout.choose_file_item, files) {
 			@NonNull
 			@Override
 			public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+				ItemViewHolder holder;
 				if (convertView == null) {
 					convertView = getLayoutInflater().inflate(R.layout.choose_file_item, parent, false);
-					ItemViewHolder holder = new ItemViewHolder(convertView);
-					if (position < dirCount)
-						holder.imageView.setImageResource(R.drawable.ic_folder_white_24dp);
-					else
-						holder.imageView.setImageResource(R.drawable.ic_file_white_24dp);
-					holder.textView.setText(((DocumentFile) listView.getItemAtPosition(position)).getName());
+					holder = new ItemViewHolder(convertView);
 					convertView.setTag(holder);
+				} else {
+					holder = (ItemViewHolder) convertView.getTag();
 				}
+				if (position < dirCount)
+					holder.imageView.setImageResource(R.drawable.ic_folder_white_24dp);
+				else
+					holder.imageView.setImageResource(R.drawable.ic_file_white_24dp);
+				holder.textView.setText(((String) listView.getItemAtPosition(position)));
 				return convertView;
 			}
 
@@ -78,21 +79,24 @@ public class ChooseActivity extends Activity {
 			}
 			Log.v(LOG_TAG, "time used: " + (System.currentTimeMillis() - start));
 			DocumentFile[] list = root.listFiles();
-			SortedMap<String, DocumentFile> dirList = new TreeMap<>();
-			SortedMap<String, DocumentFile> fileList = new TreeMap<>();
+			List<String> dirList = new ArrayList<>();
+			List<String> fileList = new ArrayList<>();
 			for (DocumentFile file : list) {
 				String name = file.getName();
 				if (name.startsWith("."))
 					continue;
 				if (file.isFile() && file.canRead()) {
-					fileList.put(name.toLowerCase(), file);
+					fileList.add(name);
 				} else if (file.isDirectory()) {
-					dirList.put(name.toLowerCase(), file);
+					dirList.add(name);
 				}
 			}
 			Log.v(LOG_TAG, "time used: " + (System.currentTimeMillis() - start));
-			files.addAll(dirList.values());
-			files.addAll(fileList.values());
+			dirList.sort(String::compareToIgnoreCase);
+			fileList.sort(String::compareToIgnoreCase);
+			Log.v(LOG_TAG, "time used: " + (System.currentTimeMillis() - start));
+			files.addAll(dirList);
+			files.addAll(fileList);
 			dirCount = dirList.size();
 			Log.v(LOG_TAG, "time used: " + (System.currentTimeMillis() - start));
 			if (handler != null)
@@ -120,8 +124,8 @@ public class ChooseActivity extends Activity {
 				SparseBooleanArray positions = listView.getCheckedItemPositions();
 				String[] chosenFiles = new String[positions.size()];
 				for (int i = 0; i < positions.size(); i++) {
-					DocumentFile file = ((DocumentFile) listView.getItemAtPosition(positions.keyAt(i)));
-					chosenFiles[i] = file.getName();
+					String name = ((String) listView.getItemAtPosition(positions.keyAt(i)));
+					chosenFiles[i] = name;
 				}
 				intent.putExtra("files", chosenFiles);
 				setResult(RESULT_OK, intent);
