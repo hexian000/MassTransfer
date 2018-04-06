@@ -15,12 +15,15 @@ import android.util.Log;
 import android.widget.Toast;
 import me.hexian000.masstransfer.streams.DirectoryReader;
 import me.hexian000.masstransfer.streams.Pipe;
+import me.hexian000.masstransfer.streams.RateCounter;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static me.hexian000.masstransfer.TransferApp.*;
 
@@ -42,7 +45,7 @@ public class TransferService extends Service implements Runnable {
 				.setContentTitle(getResources().getString(R.string.notification_sending))
 				.setSmallIcon(R.drawable.ic_send_black_24dp)
 				.setWhen(System.currentTimeMillis())
-				.setProgress(100, 0, true)
+				.setProgress(0, 0, true)
 				.setOngoing(true)
 				.setVisibility(Notification.VISIBILITY_PUBLIC);
 
@@ -69,8 +72,7 @@ public class TransferService extends Service implements Runnable {
 		builder.addAction(new Notification.Action.Builder(
 				null, getResources().getString(R.string.cancel),
 				PendingIntent.getService(this, startId, cancel, 0)
-		).build()).
-				setContentText(getResources().getString(R.string.notification_starting));
+		).build()).setSubText(getResources().getString(R.string.notification_starting));
 	}
 
 	@Override
@@ -143,10 +145,10 @@ public class TransferService extends Service implements Runnable {
 				(text, now, max) -> {
 					if (builder != null && notificationManager != null) {
 						if (text != null)
-							builder.setContentText(text).
+							builder.setSubText(text).
 									setProgress(max, now, false);
 						else
-							builder.setContentText(getResources().getString(R.string.notification_finishing)).
+							builder.setSubText(getResources().getString(R.string.notification_finishing)).
 									setProgress(0, 0, true);
 						notificationManager.notify(startId, builder.build());
 					}
@@ -155,6 +157,7 @@ public class TransferService extends Service implements Runnable {
 		readerThread.start();
 		//Thread ackThread = null;
 		//StreamWindow window = new StreamWindow(64 * 1024 * 1024);
+		Timer timer = new Timer();
 		try (/*InputStream in = socket.getInputStream(); */OutputStream out = socket.getOutputStream()) {
 			/*ackThread = new Thread(() -> {
 				try {
@@ -172,6 +175,20 @@ public class TransferService extends Service implements Runnable {
 				Log.d(LOG_TAG, "ack thread exited");
 			});
 			ackThread.start();*/
+			RateCounter rate = new RateCounter();
+			timer.schedule(new TimerTask() {
+				long last = System.currentTimeMillis();
+
+				@Override
+				public void run() {
+					if (builder != null && notificationManager != null) {
+						long now = System.currentTimeMillis();
+						builder.setContentText(TransferApp.speedToString(rate.rate(), (now - last)) + "/s");
+						notificationManager.notify(startId, builder.build());
+						last = now;
+					}
+				}
+			}, 1000, 1000);
 			while (true) {
 				byte[] buffer = new byte[1024 * 1024];
 				byte[] writeBuffer;
@@ -184,7 +201,8 @@ public class TransferService extends Service implements Runnable {
 				} else break;
 				//window.send(writeBuffer);
 				out.write(writeBuffer);
-				Log.v(LOG_TAG, "pipe size=" + pipe.getSize());
+				rate.increase(writeBuffer.length);
+				Log.v(LOG_TAG, "pipe size=" + (pipe.getSize() / 1024) + "KB");
 			}
 			readerThread.join();
 			//ackThread.join();
@@ -200,6 +218,7 @@ public class TransferService extends Service implements Runnable {
 				result = false;
 				ackThread.interrupt();
 			}*/
+			timer.cancel();
 			if (readerThread.isAlive()) {
 				result = false;
 				readerThread.interrupt();

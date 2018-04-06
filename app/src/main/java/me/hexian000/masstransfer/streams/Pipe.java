@@ -18,7 +18,7 @@ public class Pipe implements Reader, Writer {
 		this.capacity = new Semaphore(capacity);
 	}
 
-	public long getSize() {
+	public int getSize() {
 		return limit - capacity.availablePermits();
 	}
 

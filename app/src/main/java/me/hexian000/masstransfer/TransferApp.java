@@ -25,4 +25,17 @@ public class TransferApp extends Application {
 			manager.createNotificationChannel(channel);
 		}
 	}
+
+	public static String speedToString(long size, long millis) {
+		size = size * 1000 / millis;
+		if (size < 2L * 1024) { // Byte
+			return size + "B";
+		} else if (size < 2L * 1024 * 1024) { // KB
+			return (size / 1024L) + "KB";
+		} else if (size < 2L * 1024 * 1024 * 1024) { // MB
+			return (size / 1024L / 1024L) + "MB";
+		} else { // GB
+			return (size / 1024L / 1024L / 1024L) + "GB";
+		}
+	}
 }
