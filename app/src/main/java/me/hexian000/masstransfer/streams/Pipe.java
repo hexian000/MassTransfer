@@ -5,6 +5,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TransferQueue;
 
 public class Pipe implements Reader, Writer {
+	private int limit;
 	private Semaphore capacity;
 	private TransferQueue<byte[]> q;
 	private byte[] current = null;
@@ -13,11 +14,12 @@ public class Pipe implements Reader, Writer {
 
 	public Pipe(int capacity) {
 		q = new LinkedTransferQueue<>();
+		limit = capacity;
 		this.capacity = new Semaphore(capacity);
 	}
 
 	public long getSize() {
-		return capacity.availablePermits();
+		return limit - capacity.availablePermits();
 	}
 
 	@Override
@@ -45,9 +47,10 @@ public class Pipe implements Reader, Writer {
 
 	@Override
 	public void write(byte[] buffer) throws InterruptedException {
-		if (buffer.length > 0)
+		if (buffer.length > 0) {
 			q.transfer(buffer);
-		capacity.acquire(buffer.length);
+			capacity.acquire(buffer.length);
+		}
 	}
 
 	@Override

@@ -7,8 +7,8 @@ import java.net.*;
 import java.util.*;
 
 final class Discoverer {
-	private final static int BROADCAST_INTERVAL = 1000;
-	private final static int BROADCAST_TIMEOUT = 2000;
+	private final static int BROADCAST_INTERVAL = 500;
+	private final static int BROADCAST_TIMEOUT = 1000;
 	private final byte[] magic = "MassTransfer".getBytes();
 	private List<AnnounceInterface> announce;
 	private int port;

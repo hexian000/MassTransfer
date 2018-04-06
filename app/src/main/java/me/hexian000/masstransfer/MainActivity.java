@@ -29,11 +29,11 @@ public class MainActivity extends Activity {
 	private static final int REQUEST_SEND = 1;
 	private static final int REQUEST_RECEIVE = 2;
 	private static final int REQUEST_CHOOSE = 3;
-
 	String host;
 	Timer timer;
 	Handler refresh = new Handler();
 	DiscoverService mService;
+	private Button receiveButton;
 	private ServiceConnection mConnection = new ServiceConnection() {
 		@Override
 		public void onServiceConnected(ComponentName className, IBinder service) {
@@ -124,13 +124,9 @@ public class MainActivity extends Activity {
 				if (uriTree != null) {
 					Intent intent = new Intent(this, ReceiveService.class);
 					intent.setData(uriTree);
-					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-						startForegroundService(intent);
-					} else {
-						startService(intent);
-					}
+					startForegroundServiceCompat(intent);
 					Toast.makeText(MainActivity.this, R.string.start_receive_service, Toast.LENGTH_SHORT).show();
-					finish();
+					receiveButton.setText(R.string.receive_cancel_button);
 				}
 			}
 			break;
@@ -143,11 +139,7 @@ public class MainActivity extends Activity {
 				intent.setData(data.getData());
 				intent.putExtra("host", host);
 				intent.putExtra("files", files);
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-					startForegroundService(intent);
-				} else {
-					startService(intent);
-				}
+				startForegroundServiceCompat(intent);
 				finish();
 			}
 			break;
@@ -171,16 +163,28 @@ public class MainActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-		final Button receiveButton = findViewById(R.id.ReceiveButton);
+		receiveButton = findViewById(R.id.ReceiveButton);
+		if (isServiceRunning(ReceiveService.class))
+			receiveButton.setText(R.string.receive_cancel_button);
 		receiveButton.setOnClickListener((View v) -> {
 			if (isServiceRunning(ReceiveService.class)) {
-				Toast.makeText(MainActivity.this, R.string.receive_service_is_already_running, Toast.LENGTH_SHORT).show();
-				return;
+				receiveButton.setText(R.string.receive_button);
+				Intent intent = new Intent(this, ReceiveService.class);
+				intent.setAction("cancel");
+				startForegroundServiceCompat(intent);
+			} else {
+				Toast.makeText(MainActivity.this, R.string.choose_storage_directory, Toast.LENGTH_SHORT).show();
+				Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+				startActivityForResult(intent, REQUEST_RECEIVE);
 			}
-
-			Toast.makeText(MainActivity.this, R.string.choose_storage_directory, Toast.LENGTH_SHORT).show();
-			Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-			startActivityForResult(intent, REQUEST_RECEIVE);
 		});
+	}
+
+	private void startForegroundServiceCompat(Intent intent) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+			startForegroundService(intent);
+		} else {
+			startService(intent);
+		}
 	}
 }
