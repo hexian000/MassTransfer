@@ -245,6 +245,10 @@ public class ReceiveService extends Service implements Runnable {
 			mService = null;
 			Log.d(LOG_TAG, "unbind DiscoverService in ReceiveService");
 		}
+		MainActivity mainActivity = ((TransferApp) getApplicationContext()).mainActivity;
+		if (mainActivity != null) {
+			mainActivity.handler.post(mainActivity::updateReceiveButton);
+		}
 		if (result) {
 			Toast.makeText(this, R.string.transfer_success, Toast.LENGTH_SHORT).show();
 		} else {

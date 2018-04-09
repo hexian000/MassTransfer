@@ -31,7 +31,7 @@ public class MainActivity extends Activity {
 	private static final int REQUEST_CHOOSE = 3;
 	String host;
 	Timer timer;
-	Handler refresh = new Handler();
+	Handler handler = new Handler();
 	DiscoverService mService;
 	private Button receiveButton;
 	private ServiceConnection mConnection = new ServiceConnection() {
@@ -73,7 +73,7 @@ public class MainActivity extends Activity {
 			@Override
 			public void run() {
 				if (adapter == null) {
-					refresh.post(() -> {
+					handler.post(() -> {
 						ListView peersList = findViewById(R.id.PeerList);
 						adapter = new ArrayAdapter<>(
 								MainActivity.this,
@@ -95,7 +95,7 @@ public class MainActivity extends Activity {
 						});
 					});
 				} else {
-					refresh.post(() -> {
+					handler.post(() -> {
 						items.clear();
 						if (mService != null)
 							items.addAll(mService.discoverer.getPeers());
@@ -158,10 +158,22 @@ public class MainActivity extends Activity {
 		return false;
 	}
 
+	void updateReceiveButton() {
+		receiveButton.setText(R.string.receive_button);
+	}
+
+	@Override
+	protected void onDestroy() {
+		((TransferApp) getApplicationContext()).mainActivity = null;
+		super.onDestroy();
+	}
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+
+		((TransferApp) getApplicationContext()).mainActivity = this;
 
 		receiveButton = findViewById(R.id.ReceiveButton);
 		if (isServiceRunning(ReceiveService.class))

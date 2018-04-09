@@ -14,6 +14,8 @@ public class TransferApp extends Application {
 	public final static int UDP_PORT = 14644;
 	public final static int TCP_PORT = 14645;
 
+	public MainActivity mainActivity = null;
+
 	static void createNotificationChannels(NotificationManager manager, Resources res) {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 			NotificationChannel channel = new NotificationChannel(
