@@ -119,7 +119,8 @@ public class ReceiveService extends Service implements Runnable {
 			while (thread != null) {
 				try (Socket socket = listener.accept()) {
 					socket.setPerformancePreferences(0, 0, 1);
-					socket.setReceiveBufferSize(256 * 1024 * 1024);
+					socket.setReceiveBufferSize(8 * 1024 * 1024);
+					socket.setSoLinger(true, 10);
 					runPipe(socket);
 				} catch (SocketTimeoutException e) {
 					continue;
