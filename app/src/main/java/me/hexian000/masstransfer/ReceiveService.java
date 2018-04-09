@@ -14,7 +14,6 @@ import android.support.annotation.Nullable;
 import android.support.v4.provider.DocumentFile;
 import android.util.Log;
 import android.widget.Toast;
-import me.hexian000.masstransfer.streams.AvgRateCounter;
 import me.hexian000.masstransfer.streams.DirectoryWriter;
 import me.hexian000.masstransfer.streams.Pipe;
 import me.hexian000.masstransfer.streams.RateCounter;
@@ -120,7 +119,7 @@ public class ReceiveService extends Service implements Runnable {
 			while (thread != null) {
 				try (Socket socket = listener.accept()) {
 					socket.setPerformancePreferences(0, 0, 1);
-					socket.setReceiveBufferSize(16 * 1024 * 1024);
+					socket.setReceiveBufferSize(256 * 1024 * 1024);
 					runPipe(socket);
 				} catch (SocketTimeoutException e) {
 					continue;
@@ -158,21 +157,19 @@ public class ReceiveService extends Service implements Runnable {
 		Thread writerThread = new Thread(writer);
 		writerThread.start();
 		Timer timer = new Timer();
-		try (InputStream in = socket.getInputStream()/*; OutputStream out = socket.getOutputStream()*/) {
-			//long lastPos = 0, pos = 0;
-			AvgRateCounter avgRate = new AvgRateCounter(5);
+		try (InputStream in = socket.getInputStream()) {
 			RateCounter rate = new RateCounter();
+			final int rateInterval = 2;
 			timer.schedule(new TimerTask() {
 
 				@Override
 				public void run() {
-					avgRate.push(rate.rate());
 					if (builder != null && notificationManager != null) {
-						builder.setSubText(TransferApp.sizeToString(avgRate.rate()) + "/s");
+						builder.setSubText(TransferApp.sizeToString(rate.rate() / rateInterval) + "/s");
 						notificationManager.notify(startId, builder.build());
 					}
 				}
-			}, 1000, 1000);
+			}, rateInterval * 1000, rateInterval * 1000);
 			while (true) {
 				byte[] buffer = new byte[1024];
 				int read = in.read(buffer);
@@ -184,21 +181,12 @@ public class ReceiveService extends Service implements Runnable {
 					pipe.write(data);
 				} else break;
 				rate.increase(read);
-				Log.v(LOG_TAG, "pipe size=" + (pipe.getSize() / 1024) + "KB");
-				/*pos += read;
-				if (pos - lastPos > 8 * 1024 * 1024) {
-					ByteBuffer ack = ByteBuffer.allocate(Long.BYTES).order(ByteOrder.BIG_ENDIAN);
-					ack.putLong(pos);
-					out.write(ack.array());
-					Log.d(LOG_TAG, "sending ack at " + pos);
-					lastPos = pos;
-				}*/
+				{
+					final long size = pipe.getSize() / 1024;
+					if (size > 8 * 1024)
+						Log.v(LOG_TAG, "pipe size=" + size + "KB");
+				}
 			}
-			/*{
-				ByteBuffer ack = ByteBuffer.allocate(Long.BYTES).order(ByteOrder.BIG_ENDIAN);
-				ack.putLong(pos);
-				out.write(ack.array());
-			}*/
 			pipe.close();
 			writerThread.join();
 			Log.d(LOG_TAG, "ReceiveService finished normally");

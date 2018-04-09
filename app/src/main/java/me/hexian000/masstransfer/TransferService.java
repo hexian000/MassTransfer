@@ -13,7 +13,6 @@ import android.support.annotation.Nullable;
 import android.support.v4.provider.DocumentFile;
 import android.util.Log;
 import android.widget.Toast;
-import me.hexian000.masstransfer.streams.AvgRateCounter;
 import me.hexian000.masstransfer.streams.DirectoryReader;
 import me.hexian000.masstransfer.streams.Pipe;
 import me.hexian000.masstransfer.streams.RateCounter;
@@ -121,7 +120,7 @@ public class TransferService extends Service implements Runnable {
 	public void run() {
 		try (Socket socket = new Socket()) {
 			socket.setPerformancePreferences(0, 0, 1);
-			socket.setSendBufferSize(16 * 1024 * 1024);
+			socket.setSendBufferSize(256 * 1024 * 1024);
 			socket.setSoTimeout(4000);
 			socket.connect(new InetSocketAddress(InetAddress.getByName(host), TCP_PORT), 4000);
 			runPipe(socket);
@@ -154,39 +153,20 @@ public class TransferService extends Service implements Runnable {
 				});
 		Thread readerThread = new Thread(reader);
 		readerThread.start();
-		//Thread ackThread = null;
-		//StreamWindow window = new StreamWindow(64 * 1024 * 1024);
 		Timer timer = new Timer();
-		try (/*InputStream in = socket.getInputStream(); */OutputStream out = socket.getOutputStream()) {
-			/*ackThread = new Thread(() -> {
-				try {
-					while (true) {
-						ByteBuffer ack = ByteBuffer.allocate(Long.BYTES).order(ByteOrder.BIG_ENDIAN);
-						int read = in.read(ack.array());
-						if (read == 0 || read == -1) break;
-						if (read != Long.BYTES) continue;
-						long pos = ack.getLong();
-						Log.d(LOG_TAG, "receiving ack at " + pos);
-						window.ack(pos);
-					}
-				} catch (IOException ignored) {
-				}
-				Log.d(LOG_TAG, "ack thread exited");
-			});
-			ackThread.start();*/
-			AvgRateCounter avgRate = new AvgRateCounter(5);
+		try (OutputStream out = socket.getOutputStream()) {
 			RateCounter rate = new RateCounter();
+			final int rateInterval = 10;
 			timer.schedule(new TimerTask() {
 
 				@Override
 				public void run() {
-					avgRate.push(rate.rate());
 					if (builder != null && notificationManager != null) {
-						builder.setSubText(TransferApp.sizeToString(rate.rate()) + "/s");
+						builder.setSubText(TransferApp.sizeToString(rate.rate() / rateInterval) + "/s");
 						notificationManager.notify(startId, builder.build());
 					}
 				}
-			}, 1000, 1000);
+			}, rateInterval * 1000, rateInterval * 1000);
 			while (true) {
 				byte[] buffer = new byte[1024];
 				byte[] writeBuffer;
@@ -197,13 +177,15 @@ public class TransferService extends Service implements Runnable {
 					writeBuffer = new byte[read];
 					System.arraycopy(buffer, 0, writeBuffer, 0, read);
 				} else break;
-				//window.send(writeBuffer);
 				out.write(writeBuffer);
 				rate.increase(writeBuffer.length);
-				Log.v(LOG_TAG, "pipe size=" + (pipe.getSize() / 1024) + "KB");
+				{
+					final long size = pipe.getSize() / 1024;
+					if (size > 8 * 1024)
+						Log.v(LOG_TAG, "pipe size=" + size + "KB");
+				}
 			}
 			readerThread.join();
-			//ackThread.join();
 			Log.d(LOG_TAG, "TransferService finished normally");
 		} catch (InterruptedException e) {
 			result = false;
@@ -212,10 +194,6 @@ public class TransferService extends Service implements Runnable {
 			result = false;
 			Log.e(LOG_TAG, "TransferService", e);
 		} finally {
-			/*if (ackThread != null && ackThread.isAlive()) {
-				result = false;
-				ackThread.interrupt();
-			}*/
 			timer.cancel();
 			if (readerThread.isAlive()) {
 				result = false;
