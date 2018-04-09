@@ -168,7 +168,7 @@ public class TransferService extends Service implements Runnable {
 					}
 				}
 			}, rateInterval * 1000, rateInterval * 1000);
-			while (true) {
+			while (thread != null) {
 				byte[] buffer = new byte[1024];
 				byte[] writeBuffer;
 				int read = pipe.read(buffer);
