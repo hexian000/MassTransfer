@@ -13,6 +13,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.provider.DocumentFile;
 import android.util.Log;
 import android.widget.Toast;
+import me.hexian000.masstransfer.streams.AvgRateCounter;
 import me.hexian000.masstransfer.streams.DirectoryReader;
 import me.hexian000.masstransfer.streams.Pipe;
 import me.hexian000.masstransfer.streams.RateCounter;
@@ -119,12 +120,10 @@ public class TransferService extends Service implements Runnable {
 	@Override
 	public void run() {
 		try (Socket socket = new Socket()) {
-			socket.connect(new InetSocketAddress(
-					InetAddress.getByName(host),
-					TCP_PORT), 4000);
+			socket.setPerformancePreferences(0, 0, 1);
 			socket.setSendBufferSize(16 * 1024 * 1024);
-			socket.setSoLinger(true, 60);
-			socket.setSoTimeout(30 * 1000);
+			socket.setSoTimeout(4000);
+			socket.connect(new InetSocketAddress(InetAddress.getByName(host), TCP_PORT), 4000);
 			runPipe(socket);
 		} catch (IOException e) {
 			result = false;
@@ -175,17 +174,16 @@ public class TransferService extends Service implements Runnable {
 				Log.d(LOG_TAG, "ack thread exited");
 			});
 			ackThread.start();*/
+			AvgRateCounter avgRate = new AvgRateCounter(5);
 			RateCounter rate = new RateCounter();
 			timer.schedule(new TimerTask() {
-				long last = System.currentTimeMillis();
 
 				@Override
 				public void run() {
+					avgRate.push(rate.rate());
 					if (builder != null && notificationManager != null) {
-						long now = System.currentTimeMillis();
-						builder.setSubText(TransferApp.speedToString(rate.rate(), (now - last)) + "/s");
+						builder.setSubText(TransferApp.sizeToString(rate.rate()) + "/s");
 						notificationManager.notify(startId, builder.build());
-						last = now;
 					}
 				}
 			}, 1000, 1000);

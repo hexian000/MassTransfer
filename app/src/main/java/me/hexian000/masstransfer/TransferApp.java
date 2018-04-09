@@ -30,16 +30,15 @@ public class TransferApp extends Application {
 		}
 	}
 
-	public static String speedToString(long size, long millis) {
-		double s = (double) size * 1000.0 / (double) millis;
-		if (s < 2.0 * 1024.0) { // Byte
-			return String.format(Locale.getDefault(), "%.0fB", s);
+	public static String sizeToString(double size) {
+		if (size < 2.0 * 1024.0) { // Byte
+			return String.format(Locale.getDefault(), "%.0fB", size);
 		} else if (size < 2.0 * 1024.0 * 1024.0) { // KB
-			return String.format(Locale.getDefault(), "%.2fKB", s / 1024.0);
+			return String.format(Locale.getDefault(), "%.2fKB", size / 1024.0);
 		} else if (size < 2.0 * 1024.0 * 1024.0 * 1024.0) { // MB
-			return String.format(Locale.getDefault(), "%.2fMB", s / 1024.0 / 1024.0);
+			return String.format(Locale.getDefault(), "%.2fMB", size / 1024.0 / 1024.0);
 		} else { // GB
-			return String.format(Locale.getDefault(), "%.2fGB", s / 1024.0 / 1024.0 / 1024.0);
+			return String.format(Locale.getDefault(), "%.2fGB", size / 1024.0 / 1024.0 / 1024.0);
 		}
 	}
 }
