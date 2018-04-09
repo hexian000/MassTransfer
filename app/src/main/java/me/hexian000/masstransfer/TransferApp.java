@@ -6,6 +6,8 @@ import android.app.NotificationManager;
 import android.content.res.Resources;
 import android.os.Build;
 
+import java.util.Locale;
+
 public class TransferApp extends Application {
 	public final static String LOG_TAG = "MassTransfer";
 	public final static String CHANNEL_TRANSFER_STATE = "transfer_state";
@@ -27,15 +29,15 @@ public class TransferApp extends Application {
 	}
 
 	public static String speedToString(long size, long millis) {
-		size = size * 1000 / millis;
-		if (size < 2L * 1024) { // Byte
-			return size + "B";
-		} else if (size < 2L * 1024 * 1024) { // KB
-			return (size / 1024L) + "KB";
-		} else if (size < 2L * 1024 * 1024 * 1024) { // MB
-			return (size / 1024L / 1024L) + "MB";
+		double s = (double) size * 1000.0 / (double) millis;
+		if (s < 2.0 * 1024.0) { // Byte
+			return String.format(Locale.getDefault(), "%.0fB", s);
+		} else if (size < 2.0 * 1024.0 * 1024.0) { // KB
+			return String.format(Locale.getDefault(), "%.2fKB", s / 1024.0);
+		} else if (size < 2.0 * 1024.0 * 1024.0 * 1024.0) { // MB
+			return String.format(Locale.getDefault(), "%.2fMB", s / 1024.0 / 1024.0);
 		} else { // GB
-			return (size / 1024L / 1024L / 1024L) + "GB";
+			return String.format(Locale.getDefault(), "%.2fGB", s / 1024.0 / 1024.0 / 1024.0);
 		}
 	}
 }

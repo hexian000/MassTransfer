@@ -74,7 +74,7 @@ public class ReceiveService extends Service implements Runnable {
 		builder.addAction(new Notification.Action.Builder(
 				null, getResources().getString(R.string.cancel),
 				PendingIntent.getService(this, startId, cancel, 0)
-		).build()).setSubText(getResources().getString(R.string.notification_starting));
+		).build()).setContentText(getResources().getString(R.string.notification_starting));
 	}
 
 	private void stop() {
@@ -147,10 +147,10 @@ public class ReceiveService extends Service implements Runnable {
 				(text, now, max) -> {
 					if (builder != null && notificationManager != null) {
 						if (text != null)
-							builder.setSubText(text).
+							builder.setContentText(text).
 									setProgress(max, now, false);
 						else
-							builder.setSubText(getResources().getString(R.string.notification_finishing)).
+							builder.setContentText(getResources().getString(R.string.notification_finishing)).
 									setProgress(0, 0, true);
 						notificationManager.notify(startId, builder.build());
 					}
@@ -168,14 +168,14 @@ public class ReceiveService extends Service implements Runnable {
 				public void run() {
 					if (builder != null && notificationManager != null) {
 						long now = System.currentTimeMillis();
-						builder.setContentText(TransferApp.speedToString(rate.rate(), (now - last)) + "/s");
+						builder.setSubText(TransferApp.speedToString(rate.rate(), (now - last)) + "/s");
 						notificationManager.notify(startId, builder.build());
 						last = now;
 					}
 				}
 			}, 1000, 1000);
 			while (true) {
-				byte[] buffer = new byte[1024 * 1024];
+				byte[] buffer = new byte[1024];
 				int read = in.read(buffer);
 				if (read == buffer.length)
 					pipe.write(buffer);
