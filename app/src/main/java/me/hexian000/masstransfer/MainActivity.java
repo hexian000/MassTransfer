@@ -178,9 +178,10 @@ public class MainActivity extends Activity {
 		receiveButton = findViewById(R.id.ReceiveButton);
 		if (isServiceRunning(ReceiveService.class))
 			receiveButton.setText(R.string.receive_cancel_button);
+		else
+			receiveButton.setText(R.string.receive_button);
 		receiveButton.setOnClickListener((View v) -> {
 			if (isServiceRunning(ReceiveService.class)) {
-				receiveButton.setText(R.string.receive_button);
 				Intent intent = new Intent(this, ReceiveService.class);
 				intent.setAction("cancel");
 				startForegroundServiceCompat(intent);
