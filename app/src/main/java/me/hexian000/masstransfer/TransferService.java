@@ -205,6 +205,7 @@ public class TransferService extends Service implements Runnable {
 
 	@Override
 	public void onCreate() {
+		((TransferApp) getApplicationContext()).transferService = this;
 		result = true;
 	}
 
@@ -215,6 +216,7 @@ public class TransferService extends Service implements Runnable {
 		} else {
 			Toast.makeText(this, R.string.transfer_failed, Toast.LENGTH_SHORT).show();
 		}
+		((TransferApp) getApplicationContext()).transferService = null;
 	}
 
 	@Nullable

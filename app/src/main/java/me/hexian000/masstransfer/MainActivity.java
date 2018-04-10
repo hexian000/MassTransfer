@@ -1,7 +1,6 @@
 package me.hexian000.masstransfer;
 
 import android.app.Activity;
-import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -81,7 +80,7 @@ public class MainActivity extends Activity {
 								items);
 						peersList.setAdapter(adapter);
 						peersList.setOnItemClickListener((adapterView, view, i, l) -> {
-							if (isServiceRunning(TransferService.class)) {
+							if (((TransferApp) getApplicationContext()).transferService != null) {
 								Toast.makeText(MainActivity.this,
 										R.string.transfer_service_is_already_running,
 										Toast.LENGTH_SHORT).show();
@@ -146,18 +145,6 @@ public class MainActivity extends Activity {
 		}
 	}
 
-	private boolean isServiceRunning(Class<?> serviceClass) {
-		ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-		if (manager != null) {
-			for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-				if (serviceClass.getName().equals(service.service.getClassName())) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
 	void updateReceiveButton() {
 		receiveButton.setText(R.string.receive_button);
 	}
@@ -173,15 +160,16 @@ public class MainActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-		((TransferApp) getApplicationContext()).mainActivity = this;
+		final TransferApp app = (TransferApp) getApplicationContext();
+		app.mainActivity = this;
 
 		receiveButton = findViewById(R.id.ReceiveButton);
-		if (isServiceRunning(ReceiveService.class))
+		if (app.receiveService != null)
 			receiveButton.setText(R.string.receive_cancel_button);
 		else
 			receiveButton.setText(R.string.receive_button);
 		receiveButton.setOnClickListener((View v) -> {
-			if (isServiceRunning(ReceiveService.class)) {
+			if (app.receiveService != null) {
 				Intent intent = new Intent(this, ReceiveService.class);
 				intent.setAction("cancel");
 				startForegroundServiceCompat(intent);

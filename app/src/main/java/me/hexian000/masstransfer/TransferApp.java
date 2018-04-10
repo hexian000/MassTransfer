@@ -15,6 +15,9 @@ public class TransferApp extends Application {
 	public final static int TCP_PORT = 14645;
 
 	public MainActivity mainActivity = null;
+	public ReceiveService receiveService = null;
+	public TransferService transferService = null;
+	public DiscoverService discoverService = null;
 
 	static void createNotificationChannels(NotificationManager manager, Resources res) {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

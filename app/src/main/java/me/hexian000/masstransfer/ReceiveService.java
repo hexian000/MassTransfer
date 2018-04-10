@@ -208,6 +208,7 @@ public class ReceiveService extends Service implements Runnable {
 
 	@Override
 	public void onCreate() {
+		((TransferApp) getApplicationContext()).receiveService = this;
 		result = true;
 		mConnection = new ServiceConnection() {
 			@Override
@@ -242,6 +243,7 @@ public class ReceiveService extends Service implements Runnable {
 		} else {
 			Toast.makeText(this, R.string.transfer_failed, Toast.LENGTH_SHORT).show();
 		}
+		((TransferApp) getApplicationContext()).receiveService = null;
 	}
 
 	@Nullable
