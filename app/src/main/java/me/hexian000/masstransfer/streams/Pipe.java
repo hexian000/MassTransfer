@@ -56,5 +56,9 @@ public class Pipe implements Reader, Writer {
 	@Override
 	public void close() {
 		closed = true;
+		try {
+			q.transfer(new byte[0]);
+		} catch (InterruptedException ignored) {
+		}
 	}
 }
