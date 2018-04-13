@@ -137,18 +137,26 @@ public class TransferService extends Service implements Runnable {
 	}
 
 	private void runPipe(Socket socket) {
-		Pipe pipe = new Pipe(16 * 1024 * 1024);
+		final int pipeSize = 16 * 1024 * 1024;
+		Pipe pipe = new Pipe(pipeSize);
 		DirectoryReader reader = new DirectoryReader(
 				getContentResolver(),
 				root, files, pipe,
 				(text, now, max) -> {
 					if (builder != null && notificationManager != null) {
-						if (text != null)
-							builder.setContentText(text).
-									setProgress(max, now, false);
-						else
-							builder.setContentText(getResources().getString(R.string.notification_finishing)).
-									setProgress(0, 0, true);
+						if (text != null) {
+							text += "\n";
+							if (pipe.getSize() > pipeSize / 2) {
+								text += getResources().getString(R.string.bottleneck_network);
+							} else {
+								text += getResources().getString(R.string.bottleneck_local);
+							}
+						} else {
+							text = getResources().getString(R.string.notification_finishing);
+						}
+						builder.setContentText(text)
+								.setStyle(new Notification.BigTextStyle().bigText(text))
+								.setProgress(max, now, max == now && now == 0);
 						notificationManager.notify(startId, builder.build());
 					}
 				});
@@ -180,11 +188,6 @@ public class TransferService extends Service implements Runnable {
 				} else break;
 				out.write(writeBuffer);
 				rate.increase(writeBuffer.length);
-				{
-					final long size = pipe.getSize() / 1024;
-					if (size > 8 * 1024)
-						Log.v(LOG_TAG, "pipe size=" + size + "KB");
-				}
 			}
 			readerThread.join();
 			Log.d(LOG_TAG, "TransferService finished normally");

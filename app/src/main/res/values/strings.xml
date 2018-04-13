@@ -18,4 +18,6 @@
     <string name="notification_finishing">正在完成</string>
     <string name="transfer_success">传输成功</string>
     <string name="transfer_failed">传输失败</string>
+    <string name="bottleneck_local">瓶颈：本地</string>
+    <string name="bottleneck_network">瓶颈：网络</string>
 </resources>

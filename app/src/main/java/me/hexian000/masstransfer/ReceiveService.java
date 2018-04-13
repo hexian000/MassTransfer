@@ -140,20 +140,26 @@ public class ReceiveService extends Service implements Runnable {
 	}
 
 	private void runPipe(Socket socket) {
-		Pipe pipe = new Pipe(256 * 1024 * 1024);
+		final int pipeSize = 256 * 1024 * 1024;
+		Pipe pipe = new Pipe(pipeSize);
 		DirectoryWriter writer = new DirectoryWriter(
 				getContentResolver(),
 				root, pipe,
 				(text, now, max) -> {
-					if (builder != null && notificationManager != null) {
-						if (text != null)
-							builder.setContentText(text).
-									setProgress(max, now, false);
-						else
-							builder.setContentText(getResources().getString(R.string.notification_finishing)).
-									setProgress(0, 0, true);
-						notificationManager.notify(startId, builder.build());
+					if (text != null) {
+						text += "\n";
+						if (pipe.getSize() > pipeSize / 2) {
+							text += getResources().getString(R.string.bottleneck_local);
+						} else {
+							text += getResources().getString(R.string.bottleneck_network);
+						}
+					} else {
+						text = getResources().getString(R.string.notification_finishing);
 					}
+					builder.setContentText(text)
+							.setStyle(new Notification.BigTextStyle().bigText(text))
+							.setProgress(max, now, max == now && now == 0);
+					notificationManager.notify(startId, builder.build());
 				});
 		Thread writerThread = new Thread(writer);
 		writerThread.start();
@@ -182,11 +188,6 @@ public class ReceiveService extends Service implements Runnable {
 					pipe.write(data);
 				} else break;
 				rate.increase(read);
-				{
-					final long size = pipe.getSize() / 1024;
-					if (size > 8 * 1024)
-						Log.v(LOG_TAG, "pipe size=" + size + "KB");
-				}
 			}
 			pipe.close();
 			writerThread.join();
