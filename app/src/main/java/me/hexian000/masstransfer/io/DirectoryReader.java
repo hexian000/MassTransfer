@@ -101,7 +101,6 @@ public class DirectoryReader implements Runnable {
 	public void run() {
 		try {
 			for (String file : files) {
-				Log.d(LOG_TAG, "file=" + file);
 				DocumentFile entry = root.findFile(file);
 				if (entry != null) {
 					if (entry.isDirectory())

@@ -8,15 +8,12 @@ import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.provider.DocumentFile;
-import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.*;
 import android.widget.*;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
 
 public class ChooseActivity extends Activity {
 	List<String> files;
@@ -70,14 +67,12 @@ public class ChooseActivity extends Activity {
 
 		final Uri rootUri = getIntent().getData();
 		new Thread(() -> {
-			long start = System.currentTimeMillis();
 			DocumentFile root = DocumentFile.fromTreeUri(this, rootUri);
 			if (root == null || !root.isDirectory()) {
 				if (handler != null)
 					handler.post(this::finish);
 				return;
 			}
-			Log.v(LOG_TAG, "time used: " + (System.currentTimeMillis() - start));
 			DocumentFile[] list = root.listFiles();
 			List<String> dirList = new ArrayList<>();
 			List<String> fileList = new ArrayList<>();
@@ -91,20 +86,16 @@ public class ChooseActivity extends Activity {
 					dirList.add(name);
 				}
 			}
-			Log.v(LOG_TAG, "time used: " + (System.currentTimeMillis() - start));
 			dirList.sort(String::compareToIgnoreCase);
 			fileList.sort(String::compareToIgnoreCase);
-			Log.v(LOG_TAG, "time used: " + (System.currentTimeMillis() - start));
 			files.addAll(dirList);
 			files.addAll(fileList);
 			dirCount = dirList.size();
-			Log.v(LOG_TAG, "time used: " + (System.currentTimeMillis() - start));
 			if (handler != null)
 				handler.post(() -> {
 					progressBar.setVisibility(View.INVISIBLE);
 					adapter.notifyDataSetChanged();
 				});
-			Log.v(LOG_TAG, "time used: " + (System.currentTimeMillis() - start));
 		}).start();
 	}
 
