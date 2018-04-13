@@ -24,12 +24,13 @@ public class Pipe implements Reader, Writer {
 
 	@Override
 	public synchronized int read(byte[] buffer) throws InterruptedException {
+		if (closed) return -1;
 		int read = 0;
 		while (read < buffer.length) {
 			if (current == null) {
-				if (closed && q.size() == 0)
-					break;
 				current = q.take();
+				if (q.size() == 0)
+					return -1;
 			} else {
 				int count = Math.min(current.length - offset, buffer.length - read);
 				System.arraycopy(current, offset, buffer, read, count);
