@@ -118,6 +118,7 @@ public class ReceiveService extends Service implements Runnable {
 			listener.setSoTimeout(4000); // prevent thread leak
 			while (thread != null) {
 				try (Socket socket = listener.accept()) {
+					Log.d(LOG_TAG, "ReceiveService accepted connection");
 					socket.setPerformancePreferences(0, 0, 1);
 					socket.setReceiveBufferSize(8 * 1024 * 1024);
 					socket.setSoLinger(true, 10);

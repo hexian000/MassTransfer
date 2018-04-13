@@ -186,6 +186,7 @@ public class TransferService extends Service implements Runnable {
 					writeBuffer = new byte[read];
 					System.arraycopy(buffer, 0, writeBuffer, 0, read);
 				} else break;
+				Log.v(LOG_TAG, "send " + writeBuffer.length + " bytes");
 				out.write(writeBuffer);
 				rate.increase(writeBuffer.length);
 			}
