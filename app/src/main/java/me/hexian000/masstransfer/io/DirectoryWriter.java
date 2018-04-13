@@ -1,4 +1,4 @@
-package me.hexian000.masstransfer.streams;
+package me.hexian000.masstransfer.io;
 
 /*
  * DirectoryWriter 是对系统自带的 DocumentFile 的封装

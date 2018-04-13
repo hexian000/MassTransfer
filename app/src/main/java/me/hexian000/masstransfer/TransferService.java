@@ -13,9 +13,9 @@ import android.support.annotation.Nullable;
 import android.support.v4.provider.DocumentFile;
 import android.util.Log;
 import android.widget.Toast;
-import me.hexian000.masstransfer.streams.DirectoryReader;
-import me.hexian000.masstransfer.streams.Pipe;
-import me.hexian000.masstransfer.streams.RateCounter;
+import me.hexian000.masstransfer.io.DirectoryReader;
+import me.hexian000.masstransfer.io.Pipe;
+import me.hexian000.masstransfer.io.RateCounter;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -186,7 +186,6 @@ public class TransferService extends Service implements Runnable {
 					writeBuffer = new byte[read];
 					System.arraycopy(buffer, 0, writeBuffer, 0, read);
 				} else break;
-				Log.v(LOG_TAG, "send " + writeBuffer.length + " bytes");
 				out.write(writeBuffer);
 				rate.increase(writeBuffer.length);
 			}

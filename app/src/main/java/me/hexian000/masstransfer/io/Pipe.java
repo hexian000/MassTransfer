@@ -1,12 +1,8 @@
-package me.hexian000.masstransfer.streams;
-
-import android.util.Log;
+package me.hexian000.masstransfer.io;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.Semaphore;
-
-import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
 
 public class Pipe implements Reader, Writer {
 	private int limit;
@@ -33,7 +29,7 @@ public class Pipe implements Reader, Writer {
 		while (read < buffer.length) {
 			if (current == null) {
 				current = q.take();
-				if (q.size() == 0)
+				if (current.length == 0)
 					return -1;
 			} else {
 				int count = Math.min(current.length - offset, buffer.length - read);
@@ -53,7 +49,6 @@ public class Pipe implements Reader, Writer {
 	@Override
 	public void write(byte[] buffer) throws InterruptedException {
 		if (buffer.length > 0) {
-			Log.d(LOG_TAG, "acquire " + buffer.length + " in " + capacity.availablePermits() + "permits");
 			capacity.acquire(buffer.length);
 			q.put(buffer);
 		}

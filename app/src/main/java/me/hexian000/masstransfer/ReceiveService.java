@@ -14,9 +14,9 @@ import android.support.annotation.Nullable;
 import android.support.v4.provider.DocumentFile;
 import android.util.Log;
 import android.widget.Toast;
-import me.hexian000.masstransfer.streams.DirectoryWriter;
-import me.hexian000.masstransfer.streams.Pipe;
-import me.hexian000.masstransfer.streams.RateCounter;
+import me.hexian000.masstransfer.io.DirectoryWriter;
+import me.hexian000.masstransfer.io.Pipe;
+import me.hexian000.masstransfer.io.RateCounter;
 
 import java.io.IOException;
 import java.io.InputStream;

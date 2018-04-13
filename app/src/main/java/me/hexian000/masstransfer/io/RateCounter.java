@@ -1,4 +1,4 @@
-package me.hexian000.masstransfer.streams;
+package me.hexian000.masstransfer.io;
 
 import java.util.concurrent.atomic.AtomicLong;
 
