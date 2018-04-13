@@ -22,10 +22,14 @@ final class Discoverer {
 		try {
 			for (Enumeration<NetworkInterface> i = NetworkInterface.getNetworkInterfaces(); i.hasMoreElements(); ) {
 				NetworkInterface nic = i.nextElement();
-				if (nic.isLoopback() || !nic.isUp()) continue;
+				if (nic.isLoopback() || !nic.isUp()) {
+					continue;
+				}
 				for (InterfaceAddress interfaceAddress : nic.getInterfaceAddresses()) {
 					InetAddress broadcast = interfaceAddress.getBroadcast();
-					if (broadcast == null) continue;
+					if (broadcast == null) {
+						continue;
+					}
 					Log.d(TransferApp.LOG_TAG, "broadcast init at " + broadcast.toString());
 					DatagramSocket socket = new DatagramSocket(port);
 					socket.setBroadcast(true);
@@ -45,15 +49,16 @@ final class Discoverer {
 	}
 
 	void start() {
-		if (announce == null) return;
+		if (announce == null) {
+			return;
+		}
 		timer = new Timer();
 		timer.schedule(new TimerTask() {
 			@Override
 			public void run() {
 				try {
 					for (AnnounceInterface item : announce) {
-						DatagramPacket packet = new DatagramPacket(magic,
-								magic.length, item.broadcast, port);
+						DatagramPacket packet = new DatagramPacket(magic, magic.length, item.broadcast, port);
 						item.socket.send(packet);
 					}
 				} catch (IOException e) {
@@ -72,13 +77,15 @@ final class Discoverer {
 						item.socket.receive(p);
 						if (Arrays.equals(magic, buffer)) {
 							InetAddress ip = p.getAddress();
-							if (!ip.isAnyLocalAddress() && !ip.isLoopbackAddress() &&
-									NetworkInterface.getByInetAddress(ip) == null)
+							if (!ip.isAnyLocalAddress() && !ip.isLoopbackAddress() && NetworkInterface
+									.getByInetAddress(ip) == null) {
 								peers.put(ip.getHostAddress(), System.currentTimeMillis());
+							}
 						}
 					} catch (IOException e) {
-						if (item.socket.isClosed())
+						if (item.socket.isClosed()) {
 							break;
+						}
 						Log.e(TransferApp.LOG_TAG, "broadcast receive error", e);
 					}
 				}

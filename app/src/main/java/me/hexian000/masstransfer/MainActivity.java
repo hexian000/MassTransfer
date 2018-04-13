@@ -74,20 +74,17 @@ public class MainActivity extends Activity {
 				if (adapter == null) {
 					handler.post(() -> {
 						ListView peersList = findViewById(R.id.PeerList);
-						adapter = new ArrayAdapter<>(
-								MainActivity.this,
-								android.R.layout.simple_list_item_1,
-								items);
+						adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_list_item_1, items);
 						peersList.setAdapter(adapter);
 						peersList.setOnItemClickListener((adapterView, view, i, l) -> {
 							if (((TransferApp) getApplicationContext()).transferService != null) {
-								Toast.makeText(MainActivity.this,
-										R.string.transfer_service_is_already_running,
-										Toast.LENGTH_SHORT).show();
+								Toast.makeText(MainActivity.this, R.string.transfer_service_is_already_running, Toast
+										.LENGTH_SHORT).show();
 								return;
 							}
 
-							Toast.makeText(MainActivity.this, R.string.choose_send_directory, Toast.LENGTH_SHORT).show();
+							Toast.makeText(MainActivity.this, R.string.choose_send_directory, Toast.LENGTH_SHORT)
+									.show();
 							host = (String) adapter.getItem(i);
 							Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
 							startActivityForResult(intent, REQUEST_SEND);
@@ -96,8 +93,9 @@ public class MainActivity extends Activity {
 				} else {
 					handler.post(() -> {
 						items.clear();
-						if (mService != null)
+						if (mService != null) {
 							items.addAll(mService.discoverer.getPeers());
+						}
 						adapter.notifyDataSetChanged();
 					});
 				}
@@ -107,41 +105,47 @@ public class MainActivity extends Activity {
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if (resultCode != RESULT_OK) return;
+		if (resultCode != RESULT_OK) {
+			return;
+		}
 		switch (requestCode) {
-			case REQUEST_SEND: {
-				Uri uriTree = data.getData();
-				if (uriTree != null) {
-					Intent intent = new Intent(this, ChooseActivity.class);
-					intent.setData(uriTree);
-					startActivityForResult(intent, REQUEST_CHOOSE);
-				}
+		case REQUEST_SEND: {
+			Uri uriTree = data.getData();
+			if (uriTree != null) {
+				Intent intent = new Intent(this, ChooseActivity.class);
+				intent.setData(uriTree);
+				startActivityForResult(intent, REQUEST_CHOOSE);
 			}
-			break;
-			case REQUEST_RECEIVE: {
-				Uri uriTree = data.getData();
-				if (uriTree != null) {
-					Intent intent = new Intent(this, ReceiveService.class);
-					intent.setData(uriTree);
-					startForegroundServiceCompat(intent);
-					Toast.makeText(MainActivity.this, R.string.start_receive_service, Toast.LENGTH_SHORT).show();
-					receiveButton.setText(R.string.receive_cancel_button);
-				}
-			}
-			break;
-			case REQUEST_CHOOSE: {
-				Bundle extras = data.getExtras();
-				if (extras == null) break;
-				String[] files = extras.getStringArray("files");
-				if (files == null || files.length < 1) break;
-				Intent intent = new Intent(this, TransferService.class);
-				intent.setData(data.getData());
-				intent.putExtra("host", host);
-				intent.putExtra("files", files);
+		}
+		break;
+		case REQUEST_RECEIVE: {
+			Uri uriTree = data.getData();
+			if (uriTree != null) {
+				Intent intent = new Intent(this, ReceiveService.class);
+				intent.setData(uriTree);
 				startForegroundServiceCompat(intent);
-				finish();
+				Toast.makeText(MainActivity.this, R.string.start_receive_service, Toast.LENGTH_SHORT).show();
+				receiveButton.setText(R.string.receive_cancel_button);
 			}
-			break;
+		}
+		break;
+		case REQUEST_CHOOSE: {
+			Bundle extras = data.getExtras();
+			if (extras == null) {
+				break;
+			}
+			String[] files = extras.getStringArray("files");
+			if (files == null || files.length < 1) {
+				break;
+			}
+			Intent intent = new Intent(this, TransferService.class);
+			intent.setData(data.getData());
+			intent.putExtra("host", host);
+			intent.putExtra("files", files);
+			startForegroundServiceCompat(intent);
+			finish();
+		}
+		break;
 		}
 	}
 
@@ -164,10 +168,11 @@ public class MainActivity extends Activity {
 		app.mainActivity = this;
 
 		receiveButton = findViewById(R.id.ReceiveButton);
-		if (app.receiveService != null)
+		if (app.receiveService != null) {
 			receiveButton.setText(R.string.receive_cancel_button);
-		else
+		} else {
 			receiveButton.setText(R.string.receive_button);
+		}
 		receiveButton.setOnClickListener((View v) -> {
 			if (app.receiveService != null) {
 				Intent intent = new Intent(this, ReceiveService.class);

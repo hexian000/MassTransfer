@@ -40,47 +40,36 @@ public class ReceiveService extends Service implements Runnable {
 	private ServiceConnection mConnection;
 
 	private void initNotification() {
-		if (builder == null)
-			builder = new Notification.Builder(
-					this.getApplicationContext());
-		builder.setContentIntent(null)
-				.setContentTitle(getResources().getString(R.string.notification_receiving))
-				.setSmallIcon(R.drawable.ic_send_black_24dp)
-				.setWhen(System.currentTimeMillis())
-				.setProgress(0, 0, true)
-				.setOngoing(true)
-				.setVisibility(Notification.VISIBILITY_PUBLIC);
+		if (builder == null) {
+			builder = new Notification.Builder(this.getApplicationContext());
+		}
+		builder.setContentIntent(null).setContentTitle(getResources().getString(R.string.notification_receiving))
+				.setSmallIcon(R.drawable.ic_send_black_24dp).setWhen(System.currentTimeMillis()).setProgress(0, 0,
+				true).setOngoing(true).setVisibility(Notification.VISIBILITY_PUBLIC);
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 			// Android 8.0+
-			NotificationManager manager =
-					(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+			NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 			if (manager != null) {
-				TransferApp.createNotificationChannels(
-						manager,
-						getResources()
-				);
+				TransferApp.createNotificationChannels(manager, getResources());
 				builder.setChannelId(CHANNEL_TRANSFER_STATE);
 			}
 		} else {
 			// Android 7.1
-			builder.setPriority(Notification.PRIORITY_DEFAULT)
-					.setLights(0, 0, 0)
-					.setVibrate(null)
-					.setSound(null);
+			builder.setPriority(Notification.PRIORITY_DEFAULT).setLights(0, 0, 0).setVibrate(null).setSound(null);
 		}
 		Intent cancel = new Intent(this, ReceiveService.class);
 		cancel.setAction("cancel");
-		builder.addAction(new Notification.Action.Builder(
-				null, getResources().getString(R.string.cancel),
-				PendingIntent.getService(this, startId, cancel, 0)
-		).build()).setContentText(getResources().getString(R.string.notification_starting));
+		builder.addAction(new Notification.Action.Builder(null, getResources().getString(R.string.cancel),
+				PendingIntent.getService(this, startId, cancel, 0)).build()).setContentText(getResources().getString(R
+				.string.notification_starting));
 	}
 
 	private void stop() {
 		if (thread != null) {
-			if (thread.isAlive())
+			if (thread.isAlive()) {
 				thread.interrupt();
+			}
 			thread = null;
 		}
 		notificationManager = null;
@@ -143,25 +132,21 @@ public class ReceiveService extends Service implements Runnable {
 	private void runPipe(Socket socket) {
 		final int pipeSize = 256 * 1024 * 1024;
 		Pipe pipe = new Pipe(pipeSize);
-		DirectoryWriter writer = new DirectoryWriter(
-				getContentResolver(),
-				root, pipe,
-				(text, now, max) -> {
-					if (text != null) {
-						text += "\n";
-						if (pipe.getSize() > pipeSize / 2) {
-							text += getResources().getString(R.string.bottleneck_local);
-						} else {
-							text += getResources().getString(R.string.bottleneck_network);
-						}
-					} else {
-						text = getResources().getString(R.string.notification_finishing);
-					}
-					builder.setContentText(text)
-							.setStyle(new Notification.BigTextStyle().bigText(text))
-							.setProgress(max, now, max == now && now == 0);
-					notificationManager.notify(startId, builder.build());
-				});
+		DirectoryWriter writer = new DirectoryWriter(getContentResolver(), root, pipe, (text, now, max) -> {
+			if (text != null) {
+				text += "\n";
+				if (pipe.getSize() > pipeSize / 2) {
+					text += getResources().getString(R.string.bottleneck_local);
+				} else {
+					text += getResources().getString(R.string.bottleneck_network);
+				}
+			} else {
+				text = getResources().getString(R.string.notification_finishing);
+			}
+			builder.setContentText(text).setStyle(new Notification.BigTextStyle().bigText(text)).setProgress(max, now,
+					max == now && now == 0);
+			notificationManager.notify(startId, builder.build());
+		});
 		Thread writerThread = new Thread(writer);
 		writerThread.start();
 		Timer timer = new Timer();
@@ -181,13 +166,15 @@ public class ReceiveService extends Service implements Runnable {
 			while (true) {
 				byte[] buffer = new byte[1024];
 				int read = in.read(buffer);
-				if (read == buffer.length)
+				if (read == buffer.length) {
 					pipe.write(buffer);
-				else if (read > 0) {
+				} else if (read > 0) {
 					byte[] data = new byte[read];
 					System.arraycopy(buffer, 0, data, 0, read);
 					pipe.write(data);
-				} else break;
+				} else {
+					break;
+				}
 				rate.increase(read);
 			}
 			pipe.close();

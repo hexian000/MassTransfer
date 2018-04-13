@@ -16,8 +16,9 @@ public class StreamWindow {
 	}
 
 	public synchronized void send(byte[] data) throws InterruptedException {
-		if (data.length > window.length)
+		if (data.length > window.length) {
 			throw new IllegalArgumentException();
+		}
 		usage.acquire(data.length);
 		if (offset + data.length <= window.length) {
 			System.arraycopy(data, 0, window, offset, data.length);

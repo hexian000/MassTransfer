@@ -37,8 +37,7 @@ public class ChooseActivity extends Activity {
 		progressBar = findViewById(R.id.ListLoading);
 
 		files = new ArrayList<>();
-		ArrayAdapter adapter = new ArrayAdapter<String>(this,
-				R.layout.choose_file_item, files) {
+		ArrayAdapter adapter = new ArrayAdapter<String>(this, R.layout.choose_file_item, files) {
 			@NonNull
 			@Override
 			public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
@@ -50,10 +49,11 @@ public class ChooseActivity extends Activity {
 				} else {
 					holder = (ItemViewHolder) convertView.getTag();
 				}
-				if (position < dirCount)
+				if (position < dirCount) {
 					holder.imageView.setImageResource(R.drawable.ic_folder_white_24dp);
-				else
+				} else {
 					holder.imageView.setImageResource(R.drawable.ic_file_white_24dp);
+				}
 				holder.textView.setText(((String) listView.getItemAtPosition(position)));
 				return convertView;
 			}
@@ -69,8 +69,9 @@ public class ChooseActivity extends Activity {
 		new Thread(() -> {
 			DocumentFile root = DocumentFile.fromTreeUri(this, rootUri);
 			if (root == null || !root.isDirectory()) {
-				if (handler != null)
+				if (handler != null) {
 					handler.post(this::finish);
+				}
 				return;
 			}
 			DocumentFile[] list = root.listFiles();
@@ -78,8 +79,9 @@ public class ChooseActivity extends Activity {
 			List<String> fileList = new ArrayList<>();
 			for (DocumentFile file : list) {
 				String name = file.getName();
-				if (name.startsWith("."))
+				if (name.startsWith(".")) {
 					continue;
+				}
 				if (file.isFile() && file.canRead()) {
 					fileList.add(name);
 				} else if (file.isDirectory()) {
@@ -91,11 +93,12 @@ public class ChooseActivity extends Activity {
 			files.addAll(dirList);
 			files.addAll(fileList);
 			dirCount = dirList.size();
-			if (handler != null)
+			if (handler != null) {
 				handler.post(() -> {
 					progressBar.setVisibility(View.INVISIBLE);
 					adapter.notifyDataSetChanged();
 				});
+			}
 		}).start();
 	}
 
@@ -109,20 +112,20 @@ public class ChooseActivity extends Activity {
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
-			case R.id.ok: {
-				Intent intent = new Intent();
-				intent.setData(getIntent().getData());
-				SparseBooleanArray positions = listView.getCheckedItemPositions();
-				String[] chosenFiles = new String[positions.size()];
-				for (int i = 0; i < positions.size(); i++) {
-					String name = ((String) listView.getItemAtPosition(positions.keyAt(i)));
-					chosenFiles[i] = name;
-				}
-				intent.putExtra("files", chosenFiles);
-				setResult(RESULT_OK, intent);
-				finish();
+		case R.id.ok: {
+			Intent intent = new Intent();
+			intent.setData(getIntent().getData());
+			SparseBooleanArray positions = listView.getCheckedItemPositions();
+			String[] chosenFiles = new String[positions.size()];
+			for (int i = 0; i < positions.size(); i++) {
+				String name = ((String) listView.getItemAtPosition(positions.keyAt(i)));
+				chosenFiles[i] = name;
 			}
-			break;
+			intent.putExtra("files", chosenFiles);
+			setResult(RESULT_OK, intent);
+			finish();
+		}
+		break;
 		}
 		return super.onOptionsItemSelected(item);
 	}

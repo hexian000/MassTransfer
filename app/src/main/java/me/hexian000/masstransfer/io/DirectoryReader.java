@@ -24,11 +24,8 @@ public class DirectoryReader implements Runnable {
 	private String[] files;
 	private Writer out;
 
-	public DirectoryReader(ContentResolver resolver,
-	                       DocumentFile root,
-	                       String[] files,
-	                       Writer out,
-	                       ProgressReporter reporter) {
+	public DirectoryReader(ContentResolver resolver, DocumentFile root, String[] files, Writer out, ProgressReporter
+			reporter) {
 		this.resolver = resolver;
 		this.root = root;
 		this.files = files;
@@ -37,11 +34,16 @@ public class DirectoryReader implements Runnable {
 	}
 
 	private void sendDir(DocumentFile dir, String basePath) throws IOException, InterruptedException {
-		if (!dir.exists()) return;
+		if (!dir.exists()) {
+			return;
+		}
 		String pathStr = dir.getName();
-		if (pathStr.startsWith(".")) return; // ignore hidden
-		if (basePath.length() > 0)
+		if (pathStr.startsWith(".")) {
+			return; // ignore hidden
+		}
+		if (basePath.length() > 0) {
 			pathStr = basePath + "/" + pathStr;
+		}
 		byte[] path = pathStr.getBytes("UTF-8");
 		ByteArrayOutputStream header = new ByteArrayOutputStream();
 		ByteBuffer lengths = ByteBuffer.allocate(Integer.BYTES + Long.BYTES).
@@ -53,19 +55,25 @@ public class DirectoryReader implements Runnable {
 		header.write(path);
 		out.write(header.toByteArray());
 		for (DocumentFile f : dir.listFiles()) {
-			if (f.isFile())
+			if (f.isFile()) {
 				sendFile(f, pathStr);
-			else if (f.isDirectory())
+			} else if (f.isDirectory()) {
 				sendDir(f, pathStr);
+			}
 		}
 	}
 
 	private void sendFile(DocumentFile file, String basePath) throws IOException, InterruptedException {
-		if (!file.exists() || !file.canRead()) return;
+		if (!file.exists() || !file.canRead()) {
+			return;
+		}
 		String pathStr = file.getName();
-		if (pathStr.startsWith(".")) return; // ignore hidden
-		if (basePath.length() > 0)
+		if (pathStr.startsWith(".")) {
+			return; // ignore hidden
+		}
+		if (basePath.length() > 0) {
 			pathStr = basePath + "/" + pathStr;
+		}
 		byte[] path = pathStr.getBytes("UTF-8");
 		ByteArrayOutputStream header = new ByteArrayOutputStream();
 		ByteBuffer lengths = ByteBuffer.allocate(Integer.BYTES + Long.BYTES).
@@ -74,7 +82,9 @@ public class DirectoryReader implements Runnable {
 		final String name = file.getName();
 		Log.d(LOG_TAG, "sendFile: " + name + " length=" + file.length());
 		InputStream s = resolver.openInputStream(file.getUri());
-		if (s == null) throw new IOException("can't open input stream");
+		if (s == null) {
+			throw new IOException("can't open input stream");
+		}
 		lengths.putLong(file.length());
 		header.write(lengths.array());
 		header.write(path);
@@ -93,7 +103,9 @@ public class DirectoryReader implements Runnable {
 				System.arraycopy(buf, 0, buf2, 0, read);
 				out.write(buf2);
 				reporter.report(name, (int) (pos / bufferSize), maxProgress);
-			} else break;
+			} else {
+				break;
+			}
 		}
 	}
 
@@ -103,10 +115,11 @@ public class DirectoryReader implements Runnable {
 			for (String file : files) {
 				DocumentFile entry = root.findFile(file);
 				if (entry != null) {
-					if (entry.isDirectory())
+					if (entry.isDirectory()) {
 						sendDir(entry, "");
-					else if (entry.isFile())
+					} else if (entry.isFile()) {
 						sendFile(entry, "");
+					}
 				}
 			}
 			reporter.report(null, 0, 0);

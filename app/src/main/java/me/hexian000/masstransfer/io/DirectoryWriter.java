@@ -24,10 +24,7 @@ public class DirectoryWriter implements Runnable {
 	private DocumentFile root;
 	private Reader in;
 
-	public DirectoryWriter(ContentResolver resolver,
-	                       DocumentFile root,
-	                       Reader in,
-	                       ProgressReporter reporter) {
+	public DirectoryWriter(ContentResolver resolver, DocumentFile root, Reader in, ProgressReporter reporter) {
 		this.resolver = resolver;
 		this.root = root;
 		this.in = in;
@@ -59,16 +56,13 @@ public class DirectoryWriter implements Runnable {
 			return;
 		}
 		// is File
-		Log.d(LOG_TAG, "writeFile: " + path +
-				" length=" + length);
+		Log.d(LOG_TAG, "writeFile: " + path + " length=" + length);
 		String name;
 		DocumentFile parent = root;
 		String[] pathSegments = path.split("/");
 		if (pathSegments.length > 1) {
 			String[] parentSegments = new String[pathSegments.length - 1];
-			System.arraycopy(pathSegments, 0,
-					parentSegments, 0,
-					pathSegments.length - 1);
+			System.arraycopy(pathSegments, 0, parentSegments, 0, pathSegments.length - 1);
 			parent = makePath(parentSegments);
 			name = pathSegments[pathSegments.length - 1];
 		} else {
@@ -79,20 +73,21 @@ public class DirectoryWriter implements Runnable {
 			file.delete();
 		}
 		String mime = null;
-		if (name.contains("."))
-			mime = MimeTypeMap.getSingleton().
-					getMimeTypeFromExtension(
-							name.substring(name.lastIndexOf("."))
-					);
-		if (mime == null || "null".equals(mime))
+		if (name.contains(".")) {
+			mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(name.substring(name.lastIndexOf(".")));
+		}
+		if (mime == null || "null".equals(mime)) {
 			mime = "application/*";
+		}
 
 		file = parent.createFile(mime, name);
 		OutputStream out = null;
 		try {
-			if (file != null)
+			if (file != null) {
 				out = resolver.openOutputStream(file.getUri());
-			else Log.e(LOG_TAG, "Can't create file mime=" + mime + " name=" + name);
+			} else {
+				Log.e(LOG_TAG, "Can't create file mime=" + mime + " name=" + name);
+			}
 			final int bufferSize = 1024 * 1024;
 			long pos = 0;
 			int maxProgress = (int) (length / bufferSize);
@@ -100,10 +95,12 @@ public class DirectoryWriter implements Runnable {
 			while (length > 0) {
 				byte[] buffer = new byte[(int) Math.min(length, bufferSize)];
 				int read = in.read(buffer);
-				if (read != buffer.length)
+				if (read != buffer.length) {
 					throw new EOFException();
-				if (out != null)
+				}
+				if (out != null) {
 					out.write(buffer);
+				}
 				length -= read;
 				pos += read;
 				reporter.report(name, (int) (pos / bufferSize), maxProgress);
@@ -123,8 +120,7 @@ public class DirectoryWriter implements Runnable {
 		try {
 			do {
 				int read;
-				ByteBuffer lengths = ByteBuffer.allocate(Integer.BYTES + Long.BYTES).
-						order(ByteOrder.BIG_ENDIAN);
+				ByteBuffer lengths = ByteBuffer.allocate(Integer.BYTES + Long.BYTES).order(ByteOrder.BIG_ENDIAN);
 				read = in.read(lengths.array());
 				if (read != Integer.BYTES + Long.BYTES) {
 					Log.e(LOG_TAG, "EOF when reading header");

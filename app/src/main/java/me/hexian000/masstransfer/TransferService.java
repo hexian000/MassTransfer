@@ -39,40 +39,29 @@ public class TransferService extends Service implements Runnable {
 	boolean result;
 
 	private void initNotification() {
-		if (builder == null)
+		if (builder == null) {
 			builder = new Notification.Builder(this.getApplicationContext());
-		builder.setContentIntent(null)
-				.setContentTitle(getResources().getString(R.string.notification_sending))
-				.setSmallIcon(R.drawable.ic_send_black_24dp)
-				.setWhen(System.currentTimeMillis())
-				.setProgress(0, 0, true)
-				.setOngoing(true)
-				.setVisibility(Notification.VISIBILITY_PUBLIC);
+		}
+		builder.setContentIntent(null).setContentTitle(getResources().getString(R.string.notification_sending))
+				.setSmallIcon(R.drawable.ic_send_black_24dp).setWhen(System.currentTimeMillis()).setProgress(0, 0,
+				true).setOngoing(true).setVisibility(Notification.VISIBILITY_PUBLIC);
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 			// Android 8.0+
-			NotificationManager manager =
-					(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+			NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 			if (manager != null) {
-				TransferApp.createNotificationChannels(
-						manager,
-						getResources()
-				);
+				TransferApp.createNotificationChannels(manager, getResources());
 				builder.setChannelId(CHANNEL_TRANSFER_STATE);
 			}
 		} else {
 			// Android 7.1
-			builder.setPriority(Notification.PRIORITY_DEFAULT)
-					.setLights(0, 0, 0)
-					.setVibrate(null)
-					.setSound(null);
+			builder.setPriority(Notification.PRIORITY_DEFAULT).setLights(0, 0, 0).setVibrate(null).setSound(null);
 		}
 		Intent cancel = new Intent(this, TransferService.class);
 		cancel.setAction("cancel");
-		builder.addAction(new Notification.Action.Builder(
-				null, getResources().getString(R.string.cancel),
-				PendingIntent.getService(this, startId, cancel, 0)
-		).build()).setContentText(getResources().getString(R.string.notification_starting));
+		builder.addAction(new Notification.Action.Builder(null, getResources().getString(R.string.cancel),
+				PendingIntent.getService(this, startId, cancel, 0)).build()).setContentText(getResources().getString(R
+				.string.notification_starting));
 	}
 
 	@Override
@@ -139,27 +128,23 @@ public class TransferService extends Service implements Runnable {
 	private void runPipe(Socket socket) {
 		final int pipeSize = 16 * 1024 * 1024;
 		Pipe pipe = new Pipe(pipeSize);
-		DirectoryReader reader = new DirectoryReader(
-				getContentResolver(),
-				root, files, pipe,
-				(text, now, max) -> {
-					if (builder != null && notificationManager != null) {
-						if (text != null) {
-							text += "\n";
-							if (pipe.getSize() > pipeSize / 2) {
-								text += getResources().getString(R.string.bottleneck_network);
-							} else {
-								text += getResources().getString(R.string.bottleneck_local);
-							}
-						} else {
-							text = getResources().getString(R.string.notification_finishing);
-						}
-						builder.setContentText(text)
-								.setStyle(new Notification.BigTextStyle().bigText(text))
-								.setProgress(max, now, max == now && now == 0);
-						notificationManager.notify(startId, builder.build());
+		DirectoryReader reader = new DirectoryReader(getContentResolver(), root, files, pipe, (text, now, max) -> {
+			if (builder != null && notificationManager != null) {
+				if (text != null) {
+					text += "\n";
+					if (pipe.getSize() > pipeSize / 2) {
+						text += getResources().getString(R.string.bottleneck_network);
+					} else {
+						text += getResources().getString(R.string.bottleneck_local);
 					}
-				});
+				} else {
+					text = getResources().getString(R.string.notification_finishing);
+				}
+				builder.setContentText(text).setStyle(new Notification.BigTextStyle().bigText(text)).setProgress(max,
+						now, max == now && now == 0);
+				notificationManager.notify(startId, builder.build());
+			}
+		});
 		Thread readerThread = new Thread(reader);
 		readerThread.start();
 		Timer timer = new Timer();
@@ -185,7 +170,9 @@ public class TransferService extends Service implements Runnable {
 				} else if (read > 0) {
 					writeBuffer = new byte[read];
 					System.arraycopy(buffer, 0, writeBuffer, 0, read);
-				} else break;
+				} else {
+					break;
+				}
 				out.write(writeBuffer);
 				rate.increase(writeBuffer.length);
 			}

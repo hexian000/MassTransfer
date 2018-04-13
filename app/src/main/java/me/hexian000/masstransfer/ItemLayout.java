@@ -27,22 +27,25 @@ public class ItemLayout extends RelativeLayout implements Checkable {
 
 	@Override
 	public boolean isChecked() {
-		if (checkBox == null)
+		if (checkBox == null) {
 			checkBox = findViewById(R.id.checkBox);
+		}
 		return checkBox.isChecked();
 	}
 
 	@Override
 	public void setChecked(boolean checked) {
-		if (checkBox == null)
+		if (checkBox == null) {
 			checkBox = findViewById(R.id.checkBox);
+		}
 		checkBox.setChecked(checked);
 	}
 
 	@Override
 	public void toggle() {
-		if (checkBox == null)
+		if (checkBox == null) {
 			checkBox = findViewById(R.id.checkBox);
+		}
 		checkBox.setChecked(!checkBox.isChecked());
 	}
 }

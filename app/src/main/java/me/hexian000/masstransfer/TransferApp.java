@@ -21,10 +21,8 @@ public class TransferApp extends Application {
 
 	static void createNotificationChannels(NotificationManager manager, Resources res) {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-			NotificationChannel channel = new NotificationChannel(
-					CHANNEL_TRANSFER_STATE, res.getString(R.string.channel_transfer_state),
-					NotificationManager.IMPORTANCE_DEFAULT
-			);
+			NotificationChannel channel = new NotificationChannel(CHANNEL_TRANSFER_STATE, res.getString(R.string
+					.channel_transfer_state), NotificationManager.IMPORTANCE_DEFAULT);
 			channel.enableLights(false);
 			channel.enableVibration(false);
 			channel.setSound(null, null);
