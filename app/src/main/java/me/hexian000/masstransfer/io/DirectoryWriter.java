@@ -106,8 +106,6 @@ public class DirectoryWriter implements Runnable {
 				reporter.report(name, (int) (pos / bufferSize), maxProgress);
 			}
 		} catch (InterruptedException ignored) {
-		} catch (Throwable e) {
-			Log.e(LOG_TAG, "writing file error: ", e);
 		} finally {
 			if (out != null) {
 				out.close();
