@@ -1,19 +1,19 @@
 package me.hexian000.masstransfer.streams;
 
-import java.util.concurrent.LinkedTransferQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.TransferQueue;
 
 public class Pipe implements Reader, Writer {
 	private int limit;
 	private Semaphore capacity;
-	private TransferQueue<byte[]> q;
+	private BlockingQueue<byte[]> q;
 	private byte[] current = null;
 	private int offset = 0;
 	private boolean closed = false;
 
 	public Pipe(int capacity) {
-		q = new LinkedTransferQueue<>();
+		q = new LinkedBlockingDeque<>();
 		limit = capacity;
 		this.capacity = new Semaphore(capacity);
 	}
@@ -49,8 +49,8 @@ public class Pipe implements Reader, Writer {
 	@Override
 	public void write(byte[] buffer) throws InterruptedException {
 		if (buffer.length > 0) {
-			q.transfer(buffer);
 			capacity.acquire(buffer.length);
+			q.put(buffer);
 		}
 	}
 
@@ -58,7 +58,7 @@ public class Pipe implements Reader, Writer {
 	public void close() {
 		closed = true;
 		try {
-			q.transfer(new byte[0]);
+			q.put(new byte[0]);
 		} catch (InterruptedException ignored) {
 		}
 	}

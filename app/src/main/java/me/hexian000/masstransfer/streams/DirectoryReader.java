@@ -87,14 +87,13 @@ public class DirectoryReader implements Runnable {
 		reporter.report(name, (int) (pos / bufferSize), maxProgress);
 		while (true) {
 			read = s.read(buf);
-			if (read == -1) break;
 			if (read > 0) {
 				pos += read;
 				byte[] buf2 = new byte[read];
 				System.arraycopy(buf, 0, buf2, 0, read);
 				out.write(buf2);
 				reporter.report(name, (int) (pos / bufferSize), maxProgress);
-			}
+			} else break;
 		}
 	}
 
