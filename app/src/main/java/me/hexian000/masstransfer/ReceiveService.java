@@ -115,13 +115,11 @@ public class ReceiveService extends Service implements Runnable {
 				} catch (SocketTimeoutException e) {
 					continue;
 				} catch (IOException e) {
-					result = false;
 					Log.e(LOG_TAG, "listener accept error", e);
 				}
 				break;
 			}
 		} catch (IOException e) {
-			result = false;
 			Log.e(LOG_TAG, "listener init error", e);
 		} finally {
 			Log.d(LOG_TAG, "ReceiveService closed");
@@ -179,17 +177,15 @@ public class ReceiveService extends Service implements Runnable {
 			}
 			pipe.close();
 			writerThread.join();
+			result = writer.isSuccess();
 			Log.d(LOG_TAG, "ReceiveService finished normally");
 		} catch (InterruptedException ignored) {
-			result = false;
 			Log.d(LOG_TAG, "ReceiveService interrupted");
 		} catch (IOException e) {
-			result = false;
 			Log.e(LOG_TAG, "ReceiveService", e);
 		} finally {
 			timer.cancel();
 			if (writerThread.isAlive()) {
-				result = false;
 				writerThread.interrupt();
 			}
 		}
@@ -198,7 +194,7 @@ public class ReceiveService extends Service implements Runnable {
 	@Override
 	public void onCreate() {
 		((TransferApp) getApplicationContext()).receiveService = this;
-		result = true;
+		result = false;
 		mConnection = new ServiceConnection() {
 			@Override
 			public void onServiceConnected(ComponentName className, IBinder service) {

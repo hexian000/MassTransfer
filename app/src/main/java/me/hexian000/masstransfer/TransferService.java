@@ -68,7 +68,6 @@ public class TransferService extends Service implements Runnable {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if ("cancel".equals(intent.getAction())) {
 			Log.d(LOG_TAG, "TransferService user cancelled");
-			result = false;
 			if (thread != null) {
 				Log.d(LOG_TAG, "try interrupt transfer thread");
 				thread.interrupt();
@@ -115,7 +114,6 @@ public class TransferService extends Service implements Runnable {
 			socket.connect(new InetSocketAddress(InetAddress.getByName(host), TCP_PORT), 4000);
 			runPipe(socket);
 		} catch (IOException e) {
-			result = false;
 			Log.e(LOG_TAG, "connect failed", e);
 		} finally {
 			thread = null;
@@ -177,17 +175,15 @@ public class TransferService extends Service implements Runnable {
 				rate.increase(writeBuffer.length);
 			}
 			readerThread.join();
+			result = reader.isSuccess();
 			Log.d(LOG_TAG, "TransferService finished normally");
 		} catch (InterruptedException e) {
-			result = false;
 			Log.d(LOG_TAG, "TransferService interrupted");
 		} catch (IOException e) {
-			result = false;
 			Log.e(LOG_TAG, "TransferService", e);
 		} finally {
 			timer.cancel();
 			if (readerThread.isAlive()) {
-				result = false;
 				readerThread.interrupt();
 			}
 		}
@@ -196,7 +192,7 @@ public class TransferService extends Service implements Runnable {
 	@Override
 	public void onCreate() {
 		((TransferApp) getApplicationContext()).transferService = this;
-		result = true;
+		result = false;
 	}
 
 	@Override

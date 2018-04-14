@@ -23,12 +23,17 @@ public class DirectoryWriter implements Runnable {
 	private ContentResolver resolver;
 	private DocumentFile root;
 	private Reader in;
+	private boolean success = false;
 
 	public DirectoryWriter(ContentResolver resolver, DocumentFile root, Reader in, ProgressReporter reporter) {
 		this.resolver = resolver;
 		this.root = root;
 		this.in = in;
 		this.reporter = reporter;
+	}
+
+	public boolean isSuccess() {
+		return success;
 	}
 
 	private DocumentFile makePath(String[] segments) {
@@ -143,6 +148,7 @@ public class DirectoryWriter implements Runnable {
 				String path = new String(name, "UTF-8");
 				writeFile(path, fileLen);
 			} while (true);
+			success = true;
 			reporter.report(null, 0, 0);
 			Log.d(LOG_TAG, "DirectoryWriter finished normally");
 		} catch (InterruptedException e) {

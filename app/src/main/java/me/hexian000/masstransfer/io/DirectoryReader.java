@@ -23,6 +23,7 @@ public class DirectoryReader implements Runnable {
 	private DocumentFile root;
 	private String[] files;
 	private Writer out;
+	private boolean success = false;
 
 	public DirectoryReader(ContentResolver resolver, DocumentFile root, String[] files, Writer out, ProgressReporter
 			reporter) {
@@ -31,6 +32,10 @@ public class DirectoryReader implements Runnable {
 		this.files = files;
 		this.out = out;
 		this.reporter = reporter;
+	}
+
+	public boolean isSuccess() {
+		return success;
 	}
 
 	private void sendDir(DocumentFile dir, String basePath) throws IOException, InterruptedException {
@@ -129,6 +134,7 @@ public class DirectoryReader implements Runnable {
 			lengths.putLong(0);
 			out.write(lengths.array()); // bye
 			out.close();
+			success = true;
 			Log.d(LOG_TAG, "DirectoryReader finished normally");
 		} catch (InterruptedException e) {
 			Log.d(LOG_TAG, "DirectoryReader interrupted");
