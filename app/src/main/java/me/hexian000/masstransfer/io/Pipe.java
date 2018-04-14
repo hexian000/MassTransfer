@@ -58,11 +58,13 @@ public class Pipe implements Reader, Writer {
 	}
 
 	@Override
-	public void close() {
-		closed = true;
-		try {
-			q.put(new byte[0]);
-		} catch (InterruptedException ignored) {
+	public synchronized void close() {
+		if (!closed) {
+			closed = true;
+			try {
+				q.put(new byte[0]);
+			} catch (InterruptedException ignored) {
+			}
 		}
 	}
 }
