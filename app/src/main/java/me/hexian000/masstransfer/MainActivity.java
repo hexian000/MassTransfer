@@ -93,7 +93,7 @@ public class MainActivity extends Activity {
 				} else {
 					handler.post(() -> {
 						items.clear();
-						if (mService != null) {
+						if (mService != null && mService.discoverer != null) {
 							items.addAll(mService.discoverer.getPeers());
 						}
 						adapter.notifyDataSetChanged();
