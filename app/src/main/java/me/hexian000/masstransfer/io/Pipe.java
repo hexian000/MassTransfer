@@ -5,6 +5,8 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.Semaphore;
 
 public class Pipe implements Reader, Writer {
+	private final Object readLock = new Object();
+	private final Object closeLock = new Object();
 	private int limit;
 	private Semaphore capacity;
 	private BlockingQueue<byte[]> q;
@@ -23,30 +25,32 @@ public class Pipe implements Reader, Writer {
 	}
 
 	@Override
-	public synchronized int read(byte[] buffer) throws InterruptedException {
-		if (closed) {
-			return -1;
-		}
-		int read = 0;
-		while (read < buffer.length) {
-			if (current == null) {
-				current = q.take();
-				if (current.length == 0) {
-					return -1;
-				}
-			} else {
-				int count = Math.min(current.length - offset, buffer.length - read);
-				System.arraycopy(current, offset, buffer, read, count);
-				offset += count;
-				read += count;
-				if (offset == current.length) {
-					current = null;
-					offset = 0;
+	public int read(byte[] buffer) throws InterruptedException {
+		synchronized (readLock) {
+			if (closed) {
+				return -1;
+			}
+			int read = 0;
+			while (read < buffer.length) {
+				if (current == null) {
+					current = q.take();
+					if (current.length == 0) {
+						return -1;
+					}
+				} else {
+					int count = Math.min(current.length - offset, buffer.length - read);
+					System.arraycopy(current, offset, buffer, read, count);
+					offset += count;
+					read += count;
+					if (offset == current.length) {
+						current = null;
+						offset = 0;
+					}
 				}
 			}
+			capacity.release(read);
+			return read;
 		}
-		capacity.release(read);
-		return read;
 	}
 
 	@Override
@@ -58,12 +62,14 @@ public class Pipe implements Reader, Writer {
 	}
 
 	@Override
-	public synchronized void close() {
-		if (!closed) {
-			closed = true;
-			try {
-				q.put(new byte[0]);
-			} catch (InterruptedException ignored) {
+	public void close() {
+		synchronized (closeLock) {
+			if (!closed) {
+				closed = true;
+				try {
+					q.put(new byte[0]);
+				} catch (InterruptedException ignored) {
+				}
 			}
 		}
 	}
