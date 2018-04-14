@@ -102,32 +102,47 @@ public class ReceiveService extends Service implements Runnable {
 
 	@Override
 	public void run() {
-		try (ServerSocket listener = new ServerSocket(TransferApp.TCP_PORT)) {
+		try {
+			ServerSocket listener = new ServerSocket(TransferApp.TCP_PORT);
 			Log.d(LOG_TAG, "ReceiveService begins to listen");
-			listener.setSoTimeout(4000); // prevent thread leak
+			listener.setSoTimeout(1000); // prevent thread leak
+			Socket socket = null;
 			while (thread != null) {
-				try (Socket socket = listener.accept()) {
-					Log.d(LOG_TAG, "ReceiveService accepted connection");
-					socket.setPerformancePreferences(0, 0, 1);
-					socket.setReceiveBufferSize(8 * 1024 * 1024);
-					socket.setSoLinger(true, 10);
-					runPipe(socket);
-				} catch (SocketTimeoutException e) {
-					continue;
-				} catch (IOException e) {
-					Log.e(LOG_TAG, "listener accept error", e);
+				try {
+					socket = listener.accept();
+					break;
+				} catch (SocketTimeoutException ignored) {
 				}
-				break;
 			}
-		} catch (IOException e) {
-			Log.e(LOG_TAG, "listener init error", e);
+			if (socket == null) {
+				return;
+			}
+			listener.close();
+			try {
+				Log.d(LOG_TAG, "ReceiveService accepted connection");
+				socket.setPerformancePreferences(0, 0, 1);
+				socket.setReceiveBufferSize(8 * 1024 * 1024);
+				socket.setSoTimeout(4000);
+				socket.setSoLinger(true, 10);
+				runPipe(socket);
+			} catch (SocketTimeoutException e) {
+				Log.d(LOG_TAG, "socket timeout");
+			} catch (IOException e) {
+				Log.e(LOG_TAG, "pipe", e);
+			} finally {
+				socket.close();
+			}
+		} catch (InterruptedException e) {
+			Log.d(LOG_TAG, "ReceiveService interrupted");
+		} catch (Exception e) {
+			Log.e(LOG_TAG, "ReceiveService unexpected exception", e);
 		} finally {
-			Log.d(LOG_TAG, "ReceiveService closed");
+			Log.d(LOG_TAG, "ReceiveService closing");
 			stop();
 		}
 	}
 
-	private void runPipe(Socket socket) {
+	private void runPipe(Socket socket) throws InterruptedException, IOException {
 		final int pipeSize = 256 * 1024 * 1024;
 		Pipe pipe = new Pipe(pipeSize);
 		DirectoryWriter writer = new DirectoryWriter(getContentResolver(), root, pipe, (text, now, max) -> {
@@ -167,10 +182,12 @@ public class ReceiveService extends Service implements Runnable {
 				if (read == buffer.length) {
 					pipe.write(buffer);
 				} else if (read > 0) {
+					Log.v(LOG_TAG, "read: " + read);
 					byte[] data = new byte[read];
 					System.arraycopy(buffer, 0, data, 0, read);
 					pipe.write(data);
 				} else {
+					Log.v(LOG_TAG, "read: " + read);
 					break;
 				}
 				rate.increase(read);
@@ -179,10 +196,6 @@ public class ReceiveService extends Service implements Runnable {
 			writerThread.join();
 			result = writer.isSuccess();
 			Log.d(LOG_TAG, "ReceiveService finished normally");
-		} catch (InterruptedException ignored) {
-			Log.d(LOG_TAG, "ReceiveService interrupted");
-		} catch (IOException e) {
-			Log.e(LOG_TAG, "ReceiveService", e);
 		} finally {
 			timer.cancel();
 			if (writerThread.isAlive()) {
