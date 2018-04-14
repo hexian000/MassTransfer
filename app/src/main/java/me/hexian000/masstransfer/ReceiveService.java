@@ -182,12 +182,10 @@ public class ReceiveService extends Service implements Runnable {
 				if (read == buffer.length) {
 					pipe.write(buffer);
 				} else if (read > 0) {
-					Log.v(LOG_TAG, "read: " + read);
 					byte[] data = new byte[read];
 					System.arraycopy(buffer, 0, data, 0, read);
 					pipe.write(data);
 				} else {
-					Log.v(LOG_TAG, "read: " + read);
 					break;
 				}
 				rate.increase(read);
@@ -195,7 +193,7 @@ public class ReceiveService extends Service implements Runnable {
 			pipe.close();
 			writerThread.join();
 			result = writer.isSuccess();
-			Log.d(LOG_TAG, "ReceiveService finished normally");
+			Log.d(LOG_TAG, "receive thread finished normally");
 		} finally {
 			timer.cancel();
 			if (writerThread.isAlive()) {

@@ -153,6 +153,8 @@ public class DirectoryWriter implements Runnable {
 			Log.d(LOG_TAG, "DirectoryWriter finished normally");
 		} catch (InterruptedException e) {
 			Log.d(LOG_TAG, "DirectoryWriter interrupted");
+		} catch (EOFException e) {
+			Log.e(LOG_TAG, "DirectoryWriter early EOF", e);
 		} catch (IOException e) {
 			Log.e(LOG_TAG, "DirectoryWriter", e);
 		}
