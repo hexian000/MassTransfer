@@ -3,6 +3,12 @@ package me.hexian000.masstransfer.io;
 /*
  * DirectoryWriter 是对系统自带的 DocumentFile 的封装
  * 基于系统接口，实现文件夹的流化
+ *
+ * 目录树传输协议基于流式传输实现，无分包概念：
+ * 4B文件名长度 | 8B文件长度 | 文件名 | 文件数据流 | (重复...)
+ * 若文件名长度 = 文件长度 = 0，表示文件传输完毕
+ * 若文件长度 = -1，表示是文件夹
+ * 文件名采用UTF-8编码，包含文件的相对路径，并约定以"/"为路径分隔符
  */
 
 import android.content.ContentResolver;
