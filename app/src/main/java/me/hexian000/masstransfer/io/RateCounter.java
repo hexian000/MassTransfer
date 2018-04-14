@@ -15,7 +15,7 @@ public class RateCounter {
 		this.value.addAndGet(value);
 	}
 
-	public long rate() {
+	public synchronized long rate() {
 		long now = value.get();
 		long rate = now - last;
 		last = now;
