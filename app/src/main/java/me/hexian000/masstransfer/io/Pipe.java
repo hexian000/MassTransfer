@@ -35,7 +35,7 @@ public class Pipe implements Reader, Writer {
 				if (current == null) {
 					current = q.take();
 					if (current.length == 0) {
-						return -1;
+						break;
 					}
 				} else {
 					int count = Math.min(current.length - offset, buffer.length - read);
