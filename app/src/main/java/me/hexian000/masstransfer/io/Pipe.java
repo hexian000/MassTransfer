@@ -27,7 +27,7 @@ public class Pipe implements Reader, Writer {
 	@Override
 	public int read(byte[] buffer) throws InterruptedException {
 		synchronized (readLock) {
-			if (closed) {
+			if (q.size() == 0 && closed) {
 				return -1;
 			}
 			int read = 0;

@@ -108,7 +108,7 @@ public class DirectoryWriter implements Runnable {
 				byte[] buffer = new byte[(int) Math.min(length, bufferSize)];
 				int read = in.read(buffer);
 				if (read != buffer.length) {
-					throw new EOFException();
+					throw new EOFException("read=" + read + " buffer=" + buffer.length + " length=" + length);
 				}
 				if (out != null) {
 					out.write(buffer);
