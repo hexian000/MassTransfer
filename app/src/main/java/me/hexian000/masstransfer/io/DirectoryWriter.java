@@ -84,8 +84,9 @@ public class DirectoryWriter implements Runnable {
 			file.delete();
 		}
 		String mime = null;
-		if (name.contains(".")) {
-			mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(name.substring(name.lastIndexOf(".")));
+		int dot = name.lastIndexOf(".");
+		if (dot != -1) {
+			mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(name.substring(dot));
 		}
 		if (mime == null || "null".equals(mime)) {
 			mime = "application/*";
