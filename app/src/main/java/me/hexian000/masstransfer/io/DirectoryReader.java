@@ -25,8 +25,8 @@ public class DirectoryReader implements Runnable {
 	private Writer out;
 	private boolean success = false;
 
-	public DirectoryReader(ContentResolver resolver, DocumentFile root, String[] files, Writer out, ProgressReporter
-			reporter) {
+	public DirectoryReader(ContentResolver resolver, DocumentFile root, String[] files, Writer out,
+			ProgressReporter reporter) {
 		this.resolver = resolver;
 		this.root = root;
 		this.files = files;

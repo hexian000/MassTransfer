@@ -77,8 +77,8 @@ final class Discoverer {
 						item.socket.receive(p);
 						if (Arrays.equals(magic, buffer)) {
 							InetAddress ip = p.getAddress();
-							if (!ip.isAnyLocalAddress() && !ip.isLoopbackAddress() && NetworkInterface
-									.getByInetAddress(ip) == null) {
+							if (!ip.isAnyLocalAddress() && !ip.isLoopbackAddress() && NetworkInterface.getByInetAddress(
+									ip) == null) {
 								peers.put(ip.getHostAddress(), System.currentTimeMillis());
 							}
 						}

@@ -43,9 +43,13 @@ public class ReceiveService extends Service implements Runnable {
 		if (builder == null) {
 			builder = new Notification.Builder(this.getApplicationContext());
 		}
-		builder.setContentIntent(null).setContentTitle(getResources().getString(R.string.notification_receiving))
-				.setSmallIcon(R.drawable.ic_send_black_24dp).setWhen(System.currentTimeMillis()).setProgress(0, 0,
-				true).setOngoing(true).setVisibility(Notification.VISIBILITY_PUBLIC);
+		builder.setContentIntent(null)
+				.setContentTitle(getResources().getString(R.string.notification_receiving))
+				.setSmallIcon(R.drawable.ic_send_black_24dp)
+				.setWhen(System.currentTimeMillis())
+				.setProgress(0, 0, true)
+				.setOngoing(true)
+				.setVisibility(Notification.VISIBILITY_PUBLIC);
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 			// Android 8.0+
@@ -61,8 +65,8 @@ public class ReceiveService extends Service implements Runnable {
 		Intent cancel = new Intent(this, ReceiveService.class);
 		cancel.setAction("cancel");
 		builder.addAction(new Notification.Action.Builder(null, getResources().getString(R.string.cancel),
-				PendingIntent.getService(this, startId, cancel, 0)).build()).setContentText(getResources().getString(R
-				.string.notification_starting));
+				PendingIntent.getService(this, startId, cancel, 0)).build())
+				.setContentText(getResources().getString(R.string.notification_starting));
 	}
 
 	private void stop() {
@@ -156,8 +160,9 @@ public class ReceiveService extends Service implements Runnable {
 			} else {
 				text = getResources().getString(R.string.notification_finishing);
 			}
-			builder.setContentText(text).setStyle(new Notification.BigTextStyle().bigText(text)).setProgress(max, now,
-					max == now && now == 0);
+			builder.setContentText(text)
+					.setStyle(new Notification.BigTextStyle().bigText(text))
+					.setProgress(max, now, max == now && now == 0);
 			notificationManager.notify(startId, builder.build());
 		});
 		Thread writerThread = new Thread(writer);

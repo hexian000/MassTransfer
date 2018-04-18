@@ -24,8 +24,7 @@
 
         <activity
             android:name=".ChooseActivity"
-            android:label="@string/choose_file">
-        </activity>
+            android:label="@string/choose_file" />
 
         <service android:name=".DiscoverService" />
         <service android:name=".TransferService" />
