@@ -16,56 +16,29 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ChooseActivity extends Activity {
-	List<String> files;
 	int dirCount;
-	private Handler handler = new Handler();
+	private Handler handler;
 	private ListView listView;
-	private ProgressBar progressBar;
+	private ArrayAdapter adapter;
+	private List<String> files;
 
 	@Override
 	protected void onDestroy() {
 		handler = null;
+		listView = null;
+		adapter = null;
+		files = null;
 		super.onDestroy();
 	}
 
 	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.choose_activity);
-
-		listView = findViewById(R.id.List);
-		progressBar = findViewById(R.id.ListLoading);
-
-		files = new ArrayList<>();
-		ArrayAdapter adapter = new ArrayAdapter<String>(this, R.layout.choose_file_item, files) {
-			@NonNull
-			@Override
-			public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-				ItemViewHolder holder;
-				if (convertView == null) {
-					convertView = getLayoutInflater().inflate(R.layout.choose_file_item, parent, false);
-					holder = new ItemViewHolder(convertView);
-					convertView.setTag(holder);
-				} else {
-					holder = (ItemViewHolder) convertView.getTag();
-				}
-				if (position < dirCount) {
-					holder.imageView.setImageResource(R.drawable.ic_folder_white_24dp);
-				} else {
-					holder.imageView.setImageResource(R.drawable.ic_file_white_24dp);
-				}
-				holder.textView.setText(((String) listView.getItemAtPosition(position)));
-				return convertView;
-			}
-
-			@Override
-			public boolean hasStableIds() {
-				return true;
-			}
-		};
-		listView.setAdapter(adapter);
-
+	protected void onResume() {
+		super.onResume();
 		final Uri rootUri = getIntent().getData();
+		if (rootUri == null) {
+			finish();
+		}
+
 		new Thread(() -> {
 			DocumentFile root = DocumentFile.fromTreeUri(this, rootUri);
 			if (root == null || !root.isDirectory()) {
@@ -92,14 +65,54 @@ public class ChooseActivity extends Activity {
 			fileList.sort(String::compareToIgnoreCase);
 			files.addAll(dirList);
 			files.addAll(fileList);
+
 			dirCount = dirList.size();
 			if (handler != null) {
 				handler.post(() -> {
-					progressBar.setVisibility(View.INVISIBLE);
-					adapter.notifyDataSetChanged();
+					if (adapter != null) {
+						final ProgressBar progressBar = findViewById(R.id.ListLoading);
+						progressBar.setVisibility(View.INVISIBLE);
+						adapter.notifyDataSetChanged();
+					}
 				});
 			}
 		}).start();
+	}
+
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.choose_activity);
+		handler = new Handler();
+		listView = findViewById(R.id.List);
+		files = new ArrayList<>();
+		adapter = new ArrayAdapter<String>(this, R.layout.choose_file_item, files) {
+			@NonNull
+			@Override
+			public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+				ItemViewHolder holder;
+				if (convertView == null) {
+					convertView = getLayoutInflater().inflate(R.layout.choose_file_item, parent, false);
+					holder = new ItemViewHolder(convertView);
+					convertView.setTag(holder);
+				} else {
+					holder = (ItemViewHolder) convertView.getTag();
+				}
+				if (position < dirCount) {
+					holder.imageView.setImageResource(R.drawable.ic_folder_white_24dp);
+				} else {
+					holder.imageView.setImageResource(R.drawable.ic_file_white_24dp);
+				}
+				holder.textView.setText(((String) listView.getItemAtPosition(position)));
+				return convertView;
+			}
+
+			@Override
+			public boolean hasStableIds() {
+				return true;
+			}
+		};
+		listView.setAdapter(adapter);
 	}
 
 	@Override
