@@ -112,7 +112,7 @@ public class TransferService extends Service implements Runnable {
 	public void run() {
 		try (Socket socket = new Socket()) {
 			socket.setPerformancePreferences(0, 0, 1);
-			socket.setSendBufferSize(8 * 1024 * 1024);
+			socket.setSendBufferSize(1024 * 1024);
 			socket.setSoTimeout(4000);
 			socket.setSoLinger(true, 10);
 			socket.connect(new InetSocketAddress(InetAddress.getByName(host), TCP_PORT), 4000);
@@ -128,7 +128,7 @@ public class TransferService extends Service implements Runnable {
 	}
 
 	private void runPipe(Socket socket) {
-		final int pipeSize = 16 * 1024 * 1024;
+		final int pipeSize = 8 * 1024 * 1024;
 		Pipe pipe = new Pipe(pipeSize);
 		DirectoryReader reader = new DirectoryReader(getContentResolver(), root, files, pipe, (text, now, max) -> {
 			if (builder != null && notificationManager != null) {

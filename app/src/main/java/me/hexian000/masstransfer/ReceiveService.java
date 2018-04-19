@@ -125,7 +125,7 @@ public class ReceiveService extends Service implements Runnable {
 			try {
 				Log.d(LOG_TAG, "ReceiveService accepted connection");
 				socket.setPerformancePreferences(0, 0, 1);
-				socket.setReceiveBufferSize(8 * 1024 * 1024);
+				socket.setReceiveBufferSize(1024 * 1024);
 				socket.setSoTimeout(4000);
 				socket.setSoLinger(true, 10);
 				runPipe(socket);
