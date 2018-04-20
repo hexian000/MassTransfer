@@ -236,7 +236,7 @@ public class ReceiveService extends Service implements Runnable {
 			Log.d(LOG_TAG, "unbind DiscoverService in ReceiveService");
 		}
 		MainActivity mainActivity = ((TransferApp) getApplicationContext()).mainActivity;
-		if (mainActivity != null) {
+		if (mainActivity != null && mainActivity.handler != null) {
 			mainActivity.handler.post(mainActivity::updateReceiveButton);
 		}
 		if (result) {

@@ -18,18 +18,10 @@ import java.util.List;
 public class ChooseActivity extends Activity {
 	int dirCount;
 	private Handler handler;
+	private ProgressBar progressBar;
 	private ListView listView;
 	private ArrayAdapter adapter;
 	private List<String> files;
-
-	@Override
-	protected void onDestroy() {
-		handler = null;
-		listView = null;
-		adapter = null;
-		files = null;
-		super.onDestroy();
-	}
 
 	@Override
 	protected void onResume() {
@@ -70,7 +62,6 @@ public class ChooseActivity extends Activity {
 			if (handler != null) {
 				handler.post(() -> {
 					if (adapter != null) {
-						final ProgressBar progressBar = findViewById(R.id.ListLoading);
 						progressBar.setVisibility(View.INVISIBLE);
 						adapter.notifyDataSetChanged();
 					}
@@ -84,6 +75,7 @@ public class ChooseActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.choose_activity);
 		handler = new Handler();
+		progressBar = findViewById(R.id.ListLoading);
 		listView = findViewById(R.id.List);
 		files = new ArrayList<>();
 		adapter = new ArrayAdapter<String>(this, R.layout.choose_file_item, files) {

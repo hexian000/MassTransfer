@@ -28,28 +28,30 @@ public class MainActivity extends Activity {
 	private static final int REQUEST_SEND = 1;
 	private static final int REQUEST_RECEIVE = 2;
 	private static final int REQUEST_CHOOSE = 3;
+	List<String> items;
+	ArrayAdapter adapter;
 	String host;
 	Timer timer;
 	Handler handler = new Handler();
-	DiscoverService mService;
+	DiscoverService discoverService;
 	private Button receiveButton;
-	private ServiceConnection mConnection = new ServiceConnection() {
+	private ServiceConnection serviceConnection = new ServiceConnection() {
 		@Override
 		public void onServiceConnected(ComponentName className, IBinder service) {
 			DiscoverService.Binder binder = (DiscoverService.Binder) service;
-			mService = binder.getService();
+			discoverService = binder.getService();
 		}
 
 		@Override
 		public void onServiceDisconnected(ComponentName arg0) {
-			mService = null;
+			discoverService = null;
 		}
 	};
 
 	@Override
 	protected void onPause() {
 		super.onPause();
-		unbindService(mConnection);
+		unbindService(serviceConnection);
 		Log.d(LOG_TAG, "unbind DiscoverService in MainActivity");
 		if (timer != null) {
 			timer.cancel();
@@ -60,41 +62,26 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
+		final TransferApp app = (TransferApp) getApplicationContext();
+		if (app.receiveService != null) {
+			receiveButton.setText(R.string.receive_cancel_button);
+		} else {
+			receiveButton.setText(R.string.receive_button);
+		}
+
 		Intent intent1 = new Intent(this, DiscoverService.class);
-		bindService(intent1, mConnection, Context.BIND_AUTO_CREATE);
+		bindService(intent1, serviceConnection, Context.BIND_AUTO_CREATE);
 		Log.d(LOG_TAG, "bind DiscoverService in MainActivity");
 
 		timer = new Timer();
 		timer.scheduleAtFixedRate(new TimerTask() {
-			List<String> items = new ArrayList<>();
-			ArrayAdapter adapter = null;
-
 			@Override
 			public void run() {
-				if (adapter == null) {
-					handler.post(() -> {
-						ListView peersList = findViewById(R.id.PeerList);
-						adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_list_item_1, items);
-						peersList.setAdapter(adapter);
-						peersList.setOnItemClickListener((adapterView, view, i, l) -> {
-							if (((TransferApp) getApplicationContext()).transferService != null) {
-								Toast.makeText(MainActivity.this, R.string.transfer_service_is_already_running, Toast
-										.LENGTH_SHORT).show();
-								return;
-							}
-
-							Toast.makeText(MainActivity.this, R.string.choose_send_directory, Toast.LENGTH_SHORT)
-									.show();
-							host = (String) adapter.getItem(i);
-							Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-							startActivityForResult(intent, REQUEST_SEND);
-						});
-					});
-				} else {
+				if (adapter != null && handler != null) {
 					handler.post(() -> {
 						items.clear();
-						if (mService != null && mService.discoverer != null) {
-							items.addAll(mService.discoverer.getPeers());
+						if (discoverService != null && discoverService.discoverer != null) {
+							items.addAll(discoverService.discoverer.getPeers());
 						}
 						adapter.notifyDataSetChanged();
 					});
@@ -168,11 +155,6 @@ public class MainActivity extends Activity {
 		app.mainActivity = this;
 
 		receiveButton = findViewById(R.id.ReceiveButton);
-		if (app.receiveService != null) {
-			receiveButton.setText(R.string.receive_cancel_button);
-		} else {
-			receiveButton.setText(R.string.receive_button);
-		}
 		receiveButton.setOnClickListener((View v) -> {
 			if (app.receiveService != null) {
 				Intent intent = new Intent(this, ReceiveService.class);
@@ -183,6 +165,23 @@ public class MainActivity extends Activity {
 				Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
 				startActivityForResult(intent, REQUEST_RECEIVE);
 			}
+		});
+
+		items = new ArrayList<>();
+		ListView peersList = findViewById(R.id.PeerList);
+		adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_list_item_1, items);
+		peersList.setAdapter(adapter);
+		peersList.setOnItemClickListener((adapterView, view, i, l) -> {
+			if (((TransferApp) getApplicationContext()).transferService != null) {
+				Toast.makeText(MainActivity.this, R.string.transfer_service_is_already_running, Toast.LENGTH_SHORT)
+						.show();
+				return;
+			}
+
+			Toast.makeText(MainActivity.this, R.string.choose_send_directory, Toast.LENGTH_SHORT).show();
+			host = (String) adapter.getItem(i);
+			Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+			startActivityForResult(intent, REQUEST_SEND);
 		});
 	}
 
