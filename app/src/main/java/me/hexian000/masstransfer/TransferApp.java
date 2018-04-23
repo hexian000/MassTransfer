@@ -50,9 +50,8 @@ public class TransferApp extends Application {
 		super.onCreate();
 		ActivityManager activityManager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
 		if (activityManager != null) {
-			Log.d(LOG_TAG,
-					"HeapSize: " + activityManager.getMemoryClass() + "MB LargeHeapSize: " + activityManager
-							.getLargeMemoryClass() + "MB");
+			Log.d(LOG_TAG, "HeapSize: " + activityManager.getMemoryClass() + "MB " +
+					"LargeHeapSize: " + activityManager.getLargeMemoryClass() + "MB");
 		}
 	}
 }
