@@ -1,10 +1,12 @@
 package me.hexian000.masstransfer;
 
+import android.app.ActivityManager;
 import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.res.Resources;
 import android.os.Build;
+import android.util.Log;
 
 import java.util.Locale;
 
@@ -40,6 +42,17 @@ public class TransferApp extends Application {
 			return String.format(Locale.getDefault(), "%.2fMB", size / 1024.0 / 1024.0);
 		} else { // GB
 			return String.format(Locale.getDefault(), "%.2fGB", size / 1024.0 / 1024.0 / 1024.0);
+		}
+	}
+
+	@Override
+	public void onCreate() {
+		super.onCreate();
+		ActivityManager activityManager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+		if (activityManager != null) {
+			Log.d(LOG_TAG,
+					"HeapSize: " + activityManager.getMemoryClass() + "MB LargeHeapSize: " + activityManager
+							.getLargeMemoryClass() + "MB");
 		}
 	}
 }
