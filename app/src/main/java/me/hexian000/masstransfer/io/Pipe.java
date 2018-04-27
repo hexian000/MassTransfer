@@ -1,21 +1,20 @@
 package me.hexian000.masstransfer.io;
 
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 
+// for single-producer and single-consumer only
 public class Pipe implements Reader, Writer {
-	private final Object readLock = new Object();
-	private final Object closeLock = new Object();
 	private int limit;
 	private Semaphore capacity;
 	private BlockingQueue<byte[]> q;
 	private byte[] current = null;
 	private int offset = 0;
-	private boolean closed = false;
+	private boolean closed = false, eof = false;
 
 	public Pipe(int capacity) {
-		q = new LinkedBlockingDeque<>();
+		q = new LinkedBlockingQueue<>();
 		limit = capacity;
 		this.capacity = new Semaphore(capacity);
 	}
@@ -26,35 +25,40 @@ public class Pipe implements Reader, Writer {
 
 	@Override
 	public int read(byte[] buffer) throws InterruptedException {
-		synchronized (readLock) {
-			if (q.size() == 0 && closed) {
-				return -1;
-			}
-			int read = 0;
-			while (read < buffer.length) {
-				if (current == null) {
-					current = q.take();
-					if (current.length == 0) {
-						break;
+		if (eof) {
+			return -1;
+		}
+		int read = 0;
+		while (read < buffer.length) {
+			if (current == null) {
+				current = q.take();
+				if (current.length == 0) {
+					eof = true;
+					if (read == 0) {
+						return -1;
 					}
-				} else {
-					int count = Math.min(current.length - offset, buffer.length - read);
-					System.arraycopy(current, offset, buffer, read, count);
-					offset += count;
-					read += count;
-					if (offset == current.length) {
-						current = null;
-						offset = 0;
-					}
+					break;
+				}
+			} else {
+				int count = Math.min(current.length - offset, buffer.length - read);
+				System.arraycopy(current, offset, buffer, read, count);
+				offset += count;
+				read += count;
+				if (offset == current.length) {
+					current = null;
+					offset = 0;
 				}
 			}
-			capacity.release(read);
-			return read;
 		}
+		capacity.release(read);
+		return read;
 	}
 
 	@Override
 	public void write(byte[] buffer) throws InterruptedException {
+		if (closed) {
+			throw new IllegalStateException("pipe is closed");
+		}
 		if (buffer.length > 0) {
 			capacity.acquire(buffer.length);
 			q.put(buffer);
@@ -63,13 +67,11 @@ public class Pipe implements Reader, Writer {
 
 	@Override
 	public void close() {
-		synchronized (closeLock) {
-			if (!closed) {
-				closed = true;
-				try {
-					q.put(new byte[0]);
-				} catch (InterruptedException ignored) {
-				}
+		if (!closed) {
+			closed = true;
+			try {
+				q.put(new byte[0]);
+			} catch (InterruptedException ignored) {
 			}
 		}
 	}
