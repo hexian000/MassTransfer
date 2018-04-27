@@ -21,10 +21,6 @@ public class ItemLayout extends RelativeLayout implements Checkable {
 		super(context, attrs, defStyleAttr);
 	}
 
-	public ItemLayout(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-		super(context, attrs, defStyleAttr, defStyleRes);
-	}
-
 	@Override
 	public boolean isChecked() {
 		if (checkBox == null) {
