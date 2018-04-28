@@ -210,9 +210,7 @@ public class TransferService extends Service implements Runnable {
 			Log.e(LOG_TAG, "TransferService", e);
 		} finally {
 			timer.cancel();
-			if (readerThread.isAlive()) {
-				readerThread.interrupt();
-			}
+			readerThread.interrupt();
 		}
 	}
 
