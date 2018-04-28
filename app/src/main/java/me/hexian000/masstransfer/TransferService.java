@@ -23,6 +23,7 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -111,6 +112,7 @@ public class TransferService extends Service implements Runnable {
 	}
 
 	private void stop() {
+		thread = null;
 		notificationManager = null;
 		builder = null;
 		stopSelf();
@@ -118,17 +120,27 @@ public class TransferService extends Service implements Runnable {
 
 	@Override
 	public void run() {
-		try (Socket socket = new Socket()) {
+		Socket socket = null;
+		try {
+			socket = new Socket();
 			socket.setPerformancePreferences(0, 0, 1);
 			socket.setSendBufferSize(1024 * 1024);
-			socket.setSoTimeout(4000);
-			socket.setSoLinger(true, 10);
+			socket.setSoTimeout(10000);
+			socket.setSoLinger(true, 30);
 			socket.connect(new InetSocketAddress(InetAddress.getByName(host), TCP_PORT), 4000);
 			runPipe(socket);
+		} catch (SocketTimeoutException e) {
+			Log.d(LOG_TAG, "socket timeout");
 		} catch (IOException e) {
 			Log.e(LOG_TAG, "connect failed", e);
 		} finally {
-			thread = null;
+			if (socket != null) {
+				try {
+					socket.close();
+				} catch (IOException e) {
+					Log.e(LOG_TAG, "socket close failed", e);
+				}
+			}
 			handler.post(this::stop);
 		}
 	}
