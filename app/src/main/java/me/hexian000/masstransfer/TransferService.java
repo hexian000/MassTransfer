@@ -74,14 +74,7 @@ public class TransferService extends Service implements Runnable {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if ("cancel".equals(intent.getAction())) {
 			Log.d(LOG_TAG, "TransferService user cancelled");
-			if (thread != null) {
-				Log.d(LOG_TAG, "try interrupt transfer thread");
-				thread.interrupt();
-				thread = null;
-			}
-			notificationManager = null;
-			builder = null;
-			stopSelf();
+			stop();
 			return START_NOT_STICKY;
 		}
 
@@ -111,7 +104,10 @@ public class TransferService extends Service implements Runnable {
 	}
 
 	private void stop() {
-		thread = null;
+		if (thread != null) {
+			thread.interrupt();
+			thread = null;
+		}
 		notificationManager = null;
 		builder = null;
 		stopSelf();
@@ -186,7 +182,7 @@ public class TransferService extends Service implements Runnable {
 					});
 				}
 			}, rateInterval * 1000, rateInterval * 1000);
-			while (thread != null) {
+			while (!thread.isInterrupted()) {
 				byte[] buffer = new byte[1024];
 				byte[] writeBuffer;
 				int read = pipe.read(buffer);

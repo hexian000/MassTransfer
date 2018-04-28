@@ -72,7 +72,10 @@ public class ReceiveService extends Service implements Runnable {
 	}
 
 	private void stop() {
-		thread = null;
+		if (thread != null) {
+			thread.interrupt();
+			thread = null;
+		}
 		notificationManager = null;
 		builder = null;
 		stopSelf();
@@ -82,8 +85,6 @@ public class ReceiveService extends Service implements Runnable {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if ("cancel".equals(intent.getAction())) {
 			Log.d(LOG_TAG, "ReceiveService user cancelled");
-			result = false;
-			thread.interrupt();
 			stop();
 			return START_NOT_STICKY;
 		}
@@ -143,7 +144,6 @@ public class ReceiveService extends Service implements Runnable {
 			Log.e(LOG_TAG, "ReceiveService unexpected exception", e);
 		} finally {
 			Log.d(LOG_TAG, "ReceiveService closing");
-			thread = null;
 			handler.post(this::stop);
 		}
 	}
