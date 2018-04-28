@@ -73,12 +73,7 @@ public class ReceiveService extends Service implements Runnable {
 	}
 
 	private void stop() {
-		if (thread != null) {
-			if (thread.isAlive()) {
-				thread.interrupt();
-			}
-			thread = null;
-		}
+		thread = null;
 		notificationManager = null;
 		builder = null;
 		stopSelf();
@@ -89,6 +84,7 @@ public class ReceiveService extends Service implements Runnable {
 		if ("cancel".equals(intent.getAction())) {
 			Log.d(LOG_TAG, "ReceiveService user cancelled");
 			result = false;
+			thread.interrupt();
 			stop();
 			return START_NOT_STICKY;
 		}
@@ -129,15 +125,18 @@ public class ReceiveService extends Service implements Runnable {
 				Log.d(LOG_TAG, "ReceiveService accepted connection");
 				socket.setPerformancePreferences(0, 0, 1);
 				socket.setReceiveBufferSize(1024 * 1024);
-				socket.setSoTimeout(4000);
-				socket.setSoLinger(true, 10);
+				socket.setSoTimeout(10000);
 				runPipe(socket);
 			} catch (SocketTimeoutException e) {
 				Log.d(LOG_TAG, "socket timeout");
 			} catch (IOException e) {
 				Log.e(LOG_TAG, "pipe", e);
 			} finally {
-				socket.close();
+				try {
+					socket.close();
+				} catch (IOException e) {
+					Log.e(LOG_TAG, "socket close failed", e);
+				}
 			}
 		} catch (InterruptedException e) {
 			Log.d(LOG_TAG, "ReceiveService interrupted");
