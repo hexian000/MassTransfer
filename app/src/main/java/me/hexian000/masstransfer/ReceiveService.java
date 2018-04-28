@@ -18,6 +18,7 @@ import android.widget.Toast;
 import me.hexian000.masstransfer.io.DirectoryWriter;
 import me.hexian000.masstransfer.io.Pipe;
 import me.hexian000.masstransfer.io.RateCounter;
+import org.apache.commons.compress.compressors.lz4.FramedLZ4CompressorInputStream;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -176,7 +177,7 @@ public class ReceiveService extends Service implements Runnable {
 		Thread writerThread = new Thread(writer);
 		writerThread.start();
 		Timer timer = new Timer();
-		try (InputStream in = socket.getInputStream()) {
+		try (InputStream in = new FramedLZ4CompressorInputStream(socket.getInputStream(), true)) {
 			RateCounter rate = new RateCounter();
 			final int rateInterval = 2;
 			timer.schedule(new TimerTask() {

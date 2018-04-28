@@ -28,4 +28,8 @@ android {
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'com.android.support:appcompat-v7:27.1.1'
+    // https://mvnrepository.com/artifact/org.apache.commons/commons-compress
+    implementation group: 'org.apache.commons', name: 'commons-compress', version: '1.16.1'
+    // https://mvnrepository.com/artifact/org.objenesis/objenesis
+    compileOnly group: 'org.objenesis', name: 'objenesis', version: '2.6'
 }
