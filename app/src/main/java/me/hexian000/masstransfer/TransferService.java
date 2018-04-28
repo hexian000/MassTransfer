@@ -29,7 +29,6 @@ import java.util.TimerTask;
 
 import static me.hexian000.masstransfer.TransferApp.*;
 
-
 public class TransferService extends Service implements Runnable {
 	Handler handler = new Handler();
 	Notification.Builder builder;
