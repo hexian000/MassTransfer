@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.provider.DocumentFile;
@@ -29,6 +30,7 @@ import static me.hexian000.masstransfer.TransferApp.*;
 
 
 public class TransferService extends Service implements Runnable {
+	Handler handler = new Handler();
 	Notification.Builder builder;
 	int startId = 0;
 	String host;
@@ -108,6 +110,12 @@ public class TransferService extends Service implements Runnable {
 		return START_NOT_STICKY;
 	}
 
+	private void stop() {
+		notificationManager = null;
+		builder = null;
+		stopSelf();
+	}
+
 	@Override
 	public void run() {
 		try (Socket socket = new Socket()) {
@@ -121,9 +129,7 @@ public class TransferService extends Service implements Runnable {
 			Log.e(LOG_TAG, "connect failed", e);
 		} finally {
 			thread = null;
-			notificationManager = null;
-			builder = null;
-			stopSelf();
+			handler.post(this::stop);
 		}
 	}
 
@@ -131,22 +137,25 @@ public class TransferService extends Service implements Runnable {
 		final int pipeSize = 8 * 1024 * 1024;
 		Pipe pipe = new Pipe(pipeSize);
 		DirectoryReader reader = new DirectoryReader(getContentResolver(), root, files, pipe, (text, now, max) -> {
-			if (builder != null && notificationManager != null) {
-				if (text != null) {
-					text += "\n";
-					if (pipe.getSize() > pipeSize / 2) {
-						text += getResources().getString(R.string.bottleneck_network);
-					} else {
-						text += getResources().getString(R.string.bottleneck_local);
-					}
+			if (text != null) {
+				text += "\n";
+				if (pipe.getSize() > pipeSize / 2) {
+					text += getResources().getString(R.string.bottleneck_network);
 				} else {
-					text = getResources().getString(R.string.notification_finishing);
+					text += getResources().getString(R.string.bottleneck_local);
 				}
-				builder.setContentText(text)
-						.setStyle(new Notification.BigTextStyle().bigText(text))
-						.setProgress(max, now, max == now && now == 0);
-				notificationManager.notify(startId, builder.build());
+			} else {
+				text = getResources().getString(R.string.notification_finishing);
 			}
+			final String contentText = text;
+			handler.post(() -> {
+				if (builder != null && notificationManager != null) {
+					builder.setContentText(contentText)
+							.setStyle(new Notification.BigTextStyle().bigText(contentText))
+							.setProgress(max, now, max == now && now == 0);
+					notificationManager.notify(startId, builder.build());
+				}
+			});
 		});
 		Thread readerThread = new Thread(reader);
 		readerThread.start();
@@ -158,10 +167,12 @@ public class TransferService extends Service implements Runnable {
 
 				@Override
 				public void run() {
-					if (builder != null && notificationManager != null) {
-						builder.setSubText(TransferApp.sizeToString(rate.rate() / rateInterval) + "/s");
-						notificationManager.notify(startId, builder.build());
-					}
+					handler.post(() -> {
+						if (builder != null && notificationManager != null) {
+							builder.setSubText(TransferApp.sizeToString(rate.rate() / rateInterval) + "/s");
+							notificationManager.notify(startId, builder.build());
+						}
+					});
 				}
 			}, rateInterval * 1000, rateInterval * 1000);
 			while (thread != null) {

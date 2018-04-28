@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.provider.DocumentFile;
@@ -30,6 +31,7 @@ import static me.hexian000.masstransfer.TransferApp.CHANNEL_TRANSFER_STATE;
 import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
 
 public class ReceiveService extends Service implements Runnable {
+	Handler handler = new Handler();
 	Notification.Builder builder;
 	int startId = 0;
 	NotificationManager notificationManager = null;
@@ -142,7 +144,8 @@ public class ReceiveService extends Service implements Runnable {
 			Log.e(LOG_TAG, "ReceiveService unexpected exception", e);
 		} finally {
 			Log.d(LOG_TAG, "ReceiveService closing");
-			stop();
+			thread = null;
+			handler.post(this::stop);
 		}
 	}
 
@@ -160,10 +163,15 @@ public class ReceiveService extends Service implements Runnable {
 			} else {
 				text = getResources().getString(R.string.notification_finishing);
 			}
-			builder.setContentText(text)
-					.setStyle(new Notification.BigTextStyle().bigText(text))
-					.setProgress(max, now, max == now && now == 0);
-			notificationManager.notify(startId, builder.build());
+			final String contentText = text;
+			handler.post(() -> {
+				if (builder != null && notificationManager != null) {
+					builder.setContentText(contentText)
+							.setStyle(new Notification.BigTextStyle().bigText(contentText))
+							.setProgress(max, now, max == now && now == 0);
+					notificationManager.notify(startId, builder.build());
+				}
+			});
 		});
 		Thread writerThread = new Thread(writer);
 		writerThread.start();
@@ -175,10 +183,12 @@ public class ReceiveService extends Service implements Runnable {
 
 				@Override
 				public void run() {
-					if (builder != null && notificationManager != null) {
-						builder.setSubText(TransferApp.sizeToString(rate.rate() / rateInterval) + "/s");
-						notificationManager.notify(startId, builder.build());
-					}
+					handler.post(() -> {
+						if (builder != null && notificationManager != null) {
+							builder.setSubText(TransferApp.sizeToString(rate.rate() / rateInterval) + "/s");
+							notificationManager.notify(startId, builder.build());
+						}
+					});
 				}
 			}, rateInterval * 1000, rateInterval * 1000);
 			while (true) {
@@ -236,7 +246,7 @@ public class ReceiveService extends Service implements Runnable {
 			Log.d(LOG_TAG, "unbind DiscoverService in ReceiveService");
 		}
 		MainActivity mainActivity = ((TransferApp) getApplicationContext()).mainActivity;
-		if (mainActivity != null && mainActivity.handler != null) {
+		if (mainActivity != null) {
 			mainActivity.handler.post(mainActivity::updateReceiveButton);
 		}
 		if (result) {
