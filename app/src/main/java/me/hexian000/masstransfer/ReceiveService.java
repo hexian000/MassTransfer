@@ -72,7 +72,10 @@ public class ReceiveService extends Service implements Runnable {
 	}
 
 	private void stop() {
-		thread = null;
+		if (thread != null) {
+			thread.interrupt();
+			thread = null;
+		}
 		notificationManager = null;
 		builder = null;
 		stopSelf();
@@ -82,8 +85,6 @@ public class ReceiveService extends Service implements Runnable {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if ("cancel".equals(intent.getAction())) {
 			Log.d(LOG_TAG, "ReceiveService user cancelled");
-			result = false;
-			thread.interrupt();
 			stop();
 			return START_NOT_STICKY;
 		}
@@ -109,7 +110,7 @@ public class ReceiveService extends Service implements Runnable {
 			Log.d(LOG_TAG, "ReceiveService begins to listen");
 			listener.setSoTimeout(1000); // prevent thread leak
 			Socket socket = null;
-			while (thread != null) {
+			while (!thread.isInterrupted()) {
 				try {
 					socket = listener.accept();
 					break;
@@ -123,11 +124,10 @@ public class ReceiveService extends Service implements Runnable {
 			try {
 				Log.d(LOG_TAG, "ReceiveService accepted connection");
 				socket.setPerformancePreferences(0, 0, 1);
-				socket.setReceiveBufferSize(1024 * 1024);
-				socket.setSoTimeout(10000);
+				socket.setSoTimeout(30000);
 				runPipe(socket);
 			} catch (SocketTimeoutException e) {
-				Log.d(LOG_TAG, "socket timeout");
+				Log.e(LOG_TAG, "socket timeout");
 			} catch (IOException e) {
 				Log.e(LOG_TAG, "pipe", e);
 			} finally {
@@ -143,7 +143,6 @@ public class ReceiveService extends Service implements Runnable {
 			Log.e(LOG_TAG, "ReceiveService unexpected exception", e);
 		} finally {
 			Log.d(LOG_TAG, "ReceiveService closing");
-			thread = null;
 			handler.post(this::stop);
 		}
 	}
@@ -210,9 +209,7 @@ public class ReceiveService extends Service implements Runnable {
 			Log.d(LOG_TAG, "receive thread finished normally");
 		} finally {
 			timer.cancel();
-			if (writerThread.isAlive()) {
-				writerThread.interrupt();
-			}
+			writerThread.interrupt();
 		}
 	}
 
