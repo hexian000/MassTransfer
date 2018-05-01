@@ -137,7 +137,11 @@ public class MainActivity extends Activity {
 	}
 
 	void updateReceiveButton() {
-		receiveButton.setText(R.string.receive_button);
+		if (((TransferApp) getApplicationContext()).receiveService == null) {
+			receiveButton.setText(R.string.receive_button);
+		} else {
+			receiveButton.setText(R.string.receive_cancel_button);
+		}
 	}
 
 	@Override

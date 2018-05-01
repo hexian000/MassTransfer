@@ -105,7 +105,8 @@ public class ReceiveService extends Service {
 
 	@Override
 	public void onCreate() {
-		((TransferApp) getApplicationContext()).receiveService = this;
+		final TransferApp app = (TransferApp) getApplicationContext();
+		app.receiveService = this;
 		result = false;
 		mConnection = new ServiceConnection() {
 			@Override
@@ -122,6 +123,10 @@ public class ReceiveService extends Service {
 		Intent discover = new Intent(this, DiscoverService.class);
 		bindService(discover, mConnection, Context.BIND_AUTO_CREATE);
 		Log.d(LOG_TAG, "bind DiscoverService in ReceiveService");
+		MainActivity mainActivity = app.mainActivity;
+		if (mainActivity != null) {
+			mainActivity.handler.post(mainActivity::updateReceiveButton);
+		}
 	}
 
 	@Override
