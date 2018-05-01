@@ -30,12 +30,12 @@ import java.util.TimerTask;
 import static me.hexian000.masstransfer.TransferApp.CHANNEL_TRANSFER_STATE;
 import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
 
-public class ReceiveService extends Service implements Runnable {
+public class ReceiveService extends Service {
 	Handler handler = new Handler();
 	Notification.Builder builder;
 	int startId = 0;
 	NotificationManager notificationManager = null;
-	Thread thread = null;
+	ReceiveThread thread = null;
 	DocumentFile root = null;
 	DiscoverService mService;
 	boolean result;
@@ -97,120 +97,10 @@ public class ReceiveService extends Service implements Runnable {
 
 		root = DocumentFile.fromTreeUri(this, intent.getData());
 
-		thread = new Thread(this);
+		thread = new ReceiveThread();
 		thread.start();
 
 		return START_NOT_STICKY;
-	}
-
-	@Override
-	public void run() {
-		try {
-			ServerSocket listener = new ServerSocket(TransferApp.TCP_PORT);
-			Log.d(LOG_TAG, "ReceiveService begins to listen");
-			listener.setSoTimeout(1000); // prevent thread leak
-			Socket socket = null;
-			while (!thread.isInterrupted()) {
-				try {
-					socket = listener.accept();
-					break;
-				} catch (SocketTimeoutException ignored) {
-				}
-			}
-			if (socket == null) {
-				return;
-			}
-			listener.close();
-			try {
-				Log.d(LOG_TAG, "ReceiveService accepted connection");
-				socket.setPerformancePreferences(0, 0, 1);
-				socket.setSoTimeout(30000);
-				runPipe(socket);
-			} catch (SocketTimeoutException e) {
-				Log.e(LOG_TAG, "socket timeout");
-			} catch (IOException e) {
-				Log.e(LOG_TAG, "pipe", e);
-			} finally {
-				try {
-					socket.close();
-				} catch (IOException e) {
-					Log.e(LOG_TAG, "socket close failed", e);
-				}
-			}
-		} catch (InterruptedException e) {
-			Log.d(LOG_TAG, "ReceiveService interrupted");
-		} catch (Exception e) {
-			Log.e(LOG_TAG, "ReceiveService unexpected exception", e);
-		} finally {
-			Log.d(LOG_TAG, "ReceiveService closing");
-			handler.post(this::stop);
-		}
-	}
-
-	private void runPipe(Socket socket) throws InterruptedException, IOException {
-		final int pipeSize = 256 * 1024 * 1024;
-		Pipe pipe = new Pipe(pipeSize);
-		DirectoryWriter writer = new DirectoryWriter(getContentResolver(), root, pipe, (text, now, max) -> {
-			if (text != null) {
-				text += "\n";
-				if (pipe.getSize() > pipeSize / 2) {
-					text += getResources().getString(R.string.bottleneck_local);
-				} else {
-					text += getResources().getString(R.string.bottleneck_network);
-				}
-			} else {
-				text = getResources().getString(R.string.notification_finishing);
-			}
-			final String contentText = text;
-			handler.post(() -> {
-				if (builder != null && notificationManager != null) {
-					builder.setContentText(contentText)
-							.setStyle(new Notification.BigTextStyle().bigText(contentText))
-							.setProgress(max, now, max == now && now == 0);
-					notificationManager.notify(startId, builder.build());
-				}
-			});
-		});
-		Thread writerThread = new Thread(writer);
-		writerThread.start();
-		Timer timer = new Timer();
-		try (InputStream in = socket.getInputStream()) {
-			RateCounter rate = new RateCounter();
-			final int rateInterval = 2;
-			timer.schedule(new TimerTask() {
-
-				@Override
-				public void run() {
-					handler.post(() -> {
-						if (builder != null && notificationManager != null) {
-							builder.setSubText(TransferApp.sizeToString(rate.rate() / rateInterval) + "/s");
-							notificationManager.notify(startId, builder.build());
-						}
-					});
-				}
-			}, rateInterval * 1000, rateInterval * 1000);
-			while (true) {
-				byte[] buffer = new byte[1024];
-				int read = in.read(buffer);
-				if (read == buffer.length) {
-					pipe.write(buffer);
-				} else if (read > 0) {
-					byte[] data = new byte[read];
-					System.arraycopy(buffer, 0, data, 0, read);
-					pipe.write(data);
-				} else {
-					break;
-				}
-				rate.increase(read);
-			}
-			pipe.close();
-			writerThread.join();
-			result = writer.isSuccess();
-			Log.d(LOG_TAG, "receive thread finished normally");
-		} finally {
-			timer.cancel();
-			writerThread.interrupt();
-		}
 	}
 
 	@Override
@@ -257,5 +147,156 @@ public class ReceiveService extends Service implements Runnable {
 	@Override
 	public IBinder onBind(Intent intent) {
 		throw new UnsupportedOperationException();
+	}
+
+	private class ReceiveThread extends Thread {
+		final Object lock = new Object();
+		ServerSocket listener = null;
+		Socket socket = null;
+
+		ReceiveThread() {
+			super();
+		}
+
+		@Override
+		public void interrupt() {
+			synchronized (lock) {
+				if (listener != null) {
+					try {
+						listener.close();
+					} catch (IOException ignored) {
+					}
+				}
+				if (socket != null) {
+					try {
+						socket.close();
+					} catch (IOException ignored) {
+					}
+				}
+			}
+			super.interrupt();
+		}
+
+		@Override
+		public void run() {
+			try {
+				synchronized (lock) {
+					listener = new ServerSocket(TransferApp.TCP_PORT);
+				}
+				Log.d(LOG_TAG, "ReceiveService begins to listen");
+				listener.setSoTimeout(1000); // prevent thread leak
+				while (!thread.isInterrupted()) {
+					try {
+						Socket s = listener.accept();
+						synchronized (lock) {
+							socket = s;
+						}
+						break;
+					} catch (SocketTimeoutException ignored) {
+					}
+				}
+				if (socket == null) {
+					return;
+				}
+				listener.close();
+				synchronized (lock) {
+					listener = null;
+				}
+				try {
+					Log.d(LOG_TAG, "ReceiveService accepted connection");
+					socket.setPerformancePreferences(0, 0, 1);
+					socket.setSoTimeout(30000);
+					runPipe(socket);
+				} catch (SocketTimeoutException e) {
+					Log.e(LOG_TAG, "socket timeout");
+				} catch (IOException e) {
+					Log.e(LOG_TAG, "pipe", e);
+				} finally {
+					try {
+						socket.close();
+					} catch (IOException e) {
+						Log.e(LOG_TAG, "socket close failed", e);
+					} finally {
+						synchronized (lock) {
+							socket = null;
+						}
+					}
+				}
+			} catch (InterruptedException e) {
+				Log.d(LOG_TAG, "ReceiveService interrupted");
+			} catch (Exception e) {
+				Log.e(LOG_TAG, "ReceiveService unexpected exception", e);
+			} finally {
+				Log.d(LOG_TAG, "ReceiveService closing");
+				handler.post(ReceiveService.this::stop);
+			}
+		}
+
+		private void runPipe(Socket socket) throws InterruptedException, IOException {
+			final int pipeSize = 256 * 1024 * 1024;
+			Pipe pipe = new Pipe(pipeSize);
+			DirectoryWriter writer = new DirectoryWriter(getContentResolver(), root, pipe, (text, now, max) -> {
+				if (text != null) {
+					text += "\n";
+					if (pipe.getSize() > pipeSize / 2) {
+						text += getResources().getString(R.string.bottleneck_local);
+					} else {
+						text += getResources().getString(R.string.bottleneck_network);
+					}
+				} else {
+					text = getResources().getString(R.string.notification_finishing);
+				}
+				final String contentText = text;
+				handler.post(() -> {
+					if (builder != null && notificationManager != null) {
+						builder.setContentText(contentText)
+								.setStyle(new Notification.BigTextStyle().bigText(contentText))
+								.setProgress(max, now, max == now && now == 0);
+						notificationManager.notify(startId, builder.build());
+					}
+				});
+			});
+			Thread writerThread = new Thread(writer);
+			writerThread.start();
+			Timer timer = new Timer();
+			try (InputStream in = socket.getInputStream()) {
+				RateCounter rate = new RateCounter();
+				final int rateInterval = 2;
+				timer.schedule(new TimerTask() {
+
+					@Override
+					public void run() {
+						handler.post(() -> {
+							if (builder != null && notificationManager != null) {
+								builder.setSubText(TransferApp.sizeToString(rate.rate() / rateInterval) + "/s");
+								notificationManager.notify(startId, builder.build());
+							}
+						});
+					}
+				}, rateInterval * 1000, rateInterval * 1000);
+				while (true) {
+					byte[] buffer = new byte[1024];
+					int read = in.read(buffer);
+					if (read == buffer.length) {
+						pipe.write(buffer);
+					} else if (read > 0) {
+						byte[] data = new byte[read];
+						System.arraycopy(buffer, 0, data, 0, read);
+						pipe.write(data);
+					} else {
+						break;
+					}
+					rate.increase(read);
+				}
+				pipe.close();
+				writerThread.join();
+				result = writer.isSuccess();
+				Log.d(LOG_TAG, "receive thread finished normally");
+			} finally {
+				timer.cancel();
+				writerThread.interrupt();
+			}
+		}
+
 	}
 }
