@@ -29,7 +29,7 @@ import java.util.TimerTask;
 
 import static me.hexian000.masstransfer.TransferApp.*;
 
-public class TransferService extends Service implements Runnable {
+public class TransferService extends Service {
 	Handler handler = new Handler();
 	Notification.Builder builder;
 	int startId = 0;
@@ -98,7 +98,7 @@ public class TransferService extends Service implements Runnable {
 		root = DocumentFile.fromTreeUri(this, intent.getData());
 		files = extras.getStringArray("files");
 
-		thread = new Thread(this);
+		thread = new TransferThread();
 		thread.start();
 		return START_NOT_STICKY;
 	}
@@ -111,103 +111,6 @@ public class TransferService extends Service implements Runnable {
 		notificationManager = null;
 		builder = null;
 		stopSelf();
-	}
-
-	@Override
-	public void run() {
-		Socket socket = null;
-		try {
-			socket = new Socket();
-			socket.setPerformancePreferences(0, 0, 1);
-			socket.setSendBufferSize(1024 * 1024);
-			socket.setSoTimeout(10000);
-			socket.setSoLinger(true, 30);
-			socket.connect(new InetSocketAddress(InetAddress.getByName(host), TCP_PORT), 4000);
-			runPipe(socket);
-		} catch (SocketTimeoutException e) {
-			Log.d(LOG_TAG, "socket timeout");
-		} catch (IOException e) {
-			Log.e(LOG_TAG, "connect failed", e);
-		} finally {
-			if (socket != null) {
-				try {
-					socket.close();
-				} catch (IOException e) {
-					Log.e(LOG_TAG, "socket close failed", e);
-				}
-			}
-			handler.post(this::stop);
-		}
-	}
-
-	private void runPipe(Socket socket) {
-		final int pipeSize = 8 * 1024 * 1024;
-		Pipe pipe = new Pipe(pipeSize);
-		DirectoryReader reader = new DirectoryReader(getContentResolver(), root, files, pipe, (text, now, max) -> {
-			if (text != null) {
-				text += "\n";
-				if (pipe.getSize() > pipeSize / 2) {
-					text += getResources().getString(R.string.bottleneck_network);
-				} else {
-					text += getResources().getString(R.string.bottleneck_local);
-				}
-			} else {
-				text = getResources().getString(R.string.notification_finishing);
-			}
-			final String contentText = text;
-			handler.post(() -> {
-				if (builder != null && notificationManager != null) {
-					builder.setContentText(contentText)
-							.setStyle(new Notification.BigTextStyle().bigText(contentText))
-							.setProgress(max, now, max == now && now == 0);
-					notificationManager.notify(startId, builder.build());
-				}
-			});
-		});
-		Thread readerThread = new Thread(reader);
-		readerThread.start();
-		Timer timer = new Timer();
-		try (OutputStream out = socket.getOutputStream()) {
-			RateCounter rate = new RateCounter();
-			final int rateInterval = 10;
-			timer.schedule(new TimerTask() {
-
-				@Override
-				public void run() {
-					handler.post(() -> {
-						if (builder != null && notificationManager != null) {
-							builder.setSubText(TransferApp.sizeToString(rate.rate() / rateInterval) + "/s");
-							notificationManager.notify(startId, builder.build());
-						}
-					});
-				}
-			}, rateInterval * 1000, rateInterval * 1000);
-			while (!thread.isInterrupted()) {
-				byte[] buffer = new byte[1024];
-				byte[] writeBuffer;
-				int read = pipe.read(buffer);
-				if (read == buffer.length) {
-					writeBuffer = buffer;
-				} else if (read > 0) {
-					writeBuffer = new byte[read];
-					System.arraycopy(buffer, 0, writeBuffer, 0, read);
-				} else {
-					break;
-				}
-				out.write(writeBuffer);
-				rate.increase(writeBuffer.length);
-			}
-			readerThread.join();
-			result = reader.isSuccess();
-			Log.d(LOG_TAG, "TransferService finished normally");
-		} catch (InterruptedException e) {
-			Log.d(LOG_TAG, "TransferService interrupted");
-		} catch (IOException e) {
-			Log.e(LOG_TAG, "TransferService", e);
-		} finally {
-			timer.cancel();
-			readerThread.interrupt();
-		}
 	}
 
 	@Override
@@ -230,5 +133,123 @@ public class TransferService extends Service implements Runnable {
 	@Override
 	public IBinder onBind(Intent intent) {
 		throw new UnsupportedOperationException();
+	}
+
+	private class TransferThread extends Thread {
+		final Object lock = new Object();
+		Socket socket = null;
+
+		@Override
+		public void interrupt() {
+			synchronized (lock) {
+				if (socket != null) {
+					try {
+						socket.close();
+					} catch (IOException ignored) {
+					}
+				}
+			}
+			super.interrupt();
+		}
+
+		@Override
+		public void run() {
+			try {
+				synchronized (lock) {
+					socket = new Socket();
+				}
+				socket.setPerformancePreferences(0, 0, 1);
+				socket.setSoTimeout(30000);
+				socket.connect(new InetSocketAddress(InetAddress.getByName(host), TCP_PORT), 4000);
+				runPipe(socket);
+			} catch (SocketTimeoutException e) {
+				Log.e(LOG_TAG, "socket timeout");
+			} catch (IOException e) {
+				Log.e(LOG_TAG, "connect failed", e);
+			} finally {
+				if (socket != null) {
+					try {
+						socket.close();
+					} catch (IOException e) {
+						Log.e(LOG_TAG, "socket close failed", e);
+					} finally {
+						synchronized (lock) {
+							socket = null;
+						}
+					}
+				}
+				handler.post(TransferService.this::stop);
+			}
+		}
+
+		private void runPipe(Socket socket) {
+			final int pipeSize = 8 * 1024 * 1024;
+			Pipe pipe = new Pipe(pipeSize);
+			DirectoryReader reader = new DirectoryReader(getContentResolver(), root, files, pipe, (text, now, max) -> {
+				if (text != null) {
+					text += "\n";
+					if (pipe.getSize() > pipeSize / 2) {
+						text += getResources().getString(R.string.bottleneck_network);
+					} else {
+						text += getResources().getString(R.string.bottleneck_local);
+					}
+				} else {
+					text = getResources().getString(R.string.notification_finishing);
+				}
+				final String contentText = text;
+				handler.post(() -> {
+					if (builder != null && notificationManager != null) {
+						builder.setContentText(contentText)
+								.setStyle(new Notification.BigTextStyle().bigText(contentText))
+								.setProgress(max, now, max == now && now == 0);
+						notificationManager.notify(startId, builder.build());
+					}
+				});
+			});
+			Thread readerThread = new Thread(reader);
+			readerThread.start();
+			Timer timer = new Timer();
+			try (OutputStream out = socket.getOutputStream()) {
+				RateCounter rate = new RateCounter();
+				final int rateInterval = 10;
+				timer.schedule(new TimerTask() {
+
+					@Override
+					public void run() {
+						handler.post(() -> {
+							if (builder != null && notificationManager != null) {
+								builder.setSubText(TransferApp.sizeToString(rate.rate() / rateInterval) + "/s");
+								notificationManager.notify(startId, builder.build());
+							}
+						});
+					}
+				}, rateInterval * 1000, rateInterval * 1000);
+				while (!thread.isInterrupted()) {
+					byte[] buffer = new byte[1024];
+					byte[] writeBuffer;
+					int read = pipe.read(buffer);
+					if (read == buffer.length) {
+						writeBuffer = buffer;
+					} else if (read > 0) {
+						writeBuffer = new byte[read];
+						System.arraycopy(buffer, 0, writeBuffer, 0, read);
+					} else {
+						break;
+					}
+					out.write(writeBuffer);
+					rate.increase(writeBuffer.length);
+				}
+				readerThread.join();
+				result = reader.isSuccess();
+				Log.d(LOG_TAG, "TransferService finished normally");
+			} catch (InterruptedException e) {
+				Log.d(LOG_TAG, "TransferService interrupted");
+			} catch (IOException e) {
+				Log.e(LOG_TAG, "TransferService", e);
+			} finally {
+				timer.cancel();
+				readerThread.interrupt();
+			}
+		}
 	}
 }
