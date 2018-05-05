@@ -235,12 +235,15 @@ public class ReceiveService extends Service {
 		}
 
 		private void runPipe(Socket socket) throws InterruptedException, IOException {
-			int memClass = 512;
-			final ActivityManager activityManager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
-			if (activityManager != null) {
-				memClass = activityManager.getLargeMemoryClass();
+			int memClass = 0;
+			{
+				final ActivityManager activityManager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+				if (activityManager != null) {
+					memClass = activityManager.getLargeMemoryClass();
+				}
 			}
-			final int pipeSize = (memClass - 16) * 1024 * 1024;
+			final int pipeSize = Math.min(memClass - 16, 8) * 1024 * 1024;
+			Log.d(LOG_TAG, "receive buffer size: " + TransferApp.sizeToString(pipeSize));
 			Pipe pipe = new Pipe(pipeSize);
 			DirectoryWriter writer = new DirectoryWriter(getContentResolver(), root, pipe, (text, now, max) -> {
 				if (text != null) {
