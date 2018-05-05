@@ -238,7 +238,8 @@ public class ReceiveService extends Service {
 		}
 
 		private void runPipe(Socket socket) throws InterruptedException, IOException {
-			final int pipeSize = 256 * 1024 * 1024;
+			final int pipeSize = (int) (Runtime.getRuntime().freeMemory() - 8 * 1024 * 1024);
+			Log.d(LOG_TAG, "Receive buffer size: " + TransferApp.sizeToString(pipeSize));
 			Pipe pipe = new Pipe(pipeSize);
 			DirectoryWriter writer = new DirectoryWriter(getContentResolver(), root, pipe, (text, now, max) -> {
 				if (text != null) {
