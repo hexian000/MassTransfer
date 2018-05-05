@@ -1,9 +1,6 @@
 package me.hexian000.masstransfer;
 
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.app.Service;
+import android.app.*;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -238,7 +235,12 @@ public class ReceiveService extends Service {
 		}
 
 		private void runPipe(Socket socket) throws InterruptedException, IOException {
-			final int pipeSize = 256 * 1024 * 1024;
+			int memClass = 512;
+			final ActivityManager activityManager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+			if (activityManager != null) {
+				memClass = activityManager.getLargeMemoryClass();
+			}
+			final int pipeSize = (memClass - 16) * 1024 * 1024;
 			Pipe pipe = new Pipe(pipeSize);
 			DirectoryWriter writer = new DirectoryWriter(getContentResolver(), root, pipe, (text, now, max) -> {
 				if (text != null) {
