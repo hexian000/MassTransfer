@@ -1,23 +1,23 @@
 <resources>
     <string name="app_name" translatable="false">Mass Transfer</string>
-    <string name="nearby_hosts">附近的主机</string>
-    <string name="choose_file">选择要发送的文件</string>
+    <string name="nearby_hosts">Nearby hosts</string>
+    <string name="choose_file">Choose files to send</string>
     <string name="choose_ok">OK</string>
-    <string name="receive_button">接收</string>
-    <string name="receive_cancel_button">停止接收</string>
-    <string name="choose_storage_directory">选择保存位置</string>
-    <string name="choose_send_directory">选择要发送的文件所在的位置</string>
-    <string name="start_receive_service">启动接收服务</string>
-    <string name="receive_service_is_already_running">接收服务已在运行</string>
-    <string name="transfer_service_is_already_running">发送服务已在运行</string>
-    <string name="cancel">取消</string>
-    <string name="channel_transfer_state">传输状态</string>
-    <string name="notification_sending">正在发送文件</string>
-    <string name="notification_receiving">正在接收文件</string>
-    <string name="notification_starting">正在等待数据</string>
-    <string name="notification_finishing">正在完成</string>
-    <string name="transfer_success">传输成功</string>
-    <string name="transfer_failed">传输失败</string>
-    <string name="bottleneck_local">瓶颈：本地</string>
-    <string name="bottleneck_network">瓶颈：网络</string>
+    <string name="receive_button">Receive</string>
+    <string name="receive_cancel_button">Stop receiving</string>
+    <string name="choose_storage_directory">Choose save directory</string>
+    <string name="choose_send_directory">Choose send directory</string>
+    <string name="start_receive_service">Start receive service</string>
+    <string name="receive_service_is_already_running">Receive service is already running</string>
+    <string name="transfer_service_is_already_running">Send service is already running</string>
+    <string name="cancel">Cancel</string>
+    <string name="channel_transfer_state">Transfer Status</string>
+    <string name="notification_sending">Sending</string>
+    <string name="notification_receiving">Receiving</string>
+    <string name="notification_starting">Starting</string>
+    <string name="notification_finishing">Finishing</string>
+    <string name="transfer_success">Transfer Success</string>
+    <string name="transfer_failed">Transfer Failed</string>
+    <string name="bottleneck_local">Bottleneck: local</string>
+    <string name="bottleneck_network">Bottleneck: network</string>
 </resources>
