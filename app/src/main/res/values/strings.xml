@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Mass Transfer</string>
+    <string name="app_name" translatable="false">Mass Transfer</string>
     <string name="nearby_hosts">附近的主机</string>
     <string name="choose_file">选择要发送的文件</string>
     <string name="choose_ok">OK</string>
