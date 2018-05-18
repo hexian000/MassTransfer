@@ -18,6 +18,6 @@
     <string name="notification_finishing">Finishing</string>
     <string name="transfer_success">Transfer Success</string>
     <string name="transfer_failed">Transfer Failed</string>
-    <string name="bottleneck_local">Bottleneck: me</string>
+    <string name="bottleneck_local">Bottleneck: local</string>
     <string name="bottleneck_network">Bottleneck: network</string>
 </resources>
