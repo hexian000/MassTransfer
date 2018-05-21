@@ -145,8 +145,7 @@ public class SendService extends TransferService {
 					}
 				});
 			});
-			Thread readerThread = new Thread(reader);
-			readerThread.start();
+			reader.start();
 			Timer timer = new Timer();
 			try (OutputStream out = socket.getOutputStream()) {
 				RateCounter rate = new RateCounter();
@@ -178,7 +177,7 @@ public class SendService extends TransferService {
 					out.write(writeBuffer);
 					rate.increase(writeBuffer.length);
 				}
-				readerThread.join();
+				reader.join();
 				result = reader.isSuccess();
 				Log.d(LOG_TAG, "SendService finished normally");
 			} catch (InterruptedException e) {
@@ -187,7 +186,7 @@ public class SendService extends TransferService {
 				Log.e(LOG_TAG, "SendService", e);
 			} finally {
 				timer.cancel();
-				readerThread.interrupt();
+				reader.interrupt();
 			}
 		}
 	}

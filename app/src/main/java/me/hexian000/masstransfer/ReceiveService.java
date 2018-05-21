@@ -200,8 +200,7 @@ public class ReceiveService extends TransferService {
 					}
 				});
 			});
-			Thread writerThread = new Thread(writer);
-			writerThread.start();
+			writer.start();
 			Timer timer = new Timer();
 			try (InputStream in = socket.getInputStream()) {
 				RateCounter rate = new RateCounter();
@@ -233,12 +232,12 @@ public class ReceiveService extends TransferService {
 					rate.increase(read);
 				}
 				pipe.close();
-				writerThread.join();
+				writer.join();
 				result = writer.isSuccess();
 				Log.d(LOG_TAG, "receive thread finished normally");
 			} finally {
 				timer.cancel();
-				writerThread.interrupt();
+				writer.interrupt();
 			}
 		}
 

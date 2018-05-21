@@ -17,7 +17,7 @@ import java.nio.ByteOrder;
 
 import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
 
-public class DirectoryReader implements Runnable {
+public class DirectoryReader extends Thread {
 	private ProgressReporter reporter;
 	private ContentResolver resolver;
 	private DocumentFile root;
