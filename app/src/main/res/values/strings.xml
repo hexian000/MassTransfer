@@ -14,7 +14,7 @@
     <string name="channel_transfer_state">Transfer Status</string>
     <string name="notification_sending">Sending</string>
     <string name="notification_receiving">Receiving</string>
-    <string name="notification_starting">Starting</string>
+    <string name="notification_starting">Waiting for data</string>
     <string name="notification_finishing">Finishing</string>
     <string name="transfer_success">Transfer Success</string>
     <string name="transfer_failed">Transfer Failed</string>
