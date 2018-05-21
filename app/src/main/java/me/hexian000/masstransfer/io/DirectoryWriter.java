@@ -18,6 +18,7 @@ import android.webkit.MimeTypeMap;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -28,10 +29,10 @@ public class DirectoryWriter extends Thread {
 	private ProgressReporter reporter;
 	private ContentResolver resolver;
 	private DocumentFile root;
-	private Reader in;
+	private InputStream in;
 	private boolean success = false;
 
-	public DirectoryWriter(ContentResolver resolver, DocumentFile root, Reader in, ProgressReporter reporter) {
+	public DirectoryWriter(ContentResolver resolver, DocumentFile root, InputStream in, ProgressReporter reporter) {
 		this.resolver = resolver;
 		this.root = root;
 		this.in = in;
@@ -117,7 +118,6 @@ public class DirectoryWriter extends Thread {
 				pos += read;
 				reporter.report(name, (int) (pos / bufferSize), maxProgress);
 			}
-		} catch (InterruptedException ignored) {
 		} finally {
 			if (out != null) {
 				out.close();
@@ -158,8 +158,6 @@ public class DirectoryWriter extends Thread {
 			success = true;
 			reporter.report(null, 0, 0);
 			Log.d(LOG_TAG, "DirectoryWriter finished normally");
-		} catch (InterruptedException e) {
-			Log.d(LOG_TAG, "DirectoryWriter interrupted");
 		} catch (EOFException e) {
 			Log.e(LOG_TAG, "DirectoryWriter early EOF", e);
 		} catch (IOException e) {

@@ -1,11 +1,13 @@
 package me.hexian000.masstransfer.io;
 
+import android.support.annotation.NonNull;
+
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 
 // for single-producer and single-consumer only
-public class Pipe implements Reader, Writer {
+public class Buffer {
 	private int limit;
 	private Semaphore capacity;
 	private BlockingQueue<byte[]> q;
@@ -13,7 +15,7 @@ public class Pipe implements Reader, Writer {
 	private int offset = 0;
 	private boolean closed = false, eof = false;
 
-	public Pipe(int capacity) {
+	public Buffer(int capacity) {
 		q = new LinkedBlockingQueue<>();
 		limit = capacity;
 		this.capacity = new Semaphore(capacity);
@@ -23,8 +25,7 @@ public class Pipe implements Reader, Writer {
 		return limit - capacity.availablePermits();
 	}
 
-	@Override
-	public int read(byte[] buffer) throws InterruptedException {
+	public int read(@NonNull byte[] buffer) throws InterruptedException {
 		if (eof) {
 			return -1;
 		}
@@ -54,8 +55,7 @@ public class Pipe implements Reader, Writer {
 		return read;
 	}
 
-	@Override
-	public void write(byte[] buffer) throws InterruptedException {
+	public void write(@NonNull byte[] buffer) throws InterruptedException {
 		if (closed) {
 			throw new IllegalStateException("pipe is closed");
 		}
@@ -65,7 +65,6 @@ public class Pipe implements Reader, Writer {
 		}
 	}
 
-	@Override
 	public void close() {
 		if (!closed) {
 			closed = true;

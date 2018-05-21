@@ -9,8 +9,9 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.provider.DocumentFile;
 import android.util.Log;
+import me.hexian000.masstransfer.io.Buffer;
+import me.hexian000.masstransfer.io.BufferInputWrapper;
 import me.hexian000.masstransfer.io.DirectoryWriter;
-import me.hexian000.masstransfer.io.Pipe;
 import me.hexian000.masstransfer.io.RateCounter;
 
 import java.io.IOException;
@@ -176,30 +177,31 @@ public class ReceiveService extends TransferService {
 		}
 
 		private void runPipe(Socket socket) throws InterruptedException, IOException {
-			final int pipeSize = Math.max(TransferApp.HeapSize - 16 * 1024 * 1024, 8 * 1024 * 1024);
-			Log.d(LOG_TAG, "receive buffer size: " + TransferApp.sizeToString(pipeSize));
-			Pipe pipe = new Pipe(pipeSize);
-			DirectoryWriter writer = new DirectoryWriter(getContentResolver(), root, pipe, (text, now, max) -> {
-				if (text != null) {
-					text += "\n";
-					if (pipe.getSize() > pipeSize / 2) {
-						text += getResources().getString(R.string.bottleneck_local);
-					} else {
-						text += getResources().getString(R.string.bottleneck_network);
-					}
-				} else {
-					text = getResources().getString(R.string.notification_finishing);
-				}
-				final String contentText = text;
-				handler.post(() -> {
-					if (builder != null && notificationManager != null) {
-						builder.setContentText(contentText)
-								.setStyle(new Notification.BigTextStyle().bigText(contentText))
-								.setProgress(max, now, max == now && now == 0);
-						notificationManager.notify(startId, builder.build());
-					}
-				});
-			});
+			final int bufferSize = Math.max(TransferApp.HeapSize - 16 * 1024 * 1024, 8 * 1024 * 1024);
+			Log.d(LOG_TAG, "receive buffer size: " + TransferApp.sizeToString(bufferSize));
+			Buffer buffer = new Buffer(bufferSize);
+			DirectoryWriter writer = new DirectoryWriter(getContentResolver(), root, new BufferInputWrapper(buffer),
+					(text, now, max) -> {
+						if (text != null) {
+							text += "\n";
+							if (buffer.getSize() > bufferSize / 2) {
+								text += getResources().getString(R.string.bottleneck_local);
+							} else {
+								text += getResources().getString(R.string.bottleneck_network);
+							}
+						} else {
+							text = getResources().getString(R.string.notification_finishing);
+						}
+						final String contentText = text;
+						handler.post(() -> {
+							if (builder != null && notificationManager != null) {
+								builder.setContentText(contentText)
+										.setStyle(new Notification.BigTextStyle().bigText(contentText))
+										.setProgress(max, now, max == now && now == 0);
+								notificationManager.notify(startId, builder.build());
+							}
+						});
+					});
 			writer.start();
 			Timer timer = new Timer();
 			try (InputStream in = socket.getInputStream()) {
@@ -218,20 +220,20 @@ public class ReceiveService extends TransferService {
 					}
 				}, rateInterval * 1000, rateInterval * 1000);
 				while (true) {
-					byte[] buffer = new byte[1024];
-					int read = in.read(buffer);
-					if (read == buffer.length) {
-						pipe.write(buffer);
+					byte[] packet = new byte[8 * 1024];
+					int read = in.read(packet);
+					if (read == packet.length) {
+						buffer.write(packet);
 					} else if (read > 0) {
 						byte[] data = new byte[read];
-						System.arraycopy(buffer, 0, data, 0, read);
-						pipe.write(data);
+						System.arraycopy(packet, 0, data, 0, read);
+						buffer.write(data);
 					} else {
 						break;
 					}
 					rate.increase(read);
 				}
-				pipe.close();
+				buffer.close();
 				writer.join();
 				result = writer.isSuccess();
 				Log.d(LOG_TAG, "receive thread finished normally");

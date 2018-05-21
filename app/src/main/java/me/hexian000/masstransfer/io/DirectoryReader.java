@@ -12,6 +12,7 @@ import android.util.Log;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -22,10 +23,10 @@ public class DirectoryReader extends Thread {
 	private ContentResolver resolver;
 	private DocumentFile root;
 	private String[] files;
-	private Writer out;
+	private OutputStream out;
 	private boolean success = false;
 
-	public DirectoryReader(ContentResolver resolver, DocumentFile root, String[] files, Writer out,
+	public DirectoryReader(ContentResolver resolver, DocumentFile root, String[] files, OutputStream out,
 			ProgressReporter reporter) {
 		this.resolver = resolver;
 		this.root = root;
@@ -38,7 +39,7 @@ public class DirectoryReader extends Thread {
 		return success;
 	}
 
-	private void sendDir(DocumentFile dir, String basePath) throws IOException, InterruptedException {
+	private void sendDir(DocumentFile dir, String basePath) throws IOException {
 		if (!dir.exists()) {
 			return;
 		}
@@ -67,7 +68,7 @@ public class DirectoryReader extends Thread {
 		}
 	}
 
-	private void sendFile(DocumentFile file, String basePath) throws IOException, InterruptedException {
+	private void sendFile(DocumentFile file, String basePath) throws IOException {
 		if (!file.exists() || !file.canRead()) {
 			return;
 		}
@@ -133,8 +134,6 @@ public class DirectoryReader extends Thread {
 			out.close();
 			success = true;
 			Log.d(LOG_TAG, "DirectoryReader finished normally");
-		} catch (InterruptedException e) {
-			Log.d(LOG_TAG, "DirectoryReader interrupted");
 		} catch (IOException e) {
 			Log.e(LOG_TAG, "DirectoryReader", e);
 		}

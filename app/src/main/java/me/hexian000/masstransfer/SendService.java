@@ -7,8 +7,9 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.provider.DocumentFile;
 import android.util.Log;
+import me.hexian000.masstransfer.io.Buffer;
+import me.hexian000.masstransfer.io.BufferOutputWrapper;
 import me.hexian000.masstransfer.io.DirectoryReader;
-import me.hexian000.masstransfer.io.Pipe;
 import me.hexian000.masstransfer.io.RateCounter;
 
 import java.io.IOException;
@@ -122,29 +123,31 @@ public class SendService extends TransferService {
 		}
 
 		private void runPipe(Socket socket) {
-			final int pipeSize = 8 * 1024 * 1024;
-			Pipe pipe = new Pipe(pipeSize);
-			DirectoryReader reader = new DirectoryReader(getContentResolver(), root, files, pipe, (text, now, max) -> {
-				if (text != null) {
-					text += "\n";
-					if (pipe.getSize() > pipeSize / 2) {
-						text += getResources().getString(R.string.bottleneck_network);
-					} else {
-						text += getResources().getString(R.string.bottleneck_local);
-					}
-				} else {
-					text = getResources().getString(R.string.notification_finishing);
-				}
-				final String contentText = text;
-				handler.post(() -> {
-					if (builder != null && notificationManager != null) {
-						builder.setContentText(contentText)
-								.setStyle(new Notification.BigTextStyle().bigText(contentText))
-								.setProgress(max, now, max == now && now == 0);
-						notificationManager.notify(startId, builder.build());
-					}
-				});
-			});
+			final int bufferSize = 8 * 1024 * 1024;
+			Buffer buffer = new Buffer(bufferSize);
+			DirectoryReader reader = new DirectoryReader(getContentResolver(), root, files,
+					new BufferOutputWrapper(buffer),
+					(text, now, max) -> {
+						if (text != null) {
+							text += "\n";
+							if (buffer.getSize() > bufferSize / 2) {
+								text += getResources().getString(R.string.bottleneck_network);
+							} else {
+								text += getResources().getString(R.string.bottleneck_local);
+							}
+						} else {
+							text = getResources().getString(R.string.notification_finishing);
+						}
+						final String contentText = text;
+						handler.post(() -> {
+							if (builder != null && notificationManager != null) {
+								builder.setContentText(contentText)
+										.setStyle(new Notification.BigTextStyle().bigText(contentText))
+										.setProgress(max, now, max == now && now == 0);
+								notificationManager.notify(startId, builder.build());
+							}
+						});
+					});
 			reader.start();
 			Timer timer = new Timer();
 			try (OutputStream out = socket.getOutputStream()) {
@@ -163,19 +166,19 @@ public class SendService extends TransferService {
 					}
 				}, rateInterval * 1000, rateInterval * 1000);
 				while (!thread.isInterrupted()) {
-					byte[] buffer = new byte[1024];
-					byte[] writeBuffer;
-					int read = pipe.read(buffer);
-					if (read == buffer.length) {
-						writeBuffer = buffer;
+					byte[] packet = new byte[8 * 1024];
+					byte[] sendBuffer;
+					int read = buffer.read(packet);
+					if (read == packet.length) {
+						sendBuffer = packet;
 					} else if (read > 0) {
-						writeBuffer = new byte[read];
-						System.arraycopy(buffer, 0, writeBuffer, 0, read);
+						sendBuffer = new byte[read];
+						System.arraycopy(packet, 0, sendBuffer, 0, read);
 					} else {
 						break;
 					}
-					out.write(writeBuffer);
-					rate.increase(writeBuffer.length);
+					out.write(sendBuffer);
+					rate.increase(sendBuffer.length);
 				}
 				reader.join();
 				result = reader.isSuccess();
