@@ -129,7 +129,7 @@ public class ReceiveService extends TransferService {
 				}
 				Log.d(LOG_TAG, "ReceiveService begins to listen");
 				listener.setSoTimeout(1000); // prevent thread leak
-				while (!thread.isInterrupted()) {
+				while (!isInterrupted()) {
 					try {
 						Socket s = listener.accept();
 						synchronized (lock) {

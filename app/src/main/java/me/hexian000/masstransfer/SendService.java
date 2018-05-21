@@ -165,20 +165,14 @@ public class SendService extends TransferService {
 						});
 					}
 				}, rateInterval * 1000, rateInterval * 1000);
-				while (!thread.isInterrupted()) {
+				while (!isInterrupted()) {
 					byte[] packet = new byte[8 * 1024];
-					byte[] sendBuffer;
 					int read = buffer.read(packet);
-					if (read == packet.length) {
-						sendBuffer = packet;
-					} else if (read > 0) {
-						sendBuffer = new byte[read];
-						System.arraycopy(packet, 0, sendBuffer, 0, read);
-					} else {
+					if (read <= 0) {
 						break;
 					}
-					out.write(sendBuffer);
-					rate.increase(sendBuffer.length);
+					out.write(packet, 0, read);
+					rate.increase(read);
 				}
 				reader.join();
 				result = reader.isSuccess();
