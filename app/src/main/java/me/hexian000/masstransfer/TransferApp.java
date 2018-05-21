@@ -16,6 +16,8 @@ public class TransferApp extends Application {
 	public final static int UDP_PORT = 14644;
 	public final static int TCP_PORT = 14645;
 
+	public static int HeapSize = 0;
+
 	public MainActivity mainActivity = null;
 	public ReceiveService receiveService = null;
 	public TransferService transferService = null;
@@ -52,6 +54,7 @@ public class TransferApp extends Application {
 		if (activityManager != null) {
 			Log.d(LOG_TAG, "HeapSize: " + activityManager.getMemoryClass() + "MB " +
 					"LargeHeapSize: " + activityManager.getLargeMemoryClass() + "MB");
+			HeapSize = activityManager.getLargeMemoryClass() * 1024 * 1024;
 		}
 	}
 }
