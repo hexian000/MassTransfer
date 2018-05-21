@@ -1,20 +1,14 @@
 package me.hexian000.masstransfer;
 
 import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.os.Build;
-import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.provider.DocumentFile;
 import android.util.Log;
-import android.widget.Toast;
 import me.hexian000.masstransfer.io.DirectoryWriter;
 import me.hexian000.masstransfer.io.Pipe;
 import me.hexian000.masstransfer.io.RateCounter;
@@ -27,59 +21,11 @@ import java.net.SocketTimeoutException;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import static me.hexian000.masstransfer.TransferApp.CHANNEL_TRANSFER_STATE;
 import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
 
-public class ReceiveService extends Service {
-	Handler handler = new Handler();
-	Notification.Builder builder;
-	int startId = 0;
-	NotificationManager notificationManager = null;
-	ReceiveThread thread = null;
-	DocumentFile root = null;
+public class ReceiveService extends TransferService {
 	DiscoverService mService;
-	boolean result;
 	private ServiceConnection mConnection;
-
-	private void initNotification() {
-		if (builder == null) {
-			builder = new Notification.Builder(this.getApplicationContext());
-		}
-		builder.setContentIntent(null)
-				.setContentTitle(getResources().getString(R.string.notification_receiving))
-				.setSmallIcon(R.drawable.ic_send_black_24dp)
-				.setWhen(System.currentTimeMillis())
-				.setProgress(0, 0, true)
-				.setOngoing(true)
-				.setVisibility(Notification.VISIBILITY_PUBLIC);
-
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-			// Android 8.0+
-			NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-			if (manager != null) {
-				TransferApp.createNotificationChannels(manager, getResources());
-				builder.setChannelId(CHANNEL_TRANSFER_STATE);
-			}
-		} else {
-			// Android 7.1
-			builder.setPriority(Notification.PRIORITY_DEFAULT).setLights(0, 0, 0).setVibrate(null).setSound(null);
-		}
-		Intent cancel = new Intent(this, ReceiveService.class);
-		cancel.setAction("cancel");
-		builder.addAction(new Notification.Action.Builder(null, getResources().getString(R.string.cancel),
-				PendingIntent.getService(this, startId, cancel, 0)).build())
-				.setContentText(getResources().getString(R.string.notification_starting));
-	}
-
-	private void stop() {
-		if (thread != null) {
-			thread.interrupt();
-			thread = null;
-		}
-		notificationManager = null;
-		builder = null;
-		stopSelf();
-	}
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
@@ -90,10 +36,7 @@ public class ReceiveService extends Service {
 		}
 
 		this.startId = startId;
-		notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-		initNotification();
-		Notification notification = builder.build();
-		startForeground(startId, notification);
+		initNotification(R.string.notification_receiving);
 
 		root = DocumentFile.fromTreeUri(this, intent.getData());
 
@@ -107,7 +50,6 @@ public class ReceiveService extends Service {
 	public void onCreate() {
 		final TransferApp app = (TransferApp) getApplicationContext();
 		app.receiveService = this;
-		result = false;
 		mConnection = new ServiceConnection() {
 			@Override
 			public void onServiceConnected(ComponentName className, IBinder service) {
@@ -140,11 +82,7 @@ public class ReceiveService extends Service {
 		if (mainActivity != null) {
 			mainActivity.handler.post(mainActivity::updateReceiveButton);
 		}
-		if (result) {
-			Toast.makeText(this, R.string.transfer_success, Toast.LENGTH_SHORT).show();
-		} else {
-			Toast.makeText(this, R.string.transfer_failed, Toast.LENGTH_SHORT).show();
-		}
+		showResultToast();
 		((TransferApp) getApplicationContext()).receiveService = null;
 	}
 

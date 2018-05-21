@@ -1,19 +1,12 @@
 package me.hexian000.masstransfer;
 
 import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.provider.DocumentFile;
 import android.util.Log;
-import android.widget.Toast;
 import me.hexian000.masstransfer.io.DirectoryReader;
 import me.hexian000.masstransfer.io.Pipe;
 import me.hexian000.masstransfer.io.RateCounter;
@@ -27,48 +20,12 @@ import java.net.SocketTimeoutException;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import static me.hexian000.masstransfer.TransferApp.*;
+import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
+import static me.hexian000.masstransfer.TransferApp.TCP_PORT;
 
-public class SendService extends Service {
-	Handler handler = new Handler();
-	Notification.Builder builder;
-	int startId = 0;
+public class SendService extends TransferService {
 	String host;
-	Thread thread = null;
-	DocumentFile root = null;
 	String[] files = null;
-	NotificationManager notificationManager = null;
-	boolean result;
-
-	private void initNotification() {
-		if (builder == null) {
-			builder = new Notification.Builder(this.getApplicationContext());
-		}
-		builder.setContentIntent(null)
-				.setContentTitle(getResources().getString(R.string.notification_sending))
-				.setSmallIcon(R.drawable.ic_send_black_24dp)
-				.setWhen(System.currentTimeMillis())
-				.setProgress(0, 0, true)
-				.setOngoing(true)
-				.setVisibility(Notification.VISIBILITY_PUBLIC);
-
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-			// Android 8.0+
-			NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-			if (manager != null) {
-				TransferApp.createNotificationChannels(manager, getResources());
-				builder.setChannelId(CHANNEL_TRANSFER_STATE);
-			}
-		} else {
-			// Android 7.1
-			builder.setPriority(Notification.PRIORITY_DEFAULT).setLights(0, 0, 0).setVibrate(null).setSound(null);
-		}
-		Intent cancel = new Intent(this, SendService.class);
-		cancel.setAction("cancel");
-		builder.addAction(new Notification.Action.Builder(null, getResources().getString(R.string.cancel),
-				PendingIntent.getService(this, startId, cancel, 0)).build())
-				.setContentText(getResources().getString(R.string.notification_starting));
-	}
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
@@ -79,10 +36,7 @@ public class SendService extends Service {
 		}
 
 		this.startId = startId;
-		notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-		initNotification();
-		Notification notification = builder.build();
-		startForeground(startId, notification);
+		initNotification(R.string.notification_sending);
 
 		Bundle extras = intent.getExtras();
 		if (extras == null) {
@@ -103,29 +57,14 @@ public class SendService extends Service {
 		return START_NOT_STICKY;
 	}
 
-	private void stop() {
-		if (thread != null) {
-			thread.interrupt();
-			thread = null;
-		}
-		notificationManager = null;
-		builder = null;
-		stopSelf();
-	}
-
 	@Override
 	public void onCreate() {
 		((TransferApp) getApplicationContext()).sendService = this;
-		result = false;
 	}
 
 	@Override
 	public void onDestroy() {
-		if (result) {
-			Toast.makeText(this, R.string.transfer_success, Toast.LENGTH_SHORT).show();
-		} else {
-			Toast.makeText(this, R.string.transfer_failed, Toast.LENGTH_SHORT).show();
-		}
+		showResultToast();
 		((TransferApp) getApplicationContext()).sendService = null;
 	}
 
