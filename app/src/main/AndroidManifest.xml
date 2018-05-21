@@ -33,7 +33,7 @@
             android:label="@string/choose_file" />
 
         <service android:name=".DiscoverService" />
-        <service android:name=".TransferService" />
+        <service android:name=".SendService" />
         <service android:name=".ReceiveService" />
 
     </application>

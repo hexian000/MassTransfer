@@ -125,7 +125,7 @@ public class MainActivity extends Activity {
 			if (files == null || files.length < 1) {
 				break;
 			}
-			Intent intent = new Intent(this, TransferService.class);
+			Intent intent = new Intent(this, SendService.class);
 			intent.setData(data.getData());
 			intent.putExtra("host", host);
 			intent.putExtra("files", files);
@@ -176,7 +176,7 @@ public class MainActivity extends Activity {
 		adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_list_item_1, items);
 		peersList.setAdapter(adapter);
 		peersList.setOnItemClickListener((adapterView, view, i, l) -> {
-			if (((TransferApp) getApplicationContext()).transferService != null) {
+			if (((TransferApp) getApplicationContext()).sendService != null) {
 				Toast.makeText(MainActivity.this, R.string.transfer_service_is_already_running, Toast.LENGTH_SHORT)
 						.show();
 				return;

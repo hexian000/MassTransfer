@@ -29,7 +29,7 @@ import java.util.TimerTask;
 
 import static me.hexian000.masstransfer.TransferApp.*;
 
-public class TransferService extends Service {
+public class SendService extends Service {
 	Handler handler = new Handler();
 	Notification.Builder builder;
 	int startId = 0;
@@ -63,7 +63,7 @@ public class TransferService extends Service {
 			// Android 7.1
 			builder.setPriority(Notification.PRIORITY_DEFAULT).setLights(0, 0, 0).setVibrate(null).setSound(null);
 		}
-		Intent cancel = new Intent(this, TransferService.class);
+		Intent cancel = new Intent(this, SendService.class);
 		cancel.setAction("cancel");
 		builder.addAction(new Notification.Action.Builder(null, getResources().getString(R.string.cancel),
 				PendingIntent.getService(this, startId, cancel, 0)).build())
@@ -73,7 +73,7 @@ public class TransferService extends Service {
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if ("cancel".equals(intent.getAction())) {
-			Log.d(LOG_TAG, "TransferService user cancelled");
+			Log.d(LOG_TAG, "SendService user cancelled");
 			stop();
 			return START_NOT_STICKY;
 		}
@@ -115,7 +115,7 @@ public class TransferService extends Service {
 
 	@Override
 	public void onCreate() {
-		((TransferApp) getApplicationContext()).transferService = this;
+		((TransferApp) getApplicationContext()).sendService = this;
 		result = false;
 	}
 
@@ -126,7 +126,7 @@ public class TransferService extends Service {
 		} else {
 			Toast.makeText(this, R.string.transfer_failed, Toast.LENGTH_SHORT).show();
 		}
-		((TransferApp) getApplicationContext()).transferService = null;
+		((TransferApp) getApplicationContext()).sendService = null;
 	}
 
 	@Nullable
@@ -178,7 +178,7 @@ public class TransferService extends Service {
 						}
 					}
 				}
-				handler.post(TransferService.this::stop);
+				handler.post(SendService.this::stop);
 			}
 		}
 
@@ -241,11 +241,11 @@ public class TransferService extends Service {
 				}
 				readerThread.join();
 				result = reader.isSuccess();
-				Log.d(LOG_TAG, "TransferService finished normally");
+				Log.d(LOG_TAG, "SendService finished normally");
 			} catch (InterruptedException e) {
-				Log.d(LOG_TAG, "TransferService interrupted");
+				Log.d(LOG_TAG, "SendService interrupted");
 			} catch (IOException e) {
-				Log.e(LOG_TAG, "TransferService", e);
+				Log.e(LOG_TAG, "SendService", e);
 			} finally {
 				timer.cancel();
 				readerThread.interrupt();
