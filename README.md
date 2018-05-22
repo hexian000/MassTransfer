@@ -1,4 +1,7 @@
 # Mass Transfer
+
+[![Build Status](https://travis-ci.org/hexian000/MassTransfer.svg?branch=master)](https://travis-ci.org/hexian000/MassTransfer)
+
 The app do only transfer files between Android
 
 For example: You can share files over WLAN or WLAN direct or hotspot between Android phones using **Mass Transfer**.
