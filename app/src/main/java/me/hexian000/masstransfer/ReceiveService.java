@@ -20,6 +20,7 @@ import java.net.SocketTimeoutException;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static me.hexian000.masstransfer.TransferApp.IPTOS_THROUGHPUT;
 import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
 
 public class ReceiveService extends TransferService {
@@ -150,7 +151,6 @@ public class ReceiveService extends TransferService {
 				try {
 					Log.d(LOG_TAG, "ReceiveService accepted connection");
 					socket.setPerformancePreferences(0, 0, 1);
-					final int IPTOS_THROUGHPUT = 0x08;
 					socket.setTrafficClass(IPTOS_THROUGHPUT);
 					socket.setReceiveBufferSize(512 * 1024);
 					socket.setSoTimeout(30000);

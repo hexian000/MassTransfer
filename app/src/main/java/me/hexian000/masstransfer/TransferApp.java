@@ -15,6 +15,7 @@ public class TransferApp extends Application {
 	public final static String CHANNEL_TRANSFER_STATE = "transfer_state";
 	public final static int UDP_PORT = 14644;
 	public final static int TCP_PORT = 14645;
+	public final static int IPTOS_THROUGHPUT = 0x08;
 
 	public static int HeapSize = 0;
 

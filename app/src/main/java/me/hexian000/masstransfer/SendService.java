@@ -19,8 +19,7 @@ import java.net.SocketTimeoutException;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
-import static me.hexian000.masstransfer.TransferApp.TCP_PORT;
+import static me.hexian000.masstransfer.TransferApp.*;
 
 public class SendService extends TransferService {
 	private String host;
@@ -99,7 +98,6 @@ public class SendService extends TransferService {
 					socket = new Socket();
 				}
 				socket.setPerformancePreferences(0, 0, 1);
-				final int IPTOS_THROUGHPUT = 0x08;
 				socket.setTrafficClass(IPTOS_THROUGHPUT);
 				socket.setSendBufferSize(512 * 1024);
 				socket.setSoTimeout(30000);
