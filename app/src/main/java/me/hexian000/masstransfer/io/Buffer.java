@@ -25,12 +25,12 @@ public class Buffer {
 		return limit - capacity.availablePermits();
 	}
 
-	public int read(@NonNull byte[] buffer) throws InterruptedException {
+	public int read(@NonNull byte[] b, int off, int len) throws InterruptedException {
 		if (eof) {
 			return -1;
 		}
 		int read = 0;
-		while (read < buffer.length) {
+		while (read < len) {
 			if (current == null) {
 				current = q.take();
 				if (current.length == 0) {
@@ -40,15 +40,14 @@ public class Buffer {
 					}
 					break;
 				}
-			} else {
-				int count = Math.min(current.length - offset, buffer.length - read);
-				System.arraycopy(current, offset, buffer, read, count);
-				offset += count;
-				read += count;
-				if (offset == current.length) {
-					current = null;
-					offset = 0;
-				}
+			}
+			int count = Math.min(current.length - offset, len - read);
+			System.arraycopy(current, offset, b, off + read, count);
+			offset += count;
+			read += count;
+			if (offset >= current.length) {
+				current = null;
+				offset = 0;
 			}
 		}
 		capacity.release(read);

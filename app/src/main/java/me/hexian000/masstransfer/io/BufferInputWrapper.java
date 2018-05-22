@@ -8,8 +8,8 @@ import java.io.InputStream;
 public class BufferInputWrapper extends InputStream {
 	private final Buffer buffer;
 
-	public BufferInputWrapper(Buffer buffer) {
-		this.buffer = buffer;
+	public BufferInputWrapper(Buffer b) {
+		buffer = b;
 	}
 
 	@Override
@@ -22,9 +22,14 @@ public class BufferInputWrapper extends InputStream {
 	}
 
 	@Override
-	public int read(@NonNull byte[] buffer) throws IOException {
+	public int read(@NonNull byte[] b) throws IOException {
+		return read(b, 0, b.length);
+	}
+
+	@Override
+	public int read(@NonNull byte[] b, int off, int len) throws IOException {
 		try {
-			return this.buffer.read(buffer);
+			return buffer.read(b, off, len);
 		} catch (InterruptedException e) {
 			throw new IOException(e);
 		}

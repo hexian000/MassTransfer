@@ -8,8 +8,8 @@ import java.io.OutputStream;
 public class BufferOutputWrapper extends OutputStream {
 	private final Buffer buffer;
 
-	public BufferOutputWrapper(Buffer buffer) {
-		this.buffer = buffer;
+	public BufferOutputWrapper(Buffer b) {
+		buffer = b;
 	}
 
 	@Override
@@ -20,9 +20,20 @@ public class BufferOutputWrapper extends OutputStream {
 	}
 
 	@Override
-	public void write(@NonNull byte[] buffer) throws IOException {
+	public void write(@NonNull byte[] b, int off, int len) throws IOException {
+		if (off == 0 && len == b.length) {
+			write(b);
+			return;
+		}
+		byte[] buf = new byte[len];
+		System.arraycopy(b, off, buf, 0, len);
+		write(buf);
+	}
+
+	@Override
+	public void write(@NonNull byte[] b) throws IOException {
 		try {
-			this.buffer.write(buffer);
+			buffer.write(b);
 		} catch (InterruptedException e) {
 			throw new IOException(e);
 		}
