@@ -7,7 +7,7 @@ import android.widget.Checkable;
 import android.widget.RelativeLayout;
 
 public class ItemLayout extends RelativeLayout implements Checkable {
-	CheckBox checkBox = null;
+	private CheckBox checkBox = null;
 
 	public ItemLayout(Context context) {
 		super(context);

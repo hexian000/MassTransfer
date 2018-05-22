@@ -19,11 +19,11 @@ import java.nio.ByteOrder;
 import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
 
 public class DirectoryReader extends Thread {
-	private ProgressReporter reporter;
-	private ContentResolver resolver;
-	private DocumentFile root;
-	private String[] files;
-	private OutputStream out;
+	private final ProgressReporter reporter;
+	private final ContentResolver resolver;
+	private final DocumentFile root;
+	private final String[] files;
+	private final OutputStream out;
 	private boolean success = false;
 
 	public DirectoryReader(ContentResolver resolver, DocumentFile root, String[] files, OutputStream out,

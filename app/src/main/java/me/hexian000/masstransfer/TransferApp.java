@@ -21,7 +21,6 @@ public class TransferApp extends Application {
 	public MainActivity mainActivity = null;
 	public ReceiveService receiveService = null;
 	public SendService sendService = null;
-	public DiscoverService discoverService = null;
 
 	static void createNotificationChannels(NotificationManager manager, Resources res) {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

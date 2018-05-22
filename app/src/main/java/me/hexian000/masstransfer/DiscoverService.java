@@ -19,12 +19,10 @@ public class DiscoverService extends Service {
 			discoverer.close();
 			discoverer = null;
 		}
-		((TransferApp) getApplicationContext()).discoverService = null;
 	}
 
 	@Override
 	public void onCreate() {
-		((TransferApp) getApplicationContext()).discoverService = this;
 		discoverer = new Discoverer(TransferApp.UDP_PORT);
 	}
 

@@ -8,9 +8,9 @@ import java.util.concurrent.Semaphore;
 
 // for single-producer and single-consumer only
 public class Buffer {
-	private int limit;
-	private Semaphore capacity;
-	private BlockingQueue<byte[]> q;
+	private final int limit;
+	private final Semaphore capacity;
+	private final BlockingQueue<byte[]> q;
 	private byte[] current = null;
 	private int offset = 0;
 	private boolean closed = false, eof = false;

@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ChooseActivity extends Activity {
-	int dirCount;
+	private int dirCount;
 	private Handler handler;
 	private ProgressBar progressBar;
 	private ListView listView;
@@ -136,14 +136,12 @@ public class ChooseActivity extends Activity {
 	}
 
 	private class ItemViewHolder {
-		ImageView imageView;
-		TextView textView;
-		CheckBox checkBox;
+		final ImageView imageView;
+		final TextView textView;
 
 		ItemViewHolder(View itemView) {
 			imageView = itemView.findViewById(R.id.imageView);
 			textView = itemView.findViewById(R.id.textView);
-			checkBox = itemView.findViewById(R.id.checkBox);
 		}
 	}
 }

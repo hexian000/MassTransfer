@@ -28,14 +28,14 @@ public class MainActivity extends Activity {
 	private static final int REQUEST_SEND = 1;
 	private static final int REQUEST_RECEIVE = 2;
 	private static final int REQUEST_CHOOSE = 3;
-	List<String> items;
-	ArrayAdapter adapter;
-	String host;
-	Timer timer;
-	Handler handler = new Handler();
-	DiscoverService discoverService;
+	final Handler handler = new Handler();
+	private List<String> items;
+	private ArrayAdapter adapter;
+	private String host;
+	private Timer timer;
+	private DiscoverService discoverService;
 	private Button receiveButton;
-	private ServiceConnection serviceConnection = new ServiceConnection() {
+	private final ServiceConnection serviceConnection = new ServiceConnection() {
 		@Override
 		public void onServiceConnected(ComponentName className, IBinder service) {
 			DiscoverService.Binder binder = (DiscoverService.Binder) service;
@@ -77,7 +77,7 @@ public class MainActivity extends Activity {
 		timer.scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {
-				if (adapter != null && handler != null) {
+				if (adapter != null) {
 					handler.post(() -> {
 						items.clear();
 						if (discoverService != null && discoverService.discoverer != null) {

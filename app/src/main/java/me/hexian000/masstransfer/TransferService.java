@@ -15,16 +15,16 @@ import android.widget.Toast;
 import static me.hexian000.masstransfer.TransferApp.CHANNEL_TRANSFER_STATE;
 
 public abstract class TransferService extends Service {
-	protected DocumentFile root = null;
-	protected Handler handler = new Handler();
-	protected Notification.Builder builder;
-	protected NotificationManager notificationManager = null;
-	protected Thread thread = null;
-	protected int startId = 0;
-	protected boolean result = false;
+	final Handler handler = new Handler();
+	DocumentFile root = null;
+	Notification.Builder builder;
+	NotificationManager notificationManager = null;
+	Thread thread = null;
+	int startId = 0;
+	boolean result = false;
 
 
-	protected void initNotification(@StringRes int title) {
+	void initNotification(@StringRes int title) {
 		notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
 		if (builder == null) {
@@ -61,7 +61,7 @@ public abstract class TransferService extends Service {
 		startForeground(startId, notification);
 	}
 
-	protected void stop() {
+	void stop() {
 		if (thread != null) {
 			thread.interrupt();
 			thread = null;
@@ -71,7 +71,7 @@ public abstract class TransferService extends Service {
 		stopSelf();
 	}
 
-	protected void showResultToast() {
+	void showResultToast() {
 		if (result) {
 			Toast.makeText(this, R.string.transfer_success, Toast.LENGTH_SHORT).show();
 		} else {

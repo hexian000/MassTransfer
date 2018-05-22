@@ -23,7 +23,7 @@ import java.util.TimerTask;
 import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
 
 public class ReceiveService extends TransferService {
-	DiscoverService mService;
+	private DiscoverService mService;
 	private ServiceConnection mConnection;
 
 	@Override

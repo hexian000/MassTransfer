@@ -11,9 +11,9 @@ final class Discoverer {
 	private final static int BROADCAST_TIMEOUT = 500;
 	private final byte[] magic = "MassTransfer".getBytes();
 	private List<AnnounceInterface> announce;
-	private int port;
+	private final int port;
 	private Timer timer = null;
-	private Map<String, Long> peers;
+	private final Map<String, Long> peers;
 
 	Discoverer(int port) {
 		this.port = port;

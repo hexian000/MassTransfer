@@ -26,10 +26,10 @@ import java.nio.ByteOrder;
 import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
 
 public class DirectoryWriter extends Thread {
-	private ProgressReporter reporter;
-	private ContentResolver resolver;
-	private DocumentFile root;
-	private InputStream in;
+	private final ProgressReporter reporter;
+	private final ContentResolver resolver;
+	private final DocumentFile root;
+	private final InputStream in;
 	private boolean success = false;
 
 	public DirectoryWriter(ContentResolver resolver, DocumentFile root, InputStream in, ProgressReporter reporter) {

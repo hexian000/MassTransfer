@@ -23,8 +23,8 @@ import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
 import static me.hexian000.masstransfer.TransferApp.TCP_PORT;
 
 public class SendService extends TransferService {
-	String host;
-	String[] files = null;
+	private String host;
+	private String[] files = null;
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
