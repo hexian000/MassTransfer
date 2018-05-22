@@ -226,14 +226,14 @@ public class ReceiveService extends TransferService {
 					}
 				}, rateInterval * 1000, rateInterval * 1000);
 				byte[] packet = new byte[8 * 1024];
-				while (true) {
-					int read = in.read(packet);
-					out.write(packet, 0, read);
-					if (read < 0) {
-						break;
+				int read;
+				do {
+					read = in.read(packet);
+					if (read > 0) {
+						out.write(packet, 0, read);
+						rate.increase(read);
 					}
-					rate.increase(read);
-				}
+				} while (read >= 0);
 				out.flush();
 				out.close();
 				writer.join();
