@@ -170,14 +170,14 @@ public class SendService extends TransferService {
 					}
 				}, rateInterval * 1000, rateInterval * 1000);
 				byte[] packet = new byte[8 * 1024];
-				while (!isInterrupted()) {
-					int read = in.read(packet);
-					if (read <= 0) {
-						break;
+				int read;
+				do {
+					read = in.read(packet);
+					if (read > 0) {
+						out.write(packet, 0, read);
+						rate.increase(read);
 					}
-					out.write(packet, 0, read);
-					rate.increase(read);
-				}
+				} while (read >= 0);
 				out.flush();
 				reader.join();
 				result = reader.isSuccess();

@@ -39,7 +39,7 @@ public class DirectoryReader extends Thread {
 		return success;
 	}
 
-	private void sendDir(DocumentFile dir, String basePath) throws IOException {
+	private void sendDir(final DocumentFile dir, final String basePath) throws IOException {
 		if (!dir.exists()) {
 			return;
 		}
@@ -68,7 +68,7 @@ public class DirectoryReader extends Thread {
 		}
 	}
 
-	private void sendFile(DocumentFile file, String basePath) throws IOException {
+	private void sendFile(final DocumentFile file, final String basePath) throws IOException {
 		if (!file.exists() || !file.canRead()) {
 			return;
 		}
