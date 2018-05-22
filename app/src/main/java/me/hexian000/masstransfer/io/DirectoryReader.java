@@ -15,6 +15,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.zip.CRC32;
 
 import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
 
@@ -79,33 +80,41 @@ public class DirectoryReader extends Thread {
 		if (basePath.length() > 0) {
 			pathStr = basePath + "/" + pathStr;
 		}
-		byte[] path = pathStr.getBytes("UTF-8");
-		ByteArrayOutputStream header = new ByteArrayOutputStream();
-		ByteBuffer lengths = ByteBuffer.allocate(Integer.BYTES + Long.BYTES).order(ByteOrder.BIG_ENDIAN);
-		lengths.putInt(path.length);
+		final byte[] path = pathStr.getBytes("UTF-8");
+		final long length = file.length();
+		out.write(ByteBuffer.allocate(Integer.BYTES + Long.BYTES)
+				.order(ByteOrder.BIG_ENDIAN)
+				.putInt(path.length)
+				.putLong(length)
+				.array());
+		out.write(path);
 		final String name = file.getName();
-		Log.d(LOG_TAG, "sendFile: " + name + " length=" + file.length());
-		InputStream s = resolver.openInputStream(file.getUri());
-		if (s == null) {
-			throw new IOException("can't open input stream");
-		}
-		lengths.putLong(file.length());
-		header.write(lengths.array());
-		header.write(path);
-		out.write(header.toByteArray());
-		byte[] buf = new byte[64 * 1024];
-		final long fileLength = file.length();
-		long pos = 0;
-		reporter.report(name, (int) (pos * 1000 / fileLength), 1000);
-		int read;
-		do {
-			read = s.read(buf);
-			if (read > 0) {
-				pos += read;
-				out.write(buf, 0, read);
-				reporter.report(name, (int) (pos * 1000 / fileLength), 1000);
+		Log.d(LOG_TAG, "sendFile: " + name + " length=" + length);
+		try (final InputStream in = resolver.openInputStream(file.getUri())) {
+			if (in == null) {
+				throw new IOException("can't open input stream");
 			}
-		} while (read >= 0);
+			final byte[] buf = new byte[64 * 1024];
+			final CRC32 crc32 = new CRC32();
+			long pos = 0;
+			reporter.report(name, 0, 1000);
+			int read;
+			do {
+				read = in.read(buf);
+				if (read > 0) {
+					pos += read;
+					out.write(buf, 0, read);
+					crc32.update(buf, 0, read);
+					reporter.report(name, (int) (pos * 1000 / length), 1000);
+				}
+			} while (read >= 0);
+			final long crcValue = crc32.getValue();
+			Log.d(LOG_TAG, "file: " + name + " CRC32=" + Long.toHexString(crcValue));
+			out.write(ByteBuffer.allocate(Long.BYTES)
+					.order(ByteOrder.BIG_ENDIAN)
+					.putLong(crcValue)
+					.array());
+		}
 	}
 
 	@Override
