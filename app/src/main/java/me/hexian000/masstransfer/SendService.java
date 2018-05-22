@@ -156,7 +156,7 @@ public class SendService extends TransferService {
 			try (InputStream in = new BufferInputWrapper(buffer);
 			     OutputStream out = socket.getOutputStream()) {
 				RateCounter rate = new RateCounter();
-				final int rateInterval = 10;
+				final int rateInterval = 5;
 				timer.schedule(new TimerTask() {
 
 					@Override
