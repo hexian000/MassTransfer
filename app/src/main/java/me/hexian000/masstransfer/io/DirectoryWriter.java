@@ -94,6 +94,11 @@ public class DirectoryWriter extends Thread {
 		}
 
 		file = parent.createFile(mime, name);
+
+		if (length == 0) {
+			return;
+		}
+
 		OutputStream out = null;
 		try {
 			if (file != null) {
@@ -101,22 +106,22 @@ public class DirectoryWriter extends Thread {
 			} else {
 				Log.e(LOG_TAG, "Can't create file mime=" + mime + " name=" + name);
 			}
-			final int bufferSize = 8 * 1024;
 			final long fileLength = length;
+			byte[] buf = new byte[64 * 1024];
 			long pos = 0;
 			reporter.report(name, (int) (pos * 1000 / fileLength), 1000);
 			while (length > 0) {
-				byte[] buffer = new byte[(int) Math.min(length, bufferSize)];
-				int read = in.read(buffer);
-				if (read != buffer.length) {
-					throw new EOFException("read=" + read + " buffer=" + buffer.length + " length=" + length);
+				int read = in.read(buf, 0, (int) Math.min(length, buf.length));
+				if (read > 0) {
+					if (out != null) {
+						out.write(buf, 0, read);
+					}
+					length -= read;
+					pos += read;
+					reporter.report(name, (int) (pos * 1000 / fileLength), 1000);
+				} else if (read < 0) {
+					throw new EOFException("read=" + read + " length=" + length);
 				}
-				if (out != null) {
-					out.write(buffer);
-				}
-				length -= read;
-				pos += read;
-				reporter.report(name, (int) (pos * 1000 / fileLength), 1000);
 			}
 		} finally {
 			if (out != null) {
@@ -142,8 +147,8 @@ public class DirectoryWriter extends Thread {
 					Log.d(LOG_TAG, "protocol bye");
 					break; // bye
 				}
-				if (nameLen > 65535) {
-					Log.e(LOG_TAG, "invalid header");
+				if (nameLen < 0 || nameLen > 65535 || fileLen < 0) {
+					Log.wtf(LOG_TAG, "BUG: invalid header");
 					return;
 				}
 				byte[] name = new byte[nameLen];

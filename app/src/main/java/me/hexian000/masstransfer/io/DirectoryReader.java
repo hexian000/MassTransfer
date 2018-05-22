@@ -93,24 +93,19 @@ public class DirectoryReader extends Thread {
 		header.write(lengths.array());
 		header.write(path);
 		out.write(header.toByteArray());
-		final int bufferSize = 8 * 1024;
-		byte[] buf = new byte[bufferSize];
+		byte[] buf = new byte[64 * 1024];
 		final long fileLength = file.length();
 		long pos = 0;
-		int read;
 		reporter.report(name, (int) (pos * 1000 / fileLength), 1000);
-		while (true) {
+		int read;
+		do {
 			read = s.read(buf);
 			if (read > 0) {
 				pos += read;
-				byte[] buf2 = new byte[read];
-				System.arraycopy(buf, 0, buf2, 0, read);
-				out.write(buf2);
+				out.write(buf, 0, read);
 				reporter.report(name, (int) (pos * 1000 / fileLength), 1000);
-			} else {
-				break;
 			}
-		}
+		} while (read >= 0);
 	}
 
 	@Override
