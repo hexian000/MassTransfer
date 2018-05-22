@@ -101,7 +101,7 @@ public class DirectoryWriter extends Thread {
 			} else {
 				Log.e(LOG_TAG, "Can't create file mime=" + mime + " name=" + name);
 			}
-			final int bufferSize = 1024 * 1024;
+			final int bufferSize = 8 * 1024;
 			final long fileLength = length;
 			long pos = 0;
 			reporter.report(name, (int) (pos * 1000 / fileLength), 1000);

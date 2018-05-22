@@ -93,7 +93,7 @@ public class DirectoryReader extends Thread {
 		header.write(lengths.array());
 		header.write(path);
 		out.write(header.toByteArray());
-		final int bufferSize = 1024 * 1024;
+		final int bufferSize = 8 * 1024;
 		byte[] buf = new byte[bufferSize];
 		final long fileLength = file.length();
 		long pos = 0;
