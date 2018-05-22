@@ -9,13 +9,11 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.provider.DocumentFile;
 import android.util.Log;
-import me.hexian000.masstransfer.io.Buffer;
-import me.hexian000.masstransfer.io.BufferInputWrapper;
-import me.hexian000.masstransfer.io.DirectoryWriter;
-import me.hexian000.masstransfer.io.RateCounter;
+import me.hexian000.masstransfer.io.*;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
@@ -150,7 +148,7 @@ public class ReceiveService extends TransferService {
 					Log.d(LOG_TAG, "ReceiveService accepted connection");
 					socket.setPerformancePreferences(0, 0, 1);
 					socket.setSoTimeout(30000);
-					runPipe(socket);
+					streamCopy(socket);
 				} catch (SocketTimeoutException e) {
 					Log.e(LOG_TAG, "socket timeout");
 				} catch (IOException e) {
@@ -176,7 +174,7 @@ public class ReceiveService extends TransferService {
 			}
 		}
 
-		private void runPipe(Socket socket) throws InterruptedException, IOException {
+		private void streamCopy(Socket socket) throws InterruptedException, IOException {
 			final int bufferSize = Math.max(TransferApp.HeapSize - 16 * 1024 * 1024, 8 * 1024 * 1024);
 			Log.d(LOG_TAG, "receive buffer size: " + TransferApp.sizeToString(bufferSize));
 			Buffer buffer = new Buffer(bufferSize);
@@ -204,7 +202,8 @@ public class ReceiveService extends TransferService {
 					});
 			writer.start();
 			Timer timer = new Timer();
-			try (InputStream in = socket.getInputStream()) {
+			try (InputStream in = socket.getInputStream();
+			     OutputStream out = new BufferOutputWrapper(buffer)) {
 				RateCounter rate = new RateCounter();
 				final int rateInterval = 2;
 				timer.schedule(new TimerTask() {
@@ -219,16 +218,11 @@ public class ReceiveService extends TransferService {
 						});
 					}
 				}, rateInterval * 1000, rateInterval * 1000);
+				byte[] packet = new byte[8 * 1024];
 				while (true) {
-					byte[] packet = new byte[8 * 1024];
 					int read = in.read(packet);
-					if (read == packet.length) {
-						buffer.write(packet);
-					} else if (read > 0) {
-						byte[] data = new byte[read];
-						System.arraycopy(packet, 0, data, 0, read);
-						buffer.write(data);
-					} else {
+					out.write(packet, 0, read);
+					if (read < 0) {
 						break;
 					}
 					rate.increase(read);

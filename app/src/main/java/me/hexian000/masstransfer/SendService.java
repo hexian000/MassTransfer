@@ -7,12 +7,10 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.provider.DocumentFile;
 import android.util.Log;
-import me.hexian000.masstransfer.io.Buffer;
-import me.hexian000.masstransfer.io.BufferOutputWrapper;
-import me.hexian000.masstransfer.io.DirectoryReader;
-import me.hexian000.masstransfer.io.RateCounter;
+import me.hexian000.masstransfer.io.*;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -84,8 +82,10 @@ public class SendService extends TransferService {
 			synchronized (lock) {
 				if (socket != null) {
 					try {
+						socket.shutdownOutput();
 						socket.close();
-					} catch (IOException ignored) {
+					} catch (IOException e) {
+						Log.e(LOG_TAG, "cancel: socket close failed", e);
 					}
 				}
 			}
@@ -101,19 +101,20 @@ public class SendService extends TransferService {
 				socket.setPerformancePreferences(0, 0, 1);
 				socket.setSoTimeout(30000);
 				socket.connect(new InetSocketAddress(InetAddress.getByName(host), TCP_PORT), 4000);
-				runPipe(socket);
+				streamCopy(socket);
 			} catch (SocketTimeoutException e) {
 				Log.e(LOG_TAG, "socket timeout");
 			} catch (IOException e) {
 				Log.e(LOG_TAG, "connect failed", e);
 			} finally {
-				if (socket != null) {
-					try {
-						socket.close();
-					} catch (IOException e) {
-						Log.e(LOG_TAG, "socket close failed", e);
-					} finally {
-						synchronized (lock) {
+				synchronized (lock) {
+					if (socket != null) {
+						try {
+							socket.shutdownOutput();
+							socket.close();
+						} catch (IOException e) {
+							Log.e(LOG_TAG, "socket close failed", e);
+						} finally {
 							socket = null;
 						}
 					}
@@ -122,7 +123,7 @@ public class SendService extends TransferService {
 			}
 		}
 
-		private void runPipe(Socket socket) {
+		private void streamCopy(Socket socket) {
 			final int bufferSize = 8 * 1024 * 1024;
 			Buffer buffer = new Buffer(bufferSize);
 			DirectoryReader reader = new DirectoryReader(getContentResolver(), root, files,
@@ -150,7 +151,8 @@ public class SendService extends TransferService {
 					});
 			reader.start();
 			Timer timer = new Timer();
-			try (OutputStream out = socket.getOutputStream()) {
+			try (InputStream in = new BufferInputWrapper(buffer);
+			     OutputStream out = socket.getOutputStream()) {
 				RateCounter rate = new RateCounter();
 				final int rateInterval = 10;
 				timer.schedule(new TimerTask() {
@@ -165,9 +167,9 @@ public class SendService extends TransferService {
 						});
 					}
 				}, rateInterval * 1000, rateInterval * 1000);
+				byte[] packet = new byte[8 * 1024];
 				while (!isInterrupted()) {
-					byte[] packet = new byte[8 * 1024];
-					int read = buffer.read(packet);
+					int read = in.read(packet);
 					if (read <= 0) {
 						break;
 					}
