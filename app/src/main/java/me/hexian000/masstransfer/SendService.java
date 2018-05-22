@@ -82,7 +82,7 @@ public class SendService extends TransferService {
 			synchronized (lock) {
 				if (socket != null) {
 					try {
-						socket.shutdownOutput();
+						socket.setSoLinger(true, 0);
 						socket.close();
 					} catch (IOException e) {
 						Log.e(LOG_TAG, "cancel: socket close failed", e);
@@ -99,7 +99,11 @@ public class SendService extends TransferService {
 					socket = new Socket();
 				}
 				socket.setPerformancePreferences(0, 0, 1);
+				final int IPTOS_THROUGHPUT = 0x08;
+				socket.setTrafficClass(IPTOS_THROUGHPUT);
+				socket.setSendBufferSize(512 * 1024);
 				socket.setSoTimeout(30000);
+				socket.setSoLinger(true, 30);
 				socket.connect(new InetSocketAddress(InetAddress.getByName(host), TCP_PORT), 4000);
 				streamCopy(socket);
 			} catch (SocketTimeoutException e) {
@@ -110,14 +114,12 @@ public class SendService extends TransferService {
 				synchronized (lock) {
 					if (socket != null) {
 						try {
-							socket.shutdownOutput();
 							socket.close();
 						} catch (IOException e) {
 							Log.e(LOG_TAG, "socket close failed", e);
-						} finally {
-							socket = null;
 						}
 					}
+					socket = null;
 				}
 				handler.post(SendService.this::stop);
 			}
@@ -176,6 +178,7 @@ public class SendService extends TransferService {
 					out.write(packet, 0, read);
 					rate.increase(read);
 				}
+				out.flush();
 				reader.join();
 				result = reader.isSuccess();
 				Log.d(LOG_TAG, "SendService finished normally");

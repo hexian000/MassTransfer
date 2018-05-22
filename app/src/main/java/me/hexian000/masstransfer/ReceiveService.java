@@ -111,6 +111,7 @@ public class ReceiveService extends TransferService {
 				}
 				if (socket != null) {
 					try {
+						socket.setSoLinger(true, 0);
 						socket.close();
 					} catch (IOException ignored) {
 					}
@@ -127,6 +128,8 @@ public class ReceiveService extends TransferService {
 				}
 				Log.d(LOG_TAG, "ReceiveService begins to listen");
 				listener.setSoTimeout(1000); // prevent thread leak
+				listener.setPerformancePreferences(0, 0, 1);
+				listener.setReceiveBufferSize(512 * 1024);
 				while (!isInterrupted()) {
 					try {
 						Socket s = listener.accept();
@@ -147,6 +150,9 @@ public class ReceiveService extends TransferService {
 				try {
 					Log.d(LOG_TAG, "ReceiveService accepted connection");
 					socket.setPerformancePreferences(0, 0, 1);
+					final int IPTOS_THROUGHPUT = 0x08;
+					socket.setTrafficClass(IPTOS_THROUGHPUT);
+					socket.setReceiveBufferSize(512 * 1024);
 					socket.setSoTimeout(30000);
 					streamCopy(socket);
 				} catch (SocketTimeoutException e) {
@@ -154,14 +160,15 @@ public class ReceiveService extends TransferService {
 				} catch (IOException e) {
 					Log.e(LOG_TAG, "pipe", e);
 				} finally {
-					try {
-						socket.close();
-					} catch (IOException e) {
-						Log.e(LOG_TAG, "socket close failed", e);
-					} finally {
-						synchronized (lock) {
-							socket = null;
+					synchronized (lock) {
+						if (socket != null) {
+							try {
+								socket.close();
+							} catch (IOException e) {
+								Log.e(LOG_TAG, "socket close failed", e);
+							}
 						}
+						socket = null;
 					}
 				}
 			} catch (InterruptedException e) {
@@ -227,7 +234,8 @@ public class ReceiveService extends TransferService {
 					}
 					rate.increase(read);
 				}
-				buffer.close();
+				out.flush();
+				out.close();
 				writer.join();
 				result = writer.isSuccess();
 				Log.d(LOG_TAG, "receive thread finished normally");
