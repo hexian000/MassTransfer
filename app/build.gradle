@@ -4,7 +4,7 @@ android {
     compileSdkVersion 27
     defaultConfig {
         applicationId "me.hexian000.masstransfer"
-        minSdkVersion 25
+        minSdkVersion 24
         targetSdkVersion 27
         versionCode 6
         versionName "2.2.7"
