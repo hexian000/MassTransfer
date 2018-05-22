@@ -95,10 +95,10 @@ public class DirectoryReader extends Thread {
 		out.write(header.toByteArray());
 		final int bufferSize = 1024 * 1024;
 		byte[] buf = new byte[bufferSize];
-		int maxProgress = (int) (file.length() / bufferSize);
+		final long fileLength = file.length();
 		long pos = 0;
 		int read;
-		reporter.report(name, (int) (pos / bufferSize), maxProgress);
+		reporter.report(name, (int) (pos * 1000 / fileLength), 1000);
 		while (true) {
 			read = s.read(buf);
 			if (read > 0) {
@@ -106,7 +106,7 @@ public class DirectoryReader extends Thread {
 				byte[] buf2 = new byte[read];
 				System.arraycopy(buf, 0, buf2, 0, read);
 				out.write(buf2);
-				reporter.report(name, (int) (pos / bufferSize), maxProgress);
+				reporter.report(name, (int) (pos * 1000 / fileLength), 1000);
 			} else {
 				break;
 			}

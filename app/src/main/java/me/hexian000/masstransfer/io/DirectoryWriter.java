@@ -102,9 +102,9 @@ public class DirectoryWriter extends Thread {
 				Log.e(LOG_TAG, "Can't create file mime=" + mime + " name=" + name);
 			}
 			final int bufferSize = 1024 * 1024;
+			final long fileLength = length;
 			long pos = 0;
-			int maxProgress = (int) (length / bufferSize);
-			reporter.report(name, (int) (pos / bufferSize), maxProgress);
+			reporter.report(name, (int) (pos * 1000 / fileLength), 1000);
 			while (length > 0) {
 				byte[] buffer = new byte[(int) Math.min(length, bufferSize)];
 				int read = in.read(buffer);
@@ -116,7 +116,7 @@ public class DirectoryWriter extends Thread {
 				}
 				length -= read;
 				pos += read;
-				reporter.report(name, (int) (pos / bufferSize), maxProgress);
+				reporter.report(name, (int) (pos * 1000 / fileLength), 1000);
 			}
 		} finally {
 			if (out != null) {
