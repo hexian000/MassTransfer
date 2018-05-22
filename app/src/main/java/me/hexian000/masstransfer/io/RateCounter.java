@@ -1,22 +1,21 @@
 package me.hexian000.masstransfer.io;
 
-import java.util.concurrent.atomic.AtomicLong;
-
+// Thread unsafe
 public class RateCounter {
-	private AtomicLong value;
+	private long value;
 	private long last;
 
 	public RateCounter() {
-		value = new AtomicLong(0);
+		value = 0;
 		last = 0;
 	}
 
-	public void increase(long value) {
-		this.value.addAndGet(value);
+	public void increase(long delta) {
+		value += delta;
 	}
 
-	public synchronized long rate() {
-		long now = value.get();
+	public long rate() {
+		long now = value;
 		long rate = now - last;
 		last = now;
 		return rate;
