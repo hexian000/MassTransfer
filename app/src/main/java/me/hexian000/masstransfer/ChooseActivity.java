@@ -121,12 +121,13 @@ public class ChooseActivity extends Activity {
 			Intent intent = new Intent();
 			intent.setData(getIntent().getData());
 			SparseBooleanArray positions = listView.getCheckedItemPositions();
-			String[] chosenFiles = new String[positions.size()];
+			List<String> chosenFiles = new ArrayList<>();
 			for (int i = 0; i < positions.size(); i++) {
-				String name = ((String) listView.getItemAtPosition(positions.keyAt(i)));
-				chosenFiles[i] = name;
+				if (positions.valueAt(i)) {
+					chosenFiles.add((String) listView.getItemAtPosition(positions.keyAt(i)));
+				}
 			}
-			intent.putExtra("files", chosenFiles);
+			intent.putExtra("files", chosenFiles.toArray(new String[]{}));
 			setResult(RESULT_OK, intent);
 			finish();
 		}
