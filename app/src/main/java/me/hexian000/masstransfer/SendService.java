@@ -42,13 +42,12 @@ public class SendService extends TransferService {
 			return START_NOT_STICKY;
 		}
 		host = extras.getString("host");
-		String[] uriStrings = extras.getStringArray("files");
-		if (host == null || uriStrings == null) {
+		files = extras.getStringArray("files");
+		if (host == null || files == null) {
 			stopSelf();
 			return START_NOT_STICKY;
 		}
 		root = DocumentFile.fromTreeUri(this, intent.getData());
-		files = extras.getStringArray("files");
 
 		thread = new TransferThread();
 		thread.start();

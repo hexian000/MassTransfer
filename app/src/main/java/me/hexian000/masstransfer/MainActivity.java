@@ -122,7 +122,7 @@ public class MainActivity extends Activity {
 				break;
 			}
 			String[] files = extras.getStringArray("files");
-			if (files == null || files.length < 1) {
+			if (files == null) {
 				break;
 			}
 			Intent intent = new Intent(this, SendService.class);
