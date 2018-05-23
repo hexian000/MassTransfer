@@ -97,10 +97,6 @@ public class ReceiveService extends TransferService {
 		ServerSocket listener = null;
 		Socket socket = null;
 
-		ReceiveThread() {
-			super();
-		}
-
 		@Override
 		public void interrupt() {
 			synchronized (lock) {
