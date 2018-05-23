@@ -72,12 +72,12 @@ public class SendService extends TransferService {
 	}
 
 	private class TransferThread extends Thread {
-		final Object lock = new Object();
 		Socket socket = null;
 
 		@Override
 		public void interrupt() {
-			synchronized (lock) {
+			{
+				final Socket socket = this.socket;
 				if (socket != null) {
 					try {
 						socket.setSoLinger(true, 0);
@@ -93,9 +93,7 @@ public class SendService extends TransferService {
 		@Override
 		public void run() {
 			try {
-				synchronized (lock) {
-					socket = new Socket();
-				}
+				socket = new Socket();
 				socket.setPerformancePreferences(0, 0, 1);
 				socket.setTrafficClass(IPTOS_THROUGHPUT);
 				socket.setSendBufferSize(512 * 1024);
@@ -108,13 +106,11 @@ public class SendService extends TransferService {
 			} catch (IOException e) {
 				Log.e(LOG_TAG, "connect failed", e);
 			} finally {
-				synchronized (lock) {
-					if (socket != null) {
-						try {
-							socket.close();
-						} catch (IOException e) {
-							Log.e(LOG_TAG, "socket close failed", e);
-						}
+				if (socket != null) {
+					try {
+						socket.close();
+					} catch (IOException e) {
+						Log.e(LOG_TAG, "socket close failed", e);
 					}
 					socket = null;
 				}

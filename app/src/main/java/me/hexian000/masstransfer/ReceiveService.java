@@ -93,19 +93,22 @@ public class ReceiveService extends TransferService {
 	}
 
 	private class ReceiveThread extends Thread {
-		final Object lock = new Object();
 		ServerSocket listener = null;
 		Socket socket = null;
 
 		@Override
 		public void interrupt() {
-			synchronized (lock) {
+			{
+				final ServerSocket listener = this.listener;
 				if (listener != null) {
 					try {
 						listener.close();
 					} catch (IOException ignored) {
 					}
 				}
+			}
+			{
+				final Socket socket = this.socket;
 				if (socket != null) {
 					try {
 						socket.setSoLinger(true, 0);
@@ -120,19 +123,14 @@ public class ReceiveService extends TransferService {
 		@Override
 		public void run() {
 			try {
-				synchronized (lock) {
-					listener = new ServerSocket(TransferApp.TCP_PORT);
-				}
+				listener = new ServerSocket(TransferApp.TCP_PORT);
 				Log.d(LOG_TAG, "ReceiveService begins to listen");
 				listener.setSoTimeout(1000); // prevent thread leak
 				listener.setPerformancePreferences(0, 0, 1);
 				listener.setReceiveBufferSize(512 * 1024);
 				while (!isInterrupted()) {
 					try {
-						Socket s = listener.accept();
-						synchronized (lock) {
-							socket = s;
-						}
+						socket = listener.accept();
 						break;
 					} catch (SocketTimeoutException ignored) {
 					}
@@ -141,9 +139,7 @@ public class ReceiveService extends TransferService {
 					return;
 				}
 				listener.close();
-				synchronized (lock) {
-					listener = null;
-				}
+				listener = null;
 				try {
 					Log.d(LOG_TAG, "ReceiveService accepted connection");
 					socket.setPerformancePreferences(0, 0, 1);
@@ -156,13 +152,11 @@ public class ReceiveService extends TransferService {
 				} catch (IOException e) {
 					Log.e(LOG_TAG, "pipe", e);
 				} finally {
-					synchronized (lock) {
-						if (socket != null) {
-							try {
-								socket.close();
-							} catch (IOException e) {
-								Log.e(LOG_TAG, "socket close failed", e);
-							}
+					if (socket != null) {
+						try {
+							socket.close();
+						} catch (IOException e) {
+							Log.e(LOG_TAG, "socket close failed", e);
 						}
 						socket = null;
 					}
