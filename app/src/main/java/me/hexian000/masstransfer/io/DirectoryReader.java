@@ -97,23 +97,25 @@ public class DirectoryReader extends Thread {
 			final byte[] buf = new byte[64 * 1024];
 			final CRC32 crc32 = new CRC32();
 			long pos = 0;
-			reporter.report(name, 0, 1000);
-			int read;
-			do {
-				read = in.read(buf);
-				if (read > 0) {
-					pos += read;
-					out.write(buf, 0, read);
-					crc32.update(buf, 0, read);
-					reporter.report(name, (int) (pos * 1000 / length), 1000);
-				}
-			} while (read >= 0);
-			final int crcValue = (int) crc32.getValue();
-			Log.d(LOG_TAG, "file: " + name + " CRC32=" + Integer.toHexString(crcValue));
-			out.write(ByteBuffer.allocate(Integer.BYTES)
-					.order(ByteOrder.BIG_ENDIAN)
-					.putInt(crcValue)
-					.array());
+			reporter.report(name, 0, 0);
+			if (length > 0) {
+				int read;
+				do {
+					read = in.read(buf);
+					if (read > 0) {
+						pos += read;
+						out.write(buf, 0, read);
+						crc32.update(buf, 0, read);
+						reporter.report(name, (int) (pos * 1000 / length), 1000);
+					}
+				} while (read >= 0);
+				final int crcValue = (int) crc32.getValue();
+				Log.d(LOG_TAG, "file: " + name + " CRC32=" + Integer.toHexString(crcValue));
+				out.write(ByteBuffer.allocate(Integer.BYTES)
+						.order(ByteOrder.BIG_ENDIAN)
+						.putInt(crcValue)
+						.array());
+			}
 		}
 	}
 
