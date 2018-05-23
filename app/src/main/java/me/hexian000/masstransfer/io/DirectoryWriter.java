@@ -138,7 +138,7 @@ public class DirectoryWriter extends Thread {
 					file.delete();
 				}
 			} else {
-				Log.e(LOG_TAG, "CRC32 matched: " + name + " " + Integer.toHexString(localCRC));
+				Log.v(LOG_TAG, "CRC32 matched: " + name + " " + Integer.toHexString(localCRC));
 			}
 		} finally {
 			if (out != null) {
