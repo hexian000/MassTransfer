@@ -51,7 +51,7 @@ public abstract class TransferService extends Service {
 			builder.setPriority(Notification.PRIORITY_DEFAULT).setLights(0, 0, 0).setVibrate(null).setSound(null);
 		}
 
-		Intent cancel = new Intent(this, SendService.class);
+		Intent cancel = new Intent(this, this.getClass());
 		cancel.setAction("cancel");
 		builder.addAction(new Notification.Action.Builder(null, getResources().getString(R.string.cancel),
 				PendingIntent.getService(this, startId, cancel, 0)).build())
