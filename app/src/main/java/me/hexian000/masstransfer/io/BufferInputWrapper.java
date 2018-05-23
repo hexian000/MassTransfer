@@ -14,16 +14,7 @@ public class BufferInputWrapper extends InputStream {
 
 	@Override
 	public int read() throws IOException {
-		byte[] buffer = new byte[1];
-		if (read(buffer) > 0) {
-			return buffer[0];
-		}
-		return -1;
-	}
-
-	@Override
-	public int read(@NonNull byte[] b) throws IOException {
-		return read(b, 0, b.length);
+		throw new IOException("Not implemented");
 	}
 
 	@Override

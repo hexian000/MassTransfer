@@ -14,26 +14,15 @@ public class BufferOutputWrapper extends OutputStream {
 
 	@Override
 	public void write(int b) throws IOException {
-		byte[] buffer = new byte[1];
-		buffer[0] = (byte) b;
-		write(buffer);
+		throw new IOException("Not implemented");
 	}
 
 	@Override
 	public void write(@NonNull byte[] b, int off, int len) throws IOException {
-		if (off == 0 && len == b.length) {
-			write(b);
-			return;
-		}
 		byte[] buf = new byte[len];
 		System.arraycopy(b, off, buf, 0, len);
-		write(buf);
-	}
-
-	@Override
-	public void write(@NonNull byte[] b) throws IOException {
 		try {
-			buffer.write(b);
+			buffer.write(buf);
 		} catch (InterruptedException e) {
 			throw new IOException(e);
 		}
