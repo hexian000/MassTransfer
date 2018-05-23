@@ -108,11 +108,11 @@ public class DirectoryReader extends Thread {
 					reporter.report(name, (int) (pos * 1000 / length), 1000);
 				}
 			} while (read >= 0);
-			final long crcValue = crc32.getValue();
-			Log.d(LOG_TAG, "file: " + name + " CRC32=" + Long.toHexString(crcValue));
-			out.write(ByteBuffer.allocate(Long.BYTES)
+			final int crcValue = (int) crc32.getValue();
+			Log.d(LOG_TAG, "file: " + name + " CRC32=" + Integer.toHexString(crcValue));
+			out.write(ByteBuffer.allocate(Integer.BYTES)
 					.order(ByteOrder.BIG_ENDIAN)
-					.putLong(crcValue)
+					.putInt(crcValue)
 					.array());
 		}
 	}

@@ -124,19 +124,21 @@ public class DirectoryWriter extends Thread {
 					throw new EOFException("read=" + read + " length=" + length);
 				}
 			} while (pos < length);
-			ByteBuffer byteBuffer = ByteBuffer.allocate(Long.BYTES).order(ByteOrder.BIG_ENDIAN);
-			if (in.read(byteBuffer.array()) != Long.BYTES) {
+			ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES).order(ByteOrder.BIG_ENDIAN);
+			if (in.read(byteBuffer.array()) != Integer.BYTES) {
 				throw new EOFException("EOF reading CRC of file: " + name);
 			}
-			final long remoteCRC = byteBuffer.getLong();
-			final long localCRC = crc32.getValue();
+			final int remoteCRC = byteBuffer.getInt();
+			final int localCRC = (int) crc32.getValue();
 			if (remoteCRC != localCRC) {
 				Log.e(LOG_TAG, "CRC32 mismatch: " + name +
-						" expected=" + Long.toHexString(remoteCRC) +
-						" actual=" + Long.toHexString(localCRC));
+						" expected=" + Integer.toHexString(remoteCRC) +
+						" actual=" + Integer.toHexString(localCRC));
 				if (file != null) {
 					file.delete();
 				}
+			} else {
+				Log.e(LOG_TAG, "CRC32 matched: " + name + " " + Integer.toHexString(localCRC));
 			}
 		} finally {
 			if (out != null) {
