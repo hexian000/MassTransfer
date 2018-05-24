@@ -174,7 +174,7 @@ public class ReceiveService extends TransferService {
 
 		private void streamCopy(Socket socket) throws InterruptedException, IOException {
 			final int bufferSize = Math.max(TransferApp.HeapSize - 32 * 1024 * 1024, 2 * 1024 * 1024);
-			Log.d(LOG_TAG, "receive buffer size: " + TransferApp.sizeToString(bufferSize));
+			Log.d(LOG_TAG, "receive buffer size: " + TransferApp.formatSize(bufferSize));
 			final Buffer buffer = new Buffer(bufferSize);
 			final Progress progress = new Progress();
 			final DirectoryWriter writer = new DirectoryWriter(getContentResolver(), root,
@@ -215,7 +215,7 @@ public class ReceiveService extends TransferService {
 								builder.setContentText(contentText)
 										.setStyle(new Notification.BigTextStyle().bigText(contentText))
 										.setProgress(max, now, indeterminate)
-										.setSubText(TransferApp.sizeToString(rate.rate()) + "/s");
+										.setSubText(TransferApp.formatSize(rate.rate()) + "/s");
 								notificationManager.notify(startId, builder.build());
 							}
 						});

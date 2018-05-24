@@ -8,7 +8,7 @@ import android.content.res.Resources;
 import android.os.Build;
 import android.util.Log;
 
-import java.util.Locale;
+import java.text.DecimalFormat;
 
 public class TransferApp extends Application {
 	public final static String LOG_TAG = "MassTransfer";
@@ -16,9 +16,8 @@ public class TransferApp extends Application {
 	public final static int UDP_PORT = 14644;
 	public final static int TCP_PORT = 14645;
 	public final static int IPTOS_THROUGHPUT = 0x08;
-
+	private final static DecimalFormat prettyFormat = new DecimalFormat("#.##");
 	public static int HeapSize = 0;
-
 	public MainActivity mainActivity = null;
 	public ReceiveService receiveService = null;
 	public SendService sendService = null;
@@ -35,15 +34,15 @@ public class TransferApp extends Application {
 		}
 	}
 
-	public static String sizeToString(double size) {
+	public static String formatSize(double size) {
 		if (size < 2.0 * 1024.0) { // Byte
-			return String.format(Locale.getDefault(), "%.0fB", size);
+			return prettyFormat.format(size) + "B";
 		} else if (size < 2.0 * 1024.0 * 1024.0) { // KB
-			return String.format(Locale.getDefault(), "%.2fKB", size / 1024.0);
+			return prettyFormat.format(size / 1024.0) + "KB";
 		} else if (size < 2.0 * 1024.0 * 1024.0 * 1024.0) { // MB
-			return String.format(Locale.getDefault(), "%.2fMB", size / 1024.0 / 1024.0);
+			return prettyFormat.format(size / 1024.0 / 1024.0) + "MB";
 		} else { // GB
-			return String.format(Locale.getDefault(), "%.2fGB", size / 1024.0 / 1024.0 / 1024.0);
+			return prettyFormat.format(size / 1024.0 / 1024.0 / 1024.0) + "GB";
 		}
 	}
 

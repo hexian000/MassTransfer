@@ -160,7 +160,7 @@ public class SendService extends TransferService {
 								builder.setContentText(contentText)
 										.setStyle(new Notification.BigTextStyle().bigText(contentText))
 										.setProgress(max, now, indeterminate)
-										.setSubText(TransferApp.sizeToString(rate.rate()) + "/s");
+										.setSubText(TransferApp.formatSize(rate.rate()) + "/s");
 								notificationManager.notify(startId, builder.build());
 							}
 						});
