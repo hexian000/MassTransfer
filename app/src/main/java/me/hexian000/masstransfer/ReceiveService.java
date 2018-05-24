@@ -174,9 +174,21 @@ public class ReceiveService extends TransferService {
 		private void streamCopy(Socket socket) throws InterruptedException, IOException {
 			final int bufferSize = Math.max(TransferApp.HeapSize - 16 * 1024 * 1024, 8 * 1024 * 1024);
 			Log.d(LOG_TAG, "receive buffer size: " + TransferApp.sizeToString(bufferSize));
-			Buffer buffer = new Buffer(bufferSize);
-			DirectoryWriter writer = new DirectoryWriter(getContentResolver(), root, new BufferInputWrapper(buffer),
-					(text, now, max) -> {
+			final Buffer buffer = new Buffer(bufferSize);
+			final Progress progress = new Progress();
+			final DirectoryWriter writer = new DirectoryWriter(getContentResolver(), root,
+					new BufferInputWrapper(buffer), progress);
+			writer.start();
+			Timer timer = new Timer();
+			try (InputStream in = socket.getInputStream();
+			     OutputStream out = new BufferOutputWrapper(buffer)) {
+				RateCounter rate = new RateCounter();
+				timer.schedule(new TimerTask() {
+
+					@Override
+					public void run() {
+						final Progress p = progress.get();
+						String text = p.text;
 						if (text != null) {
 							text += "\n";
 							if (buffer.getSize() > bufferSize / 2) {
@@ -188,33 +200,26 @@ public class ReceiveService extends TransferService {
 							text = getResources().getString(R.string.notification_finishing);
 						}
 						final String contentText = text;
+						final boolean indeterminate = p.max == 0;
+						final int max, now;
+						if (indeterminate) {
+							max = 0;
+							now = 0;
+						} else {
+							max = 1000;
+							now = (int) (p.now * 1000 / p.max);
+						}
 						handler.post(() -> {
 							if (builder != null && notificationManager != null) {
 								builder.setContentText(contentText)
 										.setStyle(new Notification.BigTextStyle().bigText(contentText))
-										.setProgress(max, now, max == now && now == 0);
-								notificationManager.notify(startId, builder.build());
-							}
-						});
-					});
-			writer.start();
-			Timer timer = new Timer();
-			try (InputStream in = socket.getInputStream();
-			     OutputStream out = new BufferOutputWrapper(buffer)) {
-				RateCounter rate = new RateCounter();
-				final int rateInterval = 2;
-				timer.schedule(new TimerTask() {
-
-					@Override
-					public void run() {
-						handler.post(() -> {
-							if (builder != null && notificationManager != null) {
-								builder.setSubText(TransferApp.sizeToString(rate.rate() / rateInterval) + "/s");
+										.setProgress(max, now, indeterminate)
+										.setSubText(TransferApp.sizeToString(rate.rate()) + "/s");
 								notificationManager.notify(startId, builder.build());
 							}
 						});
 					}
-				}, rateInterval * 1000, rateInterval * 1000);
+				}, 1000, 1000);
 				byte[] packet = new byte[8 * 1024];
 				int read;
 				do {

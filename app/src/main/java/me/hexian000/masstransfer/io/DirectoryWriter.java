@@ -108,7 +108,7 @@ public class DirectoryWriter extends Thread {
 			}
 			byte[] buf = new byte[64 * 1024];
 			long pos = 0;
-			reporter.report(name, (int) (pos * 1000 / length), 1000);
+			reporter.report(name, 0, 0);
 			do {
 				int read = in.read(buf, 0, (int) Math.min(length - pos, buf.length));
 				if (read > 0) {
@@ -116,7 +116,7 @@ public class DirectoryWriter extends Thread {
 						out.write(buf, 0, read);
 					}
 					pos += read;
-					reporter.report(name, (int) (pos * 1000 / length), 1000);
+					reporter.report(name, pos, length);
 				} else if (read < 0) {
 					throw new EOFException("read=" + read + " length=" + length);
 				}

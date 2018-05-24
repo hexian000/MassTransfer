@@ -11,6 +11,7 @@ import android.os.Handler;
 import android.support.annotation.StringRes;
 import android.support.v4.provider.DocumentFile;
 import android.widget.Toast;
+import me.hexian000.masstransfer.io.ProgressReporter;
 
 import static me.hexian000.masstransfer.TransferApp.CHANNEL_TRANSFER_STATE;
 
@@ -79,4 +80,23 @@ public abstract class TransferService extends Service {
 		}
 	}
 
+	protected class Progress implements ProgressReporter {
+		public String text;
+		public long now, max;
+
+		public synchronized Progress get() {
+			Progress p = new Progress();
+			p.text = text;
+			p.now = now;
+			p.max = max;
+			return p;
+		}
+
+		@Override
+		public synchronized void report(String text, long now, long max) {
+			this.text = text;
+			this.now = now;
+			this.max = max;
+		}
+	}
 }

@@ -103,7 +103,7 @@ public class DirectoryReader extends Thread {
 					if (read > 0) {
 						pos += read;
 						out.write(buf, 0, read);
-						reporter.report(name, (int) (pos * 1000 / length), 1000);
+						reporter.report(name, pos, length);
 					}
 				} while (read >= 0);
 			}

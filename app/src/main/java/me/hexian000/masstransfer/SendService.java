@@ -120,10 +120,21 @@ public class SendService extends TransferService {
 
 		private void streamCopy(Socket socket) {
 			final int bufferSize = 8 * 1024 * 1024;
-			Buffer buffer = new Buffer(bufferSize);
-			DirectoryReader reader = new DirectoryReader(getContentResolver(), root, files,
-					new BufferOutputWrapper(buffer),
-					(text, now, max) -> {
+			final Buffer buffer = new Buffer(bufferSize);
+			final Progress progress = new Progress();
+			final DirectoryReader reader = new DirectoryReader(getContentResolver(), root, files,
+					new BufferOutputWrapper(buffer), progress);
+			reader.start();
+			Timer timer = new Timer();
+			try (InputStream in = new BufferInputWrapper(buffer);
+			     OutputStream out = socket.getOutputStream()) {
+				RateCounter rate = new RateCounter();
+				timer.schedule(new TimerTask() {
+
+					@Override
+					public void run() {
+						final Progress p = progress.get();
+						String text = p.text;
 						if (text != null) {
 							text += "\n";
 							if (buffer.getSize() > bufferSize / 2) {
@@ -135,40 +146,33 @@ public class SendService extends TransferService {
 							text = getResources().getString(R.string.notification_finishing);
 						}
 						final String contentText = text;
+						final boolean indeterminate = p.max == 0;
+						final int max, now;
+						if (indeterminate) {
+							max = 0;
+							now = 0;
+						} else {
+							max = 1000;
+							now = (int) (p.now * 1000 / p.max);
+						}
 						handler.post(() -> {
 							if (builder != null && notificationManager != null) {
 								builder.setContentText(contentText)
 										.setStyle(new Notification.BigTextStyle().bigText(contentText))
-										.setProgress(max, now, max == now && now == 0);
-								notificationManager.notify(startId, builder.build());
-							}
-						});
-					});
-			reader.start();
-			Timer timer = new Timer();
-			try (InputStream in = new BufferInputWrapper(buffer);
-			     OutputStream out = socket.getOutputStream()) {
-				RateCounter rate = new RateCounter();
-				final int rateInterval = 5;
-				timer.schedule(new TimerTask() {
-
-					@Override
-					public void run() {
-						handler.post(() -> {
-							if (builder != null && notificationManager != null) {
-								builder.setSubText(TransferApp.sizeToString(rate.rate() / rateInterval) + "/s");
+										.setProgress(max, now, indeterminate)
+										.setSubText(TransferApp.sizeToString(rate.rate()) + "/s");
 								notificationManager.notify(startId, builder.build());
 							}
 						});
 					}
-				}, rateInterval * 1000, rateInterval * 1000);
-				byte[] packet = new byte[8 * 1024];
+				}, 1000, 1000);
+				final byte[] packet = new byte[8 * 1024];
 				int read;
 				do {
 					read = in.read(packet);
 					if (read > 0) {
-						out.write(packet, 0, read);
 						rate.increase(read);
+						out.write(packet, 0, read);
 					}
 				} while (read >= 0);
 				out.flush();
