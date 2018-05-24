@@ -119,7 +119,7 @@ public class SendService extends TransferService {
 		}
 
 		private void streamCopy(Socket socket) {
-			final int bufferSize = 8 * 1024 * 1024;
+			final int bufferSize = 2 * 1024 * 1024;
 			final Buffer buffer = new Buffer(bufferSize);
 			final Progress progress = new Progress();
 			final DirectoryReader reader = new DirectoryReader(getContentResolver(), root, files,

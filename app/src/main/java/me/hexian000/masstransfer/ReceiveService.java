@@ -11,6 +11,7 @@ import android.support.v4.provider.DocumentFile;
 import android.util.Log;
 import me.hexian000.masstransfer.io.*;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -172,7 +173,7 @@ public class ReceiveService extends TransferService {
 		}
 
 		private void streamCopy(Socket socket) throws InterruptedException, IOException {
-			final int bufferSize = Math.max(TransferApp.HeapSize - 16 * 1024 * 1024, 8 * 1024 * 1024);
+			final int bufferSize = Math.max(TransferApp.HeapSize - 32 * 1024 * 1024, 2 * 1024 * 1024);
 			Log.d(LOG_TAG, "receive buffer size: " + TransferApp.sizeToString(bufferSize));
 			final Buffer buffer = new Buffer(bufferSize);
 			final Progress progress = new Progress();
@@ -181,7 +182,7 @@ public class ReceiveService extends TransferService {
 			writer.start();
 			Timer timer = new Timer();
 			try (InputStream in = socket.getInputStream();
-			     OutputStream out = new BufferOutputWrapper(buffer)) {
+			     OutputStream out = new BufferedOutputStream(new BufferOutputWrapper(buffer), 512 * 1024)) {
 				RateCounter rate = new RateCounter();
 				timer.schedule(new TimerTask() {
 

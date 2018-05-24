@@ -93,7 +93,7 @@ public class DirectoryReader extends Thread {
 			if (in == null) {
 				throw new IOException("can't open input stream");
 			}
-			final byte[] buf = new byte[64 * 1024];
+			final byte[] buf = new byte[512 * 1024];
 			long pos = 0;
 			reporter.report(name, 0, 0);
 			if (length > 0) {
