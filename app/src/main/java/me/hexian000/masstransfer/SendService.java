@@ -128,7 +128,7 @@ public class SendService extends TransferService {
 			Timer timer = new Timer();
 			try (InputStream in = new BufferInputWrapper(buffer);
 			     OutputStream out = socket.getOutputStream()) {
-				RateCounter rate = new RateCounter();
+				AverageRateCounter rate = new AverageRateCounter(5);
 				timer.schedule(new TimerTask() {
 
 					@Override

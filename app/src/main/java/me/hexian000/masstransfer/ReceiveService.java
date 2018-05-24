@@ -183,7 +183,7 @@ public class ReceiveService extends TransferService {
 			Timer timer = new Timer();
 			try (InputStream in = socket.getInputStream();
 			     OutputStream out = new BufferedOutputStream(new BufferOutputWrapper(buffer), 512 * 1024)) {
-				RateCounter rate = new RateCounter();
+				AverageRateCounter rate = new AverageRateCounter(5);
 				timer.schedule(new TimerTask() {
 
 					@Override
