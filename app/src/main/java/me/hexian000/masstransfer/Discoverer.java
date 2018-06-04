@@ -10,10 +10,10 @@ final class Discoverer {
 	private final static int BROADCAST_INTERVAL = 100;
 	private final static int BROADCAST_TIMEOUT = 500;
 	private final byte[] magic = "MassTransfer".getBytes();
-	private List<AnnounceInterface> announce;
 	private final int port;
-	private Timer timer = null;
 	private final Map<String, Long> peers;
+	private List<AnnounceInterface> announce;
+	private Timer timer = null;
 
 	Discoverer(int port) {
 		this.port = port;
@@ -49,7 +49,7 @@ final class Discoverer {
 	}
 
 	void start() {
-		if (announce == null) {
+		if (announce == null || timer != null) {
 			return;
 		}
 		timer = new Timer();
@@ -77,8 +77,8 @@ final class Discoverer {
 						item.socket.receive(p);
 						if (Arrays.equals(magic, buffer)) {
 							InetAddress ip = p.getAddress();
-							if (!ip.isAnyLocalAddress() && !ip.isLoopbackAddress() && NetworkInterface.getByInetAddress(
-									ip) == null) {
+							if (!ip.isAnyLocalAddress() && !ip.isLoopbackAddress() && NetworkInterface
+									.getByInetAddress(ip) == null) {
 								peers.put(ip.getHostAddress(), System.currentTimeMillis());
 							}
 						}

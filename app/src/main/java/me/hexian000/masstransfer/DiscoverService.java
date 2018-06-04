@@ -29,8 +29,10 @@ public class DiscoverService extends Service {
 	@Nullable
 	@Override
 	public IBinder onBind(Intent intent) {
-		Log.d(LOG_TAG, "discover start");
-		discoverer.start();
+		if (discoverer != null) {
+			Log.d(LOG_TAG, "discover start");
+			discoverer.start();
+		}
 		return mBinder;
 	}
 
