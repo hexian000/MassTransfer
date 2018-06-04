@@ -6,7 +6,7 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
+import static me.hexian000.masstransfer.MassTransfer.LOG_TAG;
 
 public class DiscoverService extends Service {
 	private final IBinder mBinder = new Binder();
@@ -23,7 +23,7 @@ public class DiscoverService extends Service {
 
 	@Override
 	public void onCreate() {
-		discoverer = new Discoverer(TransferApp.UDP_PORT);
+		discoverer = new Discoverer(MassTransfer.UDP_PORT);
 	}
 
 	@Nullable

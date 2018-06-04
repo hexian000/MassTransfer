@@ -23,7 +23,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
+import static me.hexian000.masstransfer.MassTransfer.LOG_TAG;
 
 public class DirectoryWriter extends Thread {
 	private final ProgressReporter reporter;

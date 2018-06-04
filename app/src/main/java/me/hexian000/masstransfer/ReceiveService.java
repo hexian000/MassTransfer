@@ -22,8 +22,8 @@ import java.net.SocketTimeoutException;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import static me.hexian000.masstransfer.TransferApp.IPTOS_THROUGHPUT;
-import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
+import static me.hexian000.masstransfer.MassTransfer.IPTOS_THROUGHPUT;
+import static me.hexian000.masstransfer.MassTransfer.LOG_TAG;
 
 public class ReceiveService extends TransferService {
 	private DiscoverService mService;
@@ -50,7 +50,7 @@ public class ReceiveService extends TransferService {
 
 	@Override
 	public void onCreate() {
-		final TransferApp app = (TransferApp) getApplicationContext();
+		final MassTransfer app = (MassTransfer) getApplicationContext();
 		app.receiveService = this;
 		mConnection = new ServiceConnection() {
 			@Override
@@ -80,12 +80,12 @@ public class ReceiveService extends TransferService {
 			mService = null;
 			Log.d(LOG_TAG, "unbind DiscoverService in ReceiveService");
 		}
-		MainActivity mainActivity = ((TransferApp) getApplicationContext()).mainActivity;
+		MainActivity mainActivity = ((MassTransfer) getApplicationContext()).mainActivity;
 		if (mainActivity != null) {
 			mainActivity.handler.post(mainActivity::updateReceiveButton);
 		}
 		showResultToast();
-		((TransferApp) getApplicationContext()).receiveService = null;
+		((MassTransfer) getApplicationContext()).receiveService = null;
 	}
 
 	@Nullable
@@ -125,7 +125,7 @@ public class ReceiveService extends TransferService {
 		@Override
 		public void run() {
 			try {
-				listener = new ServerSocket(TransferApp.TCP_PORT);
+				listener = new ServerSocket(MassTransfer.TCP_PORT);
 				Log.d(LOG_TAG, "ReceiveService begins to listen");
 				listener.setSoTimeout(1000); // prevent thread leak
 				listener.setPerformancePreferences(0, 0, 1);
@@ -174,8 +174,8 @@ public class ReceiveService extends TransferService {
 		}
 
 		private void streamCopy(Socket socket) throws InterruptedException, IOException {
-			final int bufferSize = Math.max(TransferApp.HeapSize / 2, 2 * 1024 * 1024);
-			Log.d(LOG_TAG, "receive buffer size: " + TransferApp.formatSize(bufferSize));
+			final int bufferSize = Math.max(MassTransfer.HeapSize / 2, 2 * 1024 * 1024);
+			Log.d(LOG_TAG, "receive buffer size: " + MassTransfer.formatSize(bufferSize));
 			final CircularByteBuffer buffer = new CircularByteBuffer(bufferSize);
 			final Progress progress = new Progress();
 			final DirectoryWriter writer = new DirectoryWriter(getContentResolver(), root,
@@ -193,7 +193,7 @@ public class ReceiveService extends TransferService {
 						String text = p.text;
 						if (text != null) {
 							text += "\n";
-							if (buffer.getAvailable() > bufferSize / 2) {
+							if (buffer.getAvailable() > buffer.getCapacity() / 2) {
 								text += getResources().getString(R.string.bottleneck_local);
 							} else {
 								text += getResources().getString(R.string.bottleneck_network);
@@ -216,7 +216,7 @@ public class ReceiveService extends TransferService {
 								builder.setContentText(contentText)
 										.setStyle(new Notification.BigTextStyle().bigText(contentText))
 										.setProgress(max, now, indeterminate)
-										.setSubText(TransferApp.formatSize(rate.rate()) + "/s");
+										.setSubText(MassTransfer.formatSize(rate.rate()) + "/s");
 								notificationManager.notify(startId, builder.build());
 							}
 						});

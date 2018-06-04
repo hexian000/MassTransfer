@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import static me.hexian000.masstransfer.TransferApp.LOG_TAG;
+import static me.hexian000.masstransfer.MassTransfer.LOG_TAG;
 
 public class MainActivity extends Activity {
 	private static final int REQUEST_SEND = 1;
@@ -62,7 +62,7 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		final TransferApp app = (TransferApp) getApplicationContext();
+		final MassTransfer app = (MassTransfer) getApplicationContext();
 		if (app.receiveService != null) {
 			receiveButton.setText(R.string.receive_cancel_button);
 		} else {
@@ -137,7 +137,7 @@ public class MainActivity extends Activity {
 	}
 
 	void updateReceiveButton() {
-		if (((TransferApp) getApplicationContext()).receiveService == null) {
+		if (((MassTransfer) getApplicationContext()).receiveService == null) {
 			receiveButton.setText(R.string.receive_button);
 		} else {
 			receiveButton.setText(R.string.receive_cancel_button);
@@ -146,7 +146,7 @@ public class MainActivity extends Activity {
 
 	@Override
 	protected void onDestroy() {
-		((TransferApp) getApplicationContext()).mainActivity = null;
+		((MassTransfer) getApplicationContext()).mainActivity = null;
 		super.onDestroy();
 	}
 
@@ -155,7 +155,7 @@ public class MainActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-		final TransferApp app = (TransferApp) getApplicationContext();
+		final MassTransfer app = (MassTransfer) getApplicationContext();
 		app.mainActivity = this;
 
 		receiveButton = findViewById(R.id.ReceiveButton);
@@ -176,7 +176,7 @@ public class MainActivity extends Activity {
 		adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_list_item_1, items);
 		peersList.setAdapter(adapter);
 		peersList.setOnItemClickListener((adapterView, view, i, l) -> {
-			if (((TransferApp) getApplicationContext()).sendService != null) {
+			if (((MassTransfer) getApplicationContext()).sendService != null) {
 				Toast.makeText(MainActivity.this, R.string.transfer_service_is_already_running, Toast.LENGTH_SHORT)
 						.show();
 				return;

@@ -13,7 +13,7 @@ import android.support.v4.provider.DocumentFile;
 import android.widget.Toast;
 import me.hexian000.masstransfer.io.ProgressReporter;
 
-import static me.hexian000.masstransfer.TransferApp.CHANNEL_TRANSFER_STATE;
+import static me.hexian000.masstransfer.MassTransfer.CHANNEL_TRANSFER_STATE;
 
 public abstract class TransferService extends Service {
 	final Handler handler = new Handler();
@@ -44,7 +44,7 @@ public abstract class TransferService extends Service {
 			// Android 8.0+
 			NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 			if (manager != null) {
-				TransferApp.createNotificationChannels(manager, getResources());
+				MassTransfer.createNotificationChannels(manager, getResources());
 				builder.setChannelId(CHANNEL_TRANSFER_STATE);
 			}
 		} else {

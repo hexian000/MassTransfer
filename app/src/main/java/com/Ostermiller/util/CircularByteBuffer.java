@@ -46,11 +46,11 @@ public class CircularByteBuffer {
 	/**
 	 * The initial size for a circular byte buffer.
 	 */
-	private final static int INITIAL_SIZE = 64 * 1024;
+	private final static int INITIAL_SIZE = 2 * 1024 * 1024;
 	/**
 	 * The default max capacity for a circular byte buffer.
 	 */
-	private final static int DEFAULT_CAPACITY = 1024 * 1024;
+	private final static int DEFAULT_CAPACITY = 2 * 1024 * 1024;
 
 	/**
 	 * The circular buffer.
@@ -132,7 +132,7 @@ public class CircularByteBuffer {
 	 * @param size desired max capacity of the buffer in bytes.
 	 */
 	public CircularByteBuffer(int size) {
-		buffer = new byte[INITIAL_SIZE];
+		buffer = new byte[Math.min(INITIAL_SIZE, size)];
 		capacity = size;
 	}
 
@@ -214,7 +214,7 @@ public class CircularByteBuffer {
 	}
 
 	/**
-	 * Get the capacity of this buffer.
+	 * Get the current capacity of this buffer.
 	 * <p>
 	 * Note that the number of bytes available plus
 	 * the number of bytes free may not add up to the
@@ -226,6 +226,17 @@ public class CircularByteBuffer {
 	public int getSize() {
 		synchronized (this) {
 			return buffer.length;
+		}
+	}
+
+	/**
+	 * Get the max capacity of this buffer.
+	 *
+	 * @return the size in bytes of this buffer
+	 */
+	public int getCapacity() {
+		synchronized (this) {
+			return capacity;
 		}
 	}
 

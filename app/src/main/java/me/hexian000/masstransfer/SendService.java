@@ -21,7 +21,7 @@ import java.net.SocketTimeoutException;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import static me.hexian000.masstransfer.TransferApp.*;
+import static me.hexian000.masstransfer.MassTransfer.*;
 
 public class SendService extends TransferService {
 	private String host;
@@ -58,13 +58,13 @@ public class SendService extends TransferService {
 
 	@Override
 	public void onCreate() {
-		((TransferApp) getApplicationContext()).sendService = this;
+		((MassTransfer) getApplicationContext()).sendService = this;
 	}
 
 	@Override
 	public void onDestroy() {
 		showResultToast();
-		((TransferApp) getApplicationContext()).sendService = null;
+		((MassTransfer) getApplicationContext()).sendService = null;
 	}
 
 	@Nullable
@@ -101,6 +101,7 @@ public class SendService extends TransferService {
 				socket.setSendBufferSize(512 * 1024);
 				socket.setSoTimeout(30000);
 				socket.setSoLinger(true, 30);
+				socket.setTcpNoDelay(false);
 				socket.connect(new InetSocketAddress(InetAddress.getByName(host), TCP_PORT), 4000);
 				streamCopy(socket);
 			} catch (SocketTimeoutException e) {
@@ -121,8 +122,7 @@ public class SendService extends TransferService {
 		}
 
 		private void streamCopy(Socket socket) {
-			final int bufferSize = 2 * 1024 * 1024;
-			final CircularByteBuffer buffer = new CircularByteBuffer(bufferSize);
+			final CircularByteBuffer buffer = new CircularByteBuffer();
 			final Progress progress = new Progress();
 			final DirectoryReader reader = new DirectoryReader(getContentResolver(), root, files,
 					buffer.getOutputStream(), progress);
@@ -139,7 +139,7 @@ public class SendService extends TransferService {
 						String text = p.text;
 						if (text != null) {
 							text += "\n";
-							if (buffer.getAvailable() > bufferSize / 2) {
+							if (buffer.getAvailable() > buffer.getCapacity() / 2) {
 								text += getResources().getString(R.string.bottleneck_network);
 							} else {
 								text += getResources().getString(R.string.bottleneck_local);
@@ -162,7 +162,7 @@ public class SendService extends TransferService {
 								builder.setContentText(contentText)
 										.setStyle(new Notification.BigTextStyle().bigText(contentText))
 										.setProgress(max, now, indeterminate)
-										.setSubText(TransferApp.formatSize(rate.rate()) + "/s");
+										.setSubText(MassTransfer.formatSize(rate.rate()) + "/s");
 								notificationManager.notify(startId, builder.build());
 							}
 						});

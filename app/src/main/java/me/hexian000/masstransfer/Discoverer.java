@@ -30,7 +30,7 @@ final class Discoverer {
 					if (broadcast == null) {
 						continue;
 					}
-					Log.d(TransferApp.LOG_TAG, "broadcast init at " + broadcast.toString());
+					Log.d(MassTransfer.LOG_TAG, "broadcast init at " + broadcast.toString());
 					DatagramSocket socket = new DatagramSocket(port);
 					socket.setBroadcast(true);
 					AnnounceInterface item = new AnnounceInterface();
@@ -40,7 +40,7 @@ final class Discoverer {
 				}
 			}
 		} catch (IOException e) {
-			Log.e(TransferApp.LOG_TAG, "broadcast init error", e);
+			Log.e(MassTransfer.LOG_TAG, "broadcast init error", e);
 		}
 	}
 
@@ -62,7 +62,7 @@ final class Discoverer {
 						item.socket.send(packet);
 					}
 				} catch (IOException e) {
-					Log.e(TransferApp.LOG_TAG, "broadcast error", e);
+					Log.e(MassTransfer.LOG_TAG, "broadcast error", e);
 				}
 				long now = System.currentTimeMillis();
 				peers.entrySet().removeIf(entry -> now - entry.getValue() > BROADCAST_TIMEOUT);
@@ -86,10 +86,10 @@ final class Discoverer {
 						if (item.socket.isClosed()) {
 							break;
 						}
-						Log.e(TransferApp.LOG_TAG, "broadcast receive error", e);
+						Log.e(MassTransfer.LOG_TAG, "broadcast receive error", e);
 					}
 				}
-				Log.d(TransferApp.LOG_TAG, "broadcast receiver exited");
+				Log.d(MassTransfer.LOG_TAG, "broadcast receiver exited");
 			}).start();
 		}
 	}

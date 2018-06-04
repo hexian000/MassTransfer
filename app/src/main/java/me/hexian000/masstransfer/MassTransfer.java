@@ -10,7 +10,7 @@ import android.util.Log;
 
 import java.text.DecimalFormat;
 
-public class TransferApp extends Application {
+public class MassTransfer extends Application {
 	public final static String LOG_TAG = "MassTransfer";
 	public final static String CHANNEL_TRANSFER_STATE = "transfer_state";
 	public final static int UDP_PORT = 14644;
