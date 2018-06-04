@@ -125,23 +125,26 @@ public class ReceiveService extends TransferService {
 		@Override
 		public void run() {
 			try {
-				listener = new ServerSocket(MassTransfer.TCP_PORT);
-				Log.d(LOG_TAG, "ReceiveService begins to listen");
-				listener.setSoTimeout(1000); // prevent thread leak
-				listener.setPerformancePreferences(0, 0, 1);
-				listener.setReceiveBufferSize(TcpBufferSize);
-				while (!isInterrupted()) {
-					try {
-						socket = listener.accept();
-						break;
-					} catch (SocketTimeoutException ignored) {
+				try {
+					listener = new ServerSocket(MassTransfer.TCP_PORT);
+					Log.d(LOG_TAG, "ReceiveService begins to listen");
+					listener.setSoTimeout(1000); // prevent thread leak
+					listener.setPerformancePreferences(0, 0, 1);
+					listener.setReceiveBufferSize(TcpBufferSize);
+					while (!isInterrupted()) {
+						try {
+							socket = listener.accept();
+							break;
+						} catch (SocketTimeoutException ignored) {
+						}
 					}
+				} finally {
+					listener.close();
+					listener = null;
 				}
 				if (socket == null) {
 					return;
 				}
-				listener.close();
-				listener = null;
 				handler.post(() -> {
 					if (mService != null) {
 						unbindService(mConnection);
