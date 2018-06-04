@@ -142,6 +142,13 @@ public class ReceiveService extends TransferService {
 				}
 				listener.close();
 				listener = null;
+				handler.post(() -> {
+					if (mService != null) {
+						unbindService(mConnection);
+						mService = null;
+						Log.d(LOG_TAG, "unbind DiscoverService in ReceiveService");
+					}
+				});
 				try {
 					Log.d(LOG_TAG, "ReceiveService accepted connection");
 					socket.setPerformancePreferences(0, 0, 1);
