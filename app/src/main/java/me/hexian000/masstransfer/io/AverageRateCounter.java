@@ -2,7 +2,7 @@ package me.hexian000.masstransfer.io;
 
 // Thread unsafe
 public class AverageRateCounter extends RateCounter {
-	private long[] values;
+	private final long[] values;
 	private long sum;
 	private int pos;
 

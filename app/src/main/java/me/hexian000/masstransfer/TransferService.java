@@ -16,6 +16,7 @@ import me.hexian000.masstransfer.io.ProgressReporter;
 import static me.hexian000.masstransfer.MassTransfer.CHANNEL_TRANSFER_STATE;
 
 public abstract class TransferService extends Service {
+	final static int TcpBufferSize = 512 * 1024;
 	final Handler handler = new Handler();
 	DocumentFile root = null;
 	Notification.Builder builder;

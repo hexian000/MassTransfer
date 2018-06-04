@@ -129,7 +129,7 @@ public class ReceiveService extends TransferService {
 				Log.d(LOG_TAG, "ReceiveService begins to listen");
 				listener.setSoTimeout(1000); // prevent thread leak
 				listener.setPerformancePreferences(0, 0, 1);
-				listener.setReceiveBufferSize(512 * 1024);
+				listener.setReceiveBufferSize(TcpBufferSize);
 				while (!isInterrupted()) {
 					try {
 						socket = listener.accept();
@@ -146,7 +146,7 @@ public class ReceiveService extends TransferService {
 					Log.d(LOG_TAG, "ReceiveService accepted connection");
 					socket.setPerformancePreferences(0, 0, 1);
 					socket.setTrafficClass(IPTOS_THROUGHPUT);
-					socket.setReceiveBufferSize(512 * 1024);
+					socket.setReceiveBufferSize(TcpBufferSize);
 					socket.setSoTimeout(30000);
 					streamCopy(socket);
 				} catch (SocketTimeoutException e) {

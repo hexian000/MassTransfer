@@ -98,7 +98,7 @@ public class SendService extends TransferService {
 				socket = new Socket();
 				socket.setPerformancePreferences(0, 0, 1);
 				socket.setTrafficClass(IPTOS_THROUGHPUT);
-				socket.setSendBufferSize(512 * 1024);
+				socket.setSendBufferSize(TcpBufferSize);
 				socket.setSoTimeout(30000);
 				socket.setSoLinger(true, 30);
 				socket.setTcpNoDelay(false);

@@ -51,15 +51,22 @@ public class CircularByteBuffer {
 	 * The default max capacity for a circular byte buffer.
 	 */
 	private final static int DEFAULT_CAPACITY = 2 * 1024 * 1024;
-
+	/**
+	 * The InputStream that can empty this buffer.
+	 */
+	private final InputStream in = new CircularByteBufferInputStream();
+	/**
+	 * The OutputStream that can fill this buffer.
+	 */
+	private final OutputStream out = new CircularByteBufferOutputStream();
 	/**
 	 * The circular buffer.
 	 * <p>
 	 * The actual capacity of the buffer is one less than the actual length
 	 * of the buffer so that an empty and a full buffer can be
-	 * distinguished.  An empty buffer will have the markPostion and the
+	 * distinguished.  An empty buffer will have the markPosition and the
 	 * writePosition equal to each other.  A full buffer will have
-	 * the writePosition one less than the markPostion.
+	 * the writePosition one less than the markPosition.
 	 * <p>
 	 * There are three important indexes into the buffer:
 	 * The readPosition, the writePosition, and the markPosition.
@@ -95,17 +102,9 @@ public class CircularByteBuffer {
 	 */
 	private volatile int markSize = 0;
 	/**
-	 * The InputStream that can empty this buffer.
-	 */
-	private InputStream in = new CircularByteBufferInputStream();
-	/**
 	 * true if the close() method has been called on the InputStream
 	 */
 	private boolean inputStreamClosed = false;
-	/**
-	 * The OutputStream that can fill this buffer.
-	 */
-	private OutputStream out = new CircularByteBufferOutputStream();
 	/**
 	 * true if the close() method has been called on the OutputStream
 	 */
@@ -321,7 +320,7 @@ public class CircularByteBuffer {
 	/**
 	 * Class for reading from a circular byte buffer.
 	 */
-	protected class CircularByteBufferInputStream extends InputStream {
+	class CircularByteBufferInputStream extends InputStream {
 
 		/**
 		 * Returns the number of bytes that can be read (or skipped over) from this
@@ -558,7 +557,7 @@ public class CircularByteBuffer {
 	 * until there is some space available or throw an IOException
 	 * based on the CircularByteBuffer's preference.
 	 */
-	protected class CircularByteBufferOutputStream extends OutputStream {
+	class CircularByteBufferOutputStream extends OutputStream {
 
 		/**
 		 * Close the stream, flushing it first.
