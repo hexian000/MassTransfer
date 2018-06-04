@@ -369,7 +369,6 @@ public class CircularByteBuffer {
 		 * Tell whether this stream supports the mark() operation.
 		 *
 		 * @return true, mark is supported.
-		 * @since ostermillerutils 1.00.00
 		 */
 		@Override
 		public boolean markSupported() {
@@ -384,7 +383,6 @@ public class CircularByteBuffer {
 		 * @return The byte read, as an integer in the range 0 to 255 (0x00-0xff),
 		 * or -1 if the end of the stream has been reached
 		 * @throws IOException if the stream is closed.
-		 * @since ostermillerutils 1.00.00
 		 */
 		@Override
 		public int read() throws IOException {
@@ -486,7 +484,6 @@ public class CircularByteBuffer {
 		 * than the readAheadLimit have been read, this method has no effect.
 		 *
 		 * @throws IOException if the stream is closed.
-		 * @since ostermillerutils 1.00.00
 		 */
 		@Override
 		public void reset() throws IOException {
@@ -507,7 +504,6 @@ public class CircularByteBuffer {
 		 * @return The number of bytes actually skipped
 		 * @throws IllegalArgumentException if n is negative.
 		 * @throws IOException              if the stream is closed.
-		 * @since ostermillerutils 1.00.00
 		 */
 		@Override
 		public long skip(long n) throws IOException, IllegalArgumentException {
@@ -550,8 +546,6 @@ public class CircularByteBuffer {
 	 * If the buffer is full, the writes will either block
 	 * until there is some space available or throw an IOException
 	 * based on the CircularByteBuffer's preference.
-	 *
-	 * @since ostermillerutils 1.00.00
 	 */
 	protected class CircularByteBufferOutputStream extends OutputStream {
 
@@ -564,7 +558,6 @@ public class CircularByteBuffer {
 		 * however, has no effect.
 		 *
 		 * @throws IOException never.
-		 * @since ostermillerutils 1.00.00
 		 */
 		@Override
 		public void close() throws IOException {
@@ -580,7 +573,6 @@ public class CircularByteBuffer {
 		 * Flush the stream.
 		 *
 		 * @throws IOException if the stream is closed.
-		 * @since ostermillerutils 1.00.00
 		 */
 		@Override
 		public void flush() throws IOException {
@@ -602,7 +594,6 @@ public class CircularByteBuffer {
 		 * all the data has been written rather than throw an IOException.
 		 *
 		 * @param b Array of bytes to be written
-		 * @since ostermillerutils 1.00.00
 		 */
 		@Override
 		public void write(@NonNull byte[] b) throws IOException {
