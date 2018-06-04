@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="nearby_hosts">附近的主机</string>
+    <string name="nearby_hosts">发送到</string>
     <string name="choose_file">选择要发送的文件</string>
     <string name="choose_ok">OK</string>
     <string name="receive_button">接收</string>
