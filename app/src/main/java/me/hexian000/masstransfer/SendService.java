@@ -7,7 +7,9 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.provider.DocumentFile;
 import android.util.Log;
-import me.hexian000.masstransfer.io.*;
+import com.Ostermiller.util.CircularByteBuffer;
+import me.hexian000.masstransfer.io.AverageRateCounter;
+import me.hexian000.masstransfer.io.DirectoryReader;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -120,13 +122,13 @@ public class SendService extends TransferService {
 
 		private void streamCopy(Socket socket) {
 			final int bufferSize = 2 * 1024 * 1024;
-			final Buffer buffer = new Buffer(bufferSize);
+			final CircularByteBuffer buffer = new CircularByteBuffer(bufferSize);
 			final Progress progress = new Progress();
 			final DirectoryReader reader = new DirectoryReader(getContentResolver(), root, files,
-					new BufferOutputWrapper(buffer), progress);
+					buffer.getOutputStream(), progress);
 			reader.start();
 			Timer timer = new Timer();
-			try (InputStream in = new BufferInputWrapper(buffer);
+			try (InputStream in = buffer.getInputStream();
 			     OutputStream out = socket.getOutputStream()) {
 				AverageRateCounter rate = new AverageRateCounter(5);
 				timer.schedule(new TimerTask() {
@@ -137,7 +139,7 @@ public class SendService extends TransferService {
 						String text = p.text;
 						if (text != null) {
 							text += "\n";
-							if (buffer.getSize() > bufferSize / 2) {
+							if (buffer.getAvailable() > bufferSize / 2) {
 								text += getResources().getString(R.string.bottleneck_network);
 							} else {
 								text += getResources().getString(R.string.bottleneck_local);
