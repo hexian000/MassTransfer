@@ -42,6 +42,7 @@ public class ReceiveService extends TransferService {
 
 		root = DocumentFile.fromTreeUri(this, intent.getData());
 
+		acquireLocks();
 		thread = new ReceiveThread();
 		thread.start();
 
@@ -86,6 +87,7 @@ public class ReceiveService extends TransferService {
 		}
 		showResultToast();
 		((MassTransfer) getApplicationContext()).receiveService = null;
+		super.onDestroy();
 	}
 
 	@Nullable

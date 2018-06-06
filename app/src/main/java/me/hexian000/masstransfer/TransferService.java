@@ -6,17 +6,23 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Handler;
+import android.os.PowerManager;
+import android.support.annotation.CallSuper;
 import android.support.annotation.StringRes;
 import android.support.v4.provider.DocumentFile;
 import android.widget.Toast;
 import me.hexian000.masstransfer.io.ProgressReporter;
 
 import static me.hexian000.masstransfer.MassTransfer.CHANNEL_TRANSFER_STATE;
+import static me.hexian000.masstransfer.MassTransfer.LOG_TAG;
 
 public abstract class TransferService extends Service {
 	final static int TcpBufferSize = 512 * 1024;
+	private static PowerManager.WakeLock wakeLock = null;
+	private static WifiManager.WifiLock wifiLock = null;
 	final Handler handler = new Handler();
 	DocumentFile root = null;
 	Notification.Builder builder;
@@ -25,6 +31,34 @@ public abstract class TransferService extends Service {
 	int startId = 0;
 	boolean result = false;
 
+	void acquireLocks() {
+		releaseLocks();
+		PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+		if (powerManager != null) {
+			wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, LOG_TAG);
+			wakeLock.acquire(10 * 60 * 1000L /*10 minutes*/);
+		}
+		WifiManager wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
+		if (wifiManager != null) {
+			wifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, LOG_TAG);
+			wifiLock.acquire();
+		}
+	}
+
+	void releaseLocks() {
+		if (wakeLock != null) {
+			if (wakeLock.isHeld()) {
+				wakeLock.release();
+			}
+			wakeLock = null;
+		}
+		if (wifiLock != null) {
+			if (wifiLock.isHeld()) {
+				wifiLock.release();
+			}
+			wakeLock = null;
+		}
+	}
 
 	void initNotification(@StringRes int title) {
 		notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -63,6 +97,13 @@ public abstract class TransferService extends Service {
 		startForeground(startId, notification);
 	}
 
+	@CallSuper
+	@Override
+	public void onDestroy() {
+		releaseLocks();
+		super.onDestroy();
+	}
+
 	void stop() {
 		if (thread != null) {
 			thread.interrupt();
@@ -70,6 +111,7 @@ public abstract class TransferService extends Service {
 		}
 		notificationManager = null;
 		builder = null;
+		releaseLocks();
 		stopSelf();
 	}
 

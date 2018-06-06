@@ -51,6 +51,7 @@ public class SendService extends TransferService {
 		}
 		root = DocumentFile.fromTreeUri(this, intent.getData());
 
+		acquireLocks();
 		thread = new TransferThread();
 		thread.start();
 		return START_NOT_STICKY;
@@ -65,6 +66,7 @@ public class SendService extends TransferService {
 	public void onDestroy() {
 		showResultToast();
 		((MassTransfer) getApplicationContext()).sendService = null;
+		super.onDestroy();
 	}
 
 	@Nullable
