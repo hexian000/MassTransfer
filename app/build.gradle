@@ -6,8 +6,8 @@ android {
         applicationId "me.hexian000.masstransfer"
         minSdkVersion 24
         targetSdkVersion 27
-        versionCode 9
-        versionName "2.2.12"
+        versionCode 10
+        versionName "2.2.13"
     }
     buildTypes {
         release {
