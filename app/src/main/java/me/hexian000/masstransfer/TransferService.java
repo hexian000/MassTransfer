@@ -61,7 +61,7 @@ public abstract class TransferService extends Service {
 				wifiLock.release();
 				Log.d(LOG_TAG, "WifiLock released");
 			}
-			wakeLock = null;
+			wifiLock = null;
 		}
 	}
 
