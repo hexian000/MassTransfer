@@ -13,6 +13,7 @@ import android.os.PowerManager;
 import android.support.annotation.CallSuper;
 import android.support.annotation.StringRes;
 import android.support.v4.provider.DocumentFile;
+import android.util.Log;
 import android.widget.Toast;
 import me.hexian000.masstransfer.io.ProgressReporter;
 
@@ -37,11 +38,13 @@ public abstract class TransferService extends Service {
 		if (powerManager != null) {
 			wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, LOG_TAG);
 			wakeLock.acquire(10 * 60 * 1000L /*10 minutes*/);
+			Log.d(LOG_TAG, "WakeLock acquired for 10 minutes");
 		}
 		WifiManager wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
 		if (wifiManager != null) {
 			wifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, LOG_TAG);
 			wifiLock.acquire();
+			Log.d(LOG_TAG, "WifiLock acquired");
 		}
 	}
 
@@ -49,12 +52,14 @@ public abstract class TransferService extends Service {
 		if (wakeLock != null) {
 			if (wakeLock.isHeld()) {
 				wakeLock.release();
+				Log.d(LOG_TAG, "WakeLock released");
 			}
 			wakeLock = null;
 		}
 		if (wifiLock != null) {
 			if (wifiLock.isHeld()) {
 				wifiLock.release();
+				Log.d(LOG_TAG, "WifiLock released");
 			}
 			wakeLock = null;
 		}
