@@ -20,7 +20,7 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
         sourceCompatibility JavaVersion.VERSION_1_8
     }
-    buildToolsVersion '28.0.0'
+    buildToolsVersion '28.0.1'
     productFlavors {
     }
 }
