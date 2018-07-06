@@ -5,6 +5,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.net.Uri;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.provider.DocumentFile;
@@ -40,7 +41,12 @@ public class ReceiveService extends TransferService {
 		this.startId = startId;
 		initNotification(R.string.notification_receiving);
 
-		root = DocumentFile.fromTreeUri(this, intent.getData());
+		Uri data = intent.getData();
+		if (data == null) {
+			stopSelf();
+			return START_NOT_STICKY;
+		}
+		root = DocumentFile.fromTreeUri(this, data);
 
 		acquireLocks();
 		thread = new ReceiveThread();

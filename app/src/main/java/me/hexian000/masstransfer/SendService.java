@@ -2,6 +2,7 @@ package me.hexian000.masstransfer;
 
 import android.app.Notification;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
@@ -49,7 +50,12 @@ public class SendService extends TransferService {
 			stopSelf();
 			return START_NOT_STICKY;
 		}
-		root = DocumentFile.fromTreeUri(this, intent.getData());
+		Uri data = intent.getData();
+		if (data == null) {
+			stopSelf();
+			return START_NOT_STICKY;
+		}
+		root = DocumentFile.fromTreeUri(this, data);
 
 		acquireLocks();
 		thread = new TransferThread();

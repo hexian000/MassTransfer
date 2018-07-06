@@ -29,6 +29,7 @@ public class ChooseActivity extends Activity {
 		final Uri rootUri = getIntent().getData();
 		if (rootUri == null) {
 			finish();
+			return;
 		}
 
 		new Thread(() -> {
@@ -44,7 +45,7 @@ public class ChooseActivity extends Activity {
 			List<String> fileList = new ArrayList<>();
 			for (DocumentFile file : list) {
 				String name = file.getName();
-				if (name.startsWith(".")) {
+				if (name == null || name.startsWith(".")) {
 					continue;
 				}
 				if (file.isFile() && file.canRead()) {
