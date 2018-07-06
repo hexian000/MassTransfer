@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.zip.CRC32;
 
 import static me.hexian000.masstransfer.MassTransfer.LOG_TAG;
 
@@ -106,6 +107,7 @@ public class DirectoryWriter extends Thread {
 			} else {
 				Log.e(LOG_TAG, "Can't create file mime=" + mime + " name=" + name);
 			}
+			CRC32 crc32 = new CRC32();
 			byte[] buf = new byte[512 * 1024];
 			long pos = 0;
 			reporter.report(name, 0, 0);
@@ -115,12 +117,29 @@ public class DirectoryWriter extends Thread {
 					if (out != null) {
 						out.write(buf, 0, read);
 					}
+					crc32.update(buf, 0, read);
 					pos += read;
 					reporter.report(name, pos, length);
 				} else if (read < 0) {
 					throw new EOFException("read=" + read + " length=" + length);
 				}
 			} while (pos < length);
+			ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES).order(ByteOrder.BIG_ENDIAN);
+			if (in.read(byteBuffer.array()) != Integer.BYTES) {
+				throw new EOFException("EOF reading CRC of file: " + name);
+			}
+			final int remoteCRC = byteBuffer.getInt();
+			final int localCRC = (int) crc32.getValue();
+			if (remoteCRC != localCRC) {
+				Log.e(LOG_TAG, "CRC32 mismatch: " + name +
+						" expected=" + Integer.toHexString(remoteCRC) +
+						" actual=" + Integer.toHexString(localCRC));
+				if (file != null) {
+					file.delete();
+				}
+			} else {
+				Log.v(LOG_TAG, "CRC32 matched: " + name + " " + Integer.toHexString(localCRC));
+			}
 		} finally {
 			if (out != null) {
 				out.close();
