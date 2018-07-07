@@ -45,6 +45,9 @@ public class DirectoryReader extends Thread {
 			return;
 		}
 		String pathStr = dir.getName();
+		if (pathStr == null) {
+			return;
+		}
 		if (pathStr.startsWith(".")) {
 			return; // ignore hidden
 		}
@@ -74,6 +77,9 @@ public class DirectoryReader extends Thread {
 			return;
 		}
 		String pathStr = file.getName();
+		if (pathStr == null) {
+			return;
+		}
 		if (pathStr.startsWith(".")) {
 			return; // ignore hidden
 		}

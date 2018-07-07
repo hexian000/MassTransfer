@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.regex.Pattern;
 import java.util.zip.CRC32;
 
 import static me.hexian000.masstransfer.MassTransfer.LOG_TAG;
@@ -65,7 +66,7 @@ public class DirectoryWriter extends Thread {
 	private void writeFile(final String path, final long length) throws IOException {
 		if (length == -1) { // is directory
 			Log.d(LOG_TAG, "Now at: " + path);
-			makePath(path.split("/"));
+			makePath(path.split(Pattern.quote("/")));
 			return;
 		}
 		// is File
