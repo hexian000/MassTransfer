@@ -14,11 +14,9 @@ import android.support.annotation.CallSuper;
 import android.support.annotation.StringRes;
 import android.support.v4.provider.DocumentFile;
 import android.util.Log;
-import android.widget.Toast;
 import me.hexian000.masstransfer.io.ProgressReporter;
 
-import static me.hexian000.masstransfer.MassTransfer.CHANNEL_TRANSFER_STATE;
-import static me.hexian000.masstransfer.MassTransfer.LOG_TAG;
+import static me.hexian000.masstransfer.MassTransfer.*;
 
 public abstract class TransferService extends Service {
 	final static int TcpBufferSize = 512 * 1024;
@@ -105,6 +103,7 @@ public abstract class TransferService extends Service {
 	@CallSuper
 	@Override
 	public void onDestroy() {
+		notificationManager = null;
 		releaseLocks();
 		super.onDestroy();
 	}
@@ -114,18 +113,40 @@ public abstract class TransferService extends Service {
 			thread.interrupt();
 			thread = null;
 		}
-		notificationManager = null;
 		builder = null;
 		releaseLocks();
 		stopSelf();
 	}
 
 	void showResultToast() {
+		Notification.Builder builder = new Notification.Builder(this.getApplicationContext());
+
+		String title;
 		if (result) {
-			Toast.makeText(this, R.string.transfer_success, Toast.LENGTH_SHORT).show();
+			title = getResources().getString(R.string.transfer_success);
 		} else {
-			Toast.makeText(this, R.string.transfer_failed, Toast.LENGTH_SHORT).show();
+			title = getResources().getString(R.string.transfer_failed);
 		}
+
+		builder.setContentIntent(null)
+				.setContentTitle(title)
+				.setSmallIcon(R.drawable.ic_send_black_24dp)
+				.setWhen(System.currentTimeMillis())
+				.setOngoing(false)
+				.setVisibility(Notification.VISIBILITY_PUBLIC);
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+			// Android 8.0+
+			NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+			if (manager != null) {
+				builder.setChannelId(CHANNEL_TRANSFER_RESULT);
+			}
+		} else {
+			// Android 7.1
+			builder.setPriority(Notification.PRIORITY_DEFAULT);
+		}
+
+		notificationManager.notify(startId, builder.build());
 	}
 
 	protected class Progress implements ProgressReporter {
