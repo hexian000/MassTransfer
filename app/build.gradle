@@ -25,7 +25,7 @@ android {
     }
     applicationVariants.all { variant ->
         variant.outputs.all {
-            outputFileName = "Dynatweak-${variant.versionName}.apk"
+            outputFileName = "MassTransfer-${variant.versionName}.apk"
         }
     }
 }
