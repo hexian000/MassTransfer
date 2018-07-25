@@ -29,6 +29,7 @@ import static me.hexian000.masstransfer.MassTransfer.LOG_TAG;
 public class ReceiveService extends TransferService {
 	private DiscoverService mService;
 	private ServiceConnection mConnection;
+	private boolean receiveFinished;
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
@@ -166,6 +167,7 @@ public class ReceiveService extends TransferService {
 					socket.setTrafficClass(IPTOS_THROUGHPUT);
 					socket.setReceiveBufferSize(TcpBufferSize);
 					socket.setSoTimeout(30000);
+					receiveFinished = false;
 					streamCopy(socket);
 				} catch (SocketTimeoutException e) {
 					Log.e(LOG_TAG, "socket timeout");
@@ -211,7 +213,7 @@ public class ReceiveService extends TransferService {
 						String text = p.text;
 						if (text != null) {
 							text += "\n";
-							if (buffer.getAvailable() > buffer.getCapacity() / 2) {
+							if (receiveFinished || buffer.getAvailable() > buffer.getCapacity() / 2) {
 								text += getResources().getString(R.string.bottleneck_local);
 							} else {
 								text += getResources().getString(R.string.bottleneck_network);
@@ -249,6 +251,7 @@ public class ReceiveService extends TransferService {
 						rate.increase(read);
 					}
 				} while (read >= 0);
+				receiveFinished = true;
 				out.flush();
 				out.close();
 				writer.join();
