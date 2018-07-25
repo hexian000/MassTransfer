@@ -70,7 +70,7 @@ public class SendService extends TransferService {
 
 	@Override
 	public void onDestroy() {
-		showResultToast();
+		showResult();
 		((MassTransfer) getApplicationContext()).sendService = null;
 		super.onDestroy();
 	}

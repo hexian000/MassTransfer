@@ -119,7 +119,7 @@ public abstract class TransferService extends Service {
 		stopSelf();
 	}
 
-	void showResultToast() {
+	void showResult() {
 		Notification.Builder builder = new Notification.Builder(this.getApplicationContext());
 
 		String title;

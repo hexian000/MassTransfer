@@ -92,7 +92,7 @@ public class ReceiveService extends TransferService {
 		if (mainActivity != null) {
 			mainActivity.handler.post(mainActivity::updateReceiveButton);
 		}
-		showResultToast();
+		showResult();
 		((MassTransfer) getApplicationContext()).receiveService = null;
 		super.onDestroy();
 	}
