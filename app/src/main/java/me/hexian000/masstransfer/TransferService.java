@@ -131,7 +131,7 @@ public abstract class TransferService extends Service {
 
 		builder.setContentIntent(null)
 				.setContentTitle(title)
-				.setSmallIcon(R.drawable.ic_send_black_24dp)
+				.setSmallIcon(R.drawable.ic_done_black_24dp)
 				.setWhen(System.currentTimeMillis())
 				.setOngoing(false)
 				.setVisibility(Notification.VISIBILITY_PUBLIC);
