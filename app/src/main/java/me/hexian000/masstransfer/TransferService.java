@@ -76,6 +76,7 @@ public abstract class TransferService extends Service {
 				.setWhen(System.currentTimeMillis())
 				.setProgress(0, 0, true)
 				.setOngoing(true)
+				.setOnlyAlertOnce(true)
 				.setVisibility(Notification.VISIBILITY_PUBLIC);
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
