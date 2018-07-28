@@ -75,10 +75,7 @@ public class ReceiveService extends TransferService {
 		Intent discover = new Intent(this, DiscoverService.class);
 		bindService(discover, mConnection, Context.BIND_AUTO_CREATE);
 		Log.d(LOG_TAG, "bind DiscoverService in ReceiveService");
-		MainActivity mainActivity = app.mainActivity;
-		if (mainActivity != null) {
-			mainActivity.handler.post(mainActivity::updateReceiveButton);
-		}
+		postUpdateButton();
 	}
 
 	@Override
@@ -87,10 +84,6 @@ public class ReceiveService extends TransferService {
 			unbindService(mConnection);
 			mService = null;
 			Log.d(LOG_TAG, "unbind DiscoverService in ReceiveService");
-		}
-		MainActivity mainActivity = ((MassTransfer) getApplicationContext()).mainActivity;
-		if (mainActivity != null) {
-			mainActivity.handler.post(mainActivity::updateReceiveButton);
 		}
 		showResult();
 		((MassTransfer) getApplicationContext()).receiveService = null;

@@ -66,6 +66,7 @@ public class SendService extends TransferService {
 	@Override
 	public void onCreate() {
 		((MassTransfer) getApplicationContext()).sendService = this;
+		postUpdateButton();
 	}
 
 	@Override

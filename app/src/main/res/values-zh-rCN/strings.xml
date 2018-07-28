@@ -20,4 +20,6 @@
     <string name="bottleneck_local">瓶颈：本地</string>
     <string name="bottleneck_network">瓶颈：网络</string>
     <string name="channel_transfer_result">传输结果</string>
+    <string name="send_button">发送</string>
+    <string name="send_cancel_button">停止发送</string>
 </resources>

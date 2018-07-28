@@ -105,8 +105,16 @@ public abstract class TransferService extends Service {
 	@Override
 	public void onDestroy() {
 		notificationManager = null;
+		postUpdateButton();
 		releaseLocks();
 		super.onDestroy();
+	}
+
+	void postUpdateButton() {
+		MainActivity mainActivity = ((MassTransfer) getApplicationContext()).mainActivity;
+		if (mainActivity != null) {
+			mainActivity.handler.post(mainActivity::updateButtons);
+		}
 	}
 
 	void stop() {
