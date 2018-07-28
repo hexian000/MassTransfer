@@ -130,16 +130,15 @@ public abstract class TransferService extends Service {
 	void showResult() {
 		Notification.Builder builder = new Notification.Builder(this.getApplicationContext());
 
-		String title;
 		if (result) {
-			title = getResources().getString(R.string.transfer_success);
+			builder.setContentTitle(getResources().getString(R.string.transfer_success))
+					.setSmallIcon(R.drawable.ic_done_black_24dp);
 		} else {
-			title = getResources().getString(R.string.transfer_failed);
+			builder.setContentTitle(getResources().getString(R.string.transfer_failed))
+					.setSmallIcon(R.drawable.ic_error_outline_black_24dp);
 		}
 
 		builder.setContentIntent(null)
-				.setContentTitle(title)
-				.setSmallIcon(R.drawable.ic_done_black_24dp)
 				.setWhen(System.currentTimeMillis())
 				.setOngoing(false)
 				.setVisibility(Notification.VISIBILITY_PUBLIC);
