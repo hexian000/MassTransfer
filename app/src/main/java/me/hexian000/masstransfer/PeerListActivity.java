@@ -5,6 +5,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -95,10 +96,27 @@ public class PeerListActivity extends Activity {
 				return;
 			}
 
-			Intent intent = new Intent();
+			Intent startIntent = getIntent();
+			Intent intent = new Intent(this, SendService.class);
 			intent.putExtra("host", (String) adapter.getItem(i));
-			setResult(RESULT_OK, intent);
+			if (Intent.ACTION_SEND.equals(startIntent.getAction()) ||
+					Intent.ACTION_SEND_MULTIPLE.equals(startIntent.getAction())) {
+				intent.setAction(startIntent.getAction());
+				intent.setData(startIntent.getParcelableExtra(Intent.EXTRA_STREAM));
+			} else {
+				intent.setData(startIntent.getData());
+				intent.putExtra("files", startIntent.getStringArrayExtra("files"));
+			}
+			startForegroundServiceCompat(intent);
 			finish();
 		});
+	}
+
+	private void startForegroundServiceCompat(Intent intent) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+			startForegroundService(intent);
+		} else {
+			startService(intent);
+		}
 	}
 }

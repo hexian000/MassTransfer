@@ -11,7 +11,6 @@ import android.widget.Button;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
-	private static final int REQUEST_CHOOSE_PEER = 4;
 	private static final int REQUEST_SEND = 1;
 	private static final int REQUEST_RECEIVE = 2;
 	private static final int REQUEST_CHOOSE = 3;
@@ -42,10 +41,10 @@ public class MainActivity extends Activity {
 		}
 		break;
 		case REQUEST_RECEIVE: {
-			Uri uriTree = result.getData();
-			if (uriTree != null) {
+			uri = result.getData();
+			if (uri != null) {
 				Intent intent = new Intent(this, ReceiveService.class);
-				intent.setData(uriTree);
+				intent.setData(uri);
 				startForegroundServiceCompat(intent);
 				Toast.makeText(MainActivity.this, R.string.start_receive_service, Toast.LENGTH_SHORT).show();
 				receiveButton.setText(R.string.receive_cancel_button);
@@ -58,23 +57,9 @@ public class MainActivity extends Activity {
 				break;
 			}
 			Intent intent = new Intent(this, PeerListActivity.class);
-			startActivityForResult(intent, REQUEST_CHOOSE_PEER);
-		}
-		break;
-		case REQUEST_CHOOSE_PEER: {
-			if (fileList == null) {
-				break;
-			}
-			String host = result.getStringExtra("host");
-			if (host == null) {
-				break;
-			}
-			Intent intent = new Intent(this, SendService.class);
 			intent.setData(uri);
-			intent.putExtra("host", host);
 			intent.putExtra("files", fileList);
-			startForegroundServiceCompat(intent);
-			finish();
+			startActivity(intent);
 		}
 		break;
 		}

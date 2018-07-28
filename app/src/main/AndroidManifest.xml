@@ -43,7 +43,14 @@
         <service android:name=".SendService" />
         <service android:name=".ReceiveService" />
 
-        <activity android:name=".PeerListActivity"></activity>
+        <activity android:name=".PeerListActivity">
+            <!--<intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>-->
+        </activity>
     </application>
 
 </manifest>
