@@ -3,7 +3,6 @@ package me.hexian000.masstransfer;
 import android.app.Notification;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.provider.DocumentFile;
@@ -19,6 +18,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.util.StringJoiner;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -39,21 +39,21 @@ public class SendService extends TransferService {
 		this.startId = startId;
 		initNotification(R.string.notification_sending);
 
-		Bundle extras = intent.getExtras();
-		if (extras == null) {
-			stopSelf();
-			return START_NOT_STICKY;
-		}
-		host = extras.getString("host");
-		files = extras.getStringArray("files");
-		if (host == null || files == null) {
-			stopSelf();
-			return START_NOT_STICKY;
-		}
+		host = intent.getStringExtra("host");
+		files = intent.getStringArrayExtra("files");
 		Uri data = intent.getData();
-		if (data == null) {
+		if (host == null || files == null || data == null) {
 			stopSelf();
 			return START_NOT_STICKY;
+		}
+		{
+			StringJoiner sj = new StringJoiner(",");
+			for (String file : files) {
+				sj.add(file);
+			}
+			Log.d(LOG_TAG, "SendService: host=" + host +
+					" files=" + sj.toString() +
+					" data=" + data.toString());
 		}
 		root = DocumentFile.fromTreeUri(this, data);
 

@@ -17,6 +17,7 @@ public class MainActivity extends Activity {
 	private static final int REQUEST_CHOOSE = 3;
 	final Handler handler = new Handler();
 	private String[] fileList;
+	private Uri uri;
 	private Button sendButton, receiveButton;
 
 	@Override
@@ -32,10 +33,10 @@ public class MainActivity extends Activity {
 		}
 		switch (requestCode) {
 		case REQUEST_SEND: {
-			Uri uriTree = result.getData();
-			if (uriTree != null) {
+			uri = result.getData();
+			if (uri != null) {
 				Intent intent = new Intent(this, ChooseActivity.class);
-				intent.setData(uriTree);
+				intent.setData(uri);
 				startActivityForResult(intent, REQUEST_CHOOSE);
 			}
 		}
@@ -69,7 +70,7 @@ public class MainActivity extends Activity {
 				break;
 			}
 			Intent intent = new Intent(this, SendService.class);
-			intent.setData(result.getData());
+			intent.setData(uri);
 			intent.putExtra("host", host);
 			intent.putExtra("files", fileList);
 			startForegroundServiceCompat(intent);
