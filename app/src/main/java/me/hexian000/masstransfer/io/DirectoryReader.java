@@ -137,7 +137,7 @@ public class DirectoryReader extends Thread {
 			ByteBuffer buffer = bufferPool.pop();
 			buffer.putInt(0)
 					.putLong(0)
-					.limit(Integer.BYTES + Long.BYTES);
+					.flip();
 			out.write(buffer); // bye
 			out.close();
 			success = true;
