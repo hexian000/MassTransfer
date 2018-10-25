@@ -165,6 +165,7 @@ public class DirectoryWriter extends Thread {
 			current.put(b.array(), b.arrayOffset() + b.position(), b.remaining());
 			bufferPool.push(b);
 		}
+		current.flip();
 	}
 
 	@Override
