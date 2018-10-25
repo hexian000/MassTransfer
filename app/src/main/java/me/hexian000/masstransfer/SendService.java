@@ -7,17 +7,18 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.provider.DocumentFile;
 import android.util.Log;
-import com.Ostermiller.util.CircularByteBuffer;
 import me.hexian000.masstransfer.io.AverageRateCounter;
+import me.hexian000.masstransfer.io.BufferPool;
+import me.hexian000.masstransfer.io.Channel;
 import me.hexian000.masstransfer.io.DirectoryReader;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.nio.ByteBuffer;
 import java.util.StringJoiner;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -83,6 +84,7 @@ public class SendService extends TransferService {
 	}
 
 	private class TransferThread extends Thread {
+		private final BufferPool bufferPool = new BufferPool(BufferSize);
 		Socket socket = null;
 
 		@Override
@@ -131,14 +133,13 @@ public class SendService extends TransferService {
 		}
 
 		private void streamCopy(Socket socket) {
-			final CircularByteBuffer buffer = new CircularByteBuffer();
+			final Channel channel = new Channel(64 * 1024 * 1024); // 64MB
 			final Progress progress = new Progress();
 			final DirectoryReader reader = new DirectoryReader(getContentResolver(), root, files,
-					buffer.getOutputStream(), progress);
+					channel, progress, bufferPool);
 			reader.start();
 			Timer timer = new Timer();
-			try (InputStream in = buffer.getInputStream();
-			     OutputStream out = socket.getOutputStream()) {
+			try (OutputStream out = socket.getOutputStream()) {
 				AverageRateCounter rate = new AverageRateCounter(5);
 				timer.schedule(new TimerTask() {
 
@@ -148,7 +149,7 @@ public class SendService extends TransferService {
 						String text = p.text;
 						if (text != null) {
 							text += "\n";
-							if (buffer.getAvailable() > buffer.getCapacity() / 2) {
+							if (channel.getAvailable() > channel.getCapacity() / 2) {
 								text += getResources().getString(R.string.bottleneck_network);
 							} else {
 								text += getResources().getString(R.string.bottleneck_local);
@@ -177,15 +178,15 @@ public class SendService extends TransferService {
 						});
 					}
 				}, 1000, 1000);
-				final byte[] packet = new byte[8 * 1024];
-				int read;
-				do {
-					read = in.read(packet);
-					if (read > 0) {
-						rate.increase(read);
-						out.write(packet, 0, read);
+				while (true) {
+					final ByteBuffer packet = channel.read();
+					if (packet == null) {
+						break;
 					}
-				} while (read >= 0);
+					rate.increase(packet.remaining());
+					out.write(packet.array(), packet.arrayOffset(), packet.remaining());
+					bufferPool.push(packet);
+				}
 				out.flush();
 				reader.join();
 				result = reader.isSuccess();

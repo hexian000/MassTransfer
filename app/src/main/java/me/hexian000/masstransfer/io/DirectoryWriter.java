@@ -12,16 +12,17 @@ package me.hexian000.masstransfer.io;
  */
 
 import android.content.ContentResolver;
+import android.support.annotation.NonNull;
 import android.support.v4.provider.DocumentFile;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import static me.hexian000.masstransfer.MassTransfer.LOG_TAG;
@@ -30,21 +31,25 @@ public class DirectoryWriter extends Thread {
 	private final ProgressReporter reporter;
 	private final ContentResolver resolver;
 	private final DocumentFile root;
-	private final InputStream in;
+	private final Channel in;
+	private final BufferPool bufferPool;
+	private ByteBuffer current;
 	private boolean success = false;
 
-	public DirectoryWriter(ContentResolver resolver, DocumentFile root, InputStream in, ProgressReporter reporter) {
+	public DirectoryWriter(ContentResolver resolver, DocumentFile root, Channel in, ProgressReporter reporter,
+			BufferPool bufferPool) {
 		this.resolver = resolver;
 		this.root = root;
 		this.in = in;
 		this.reporter = reporter;
+		this.bufferPool = bufferPool;
 	}
 
 	public boolean isSuccess() {
 		return success;
 	}
 
-	private DocumentFile makePath(String[] segments) {
+	private DocumentFile makePath(@NonNull String[] segments) {
 		DocumentFile parent = root;
 		for (String name : segments) {
 			DocumentFile current = null;
@@ -57,12 +62,15 @@ public class DirectoryWriter extends Thread {
 			if (current == null) {
 				current = parent.createDirectory(name);
 			}
+			if (current == null) {
+				return null;
+			}
 			parent = current;
 		}
 		return parent;
 	}
 
-	private void writeFile(final String path, final long length) throws IOException {
+	private void writeFile(final String path, final long length) throws IOException, InterruptedException {
 		if (length == -1) { // is directory
 			Log.d(LOG_TAG, "Now at: " + path);
 			makePath(path.split(Pattern.quote("/")));
@@ -81,9 +89,12 @@ public class DirectoryWriter extends Thread {
 		} else {
 			name = pathSegments[0];
 		}
-		DocumentFile file = parent.findFile(name);
-		if (file != null) {
-			file.delete();
+		DocumentFile file = null;
+		if (parent != null) {
+			file = parent.findFile(name);
+			if (file != null) {
+				file.delete();
+			}
 		}
 		String mime = null;
 		int dot = name.lastIndexOf(".");
@@ -94,7 +105,9 @@ public class DirectoryWriter extends Thread {
 			mime = "application/*";
 		}
 
-		file = parent.createFile(mime, name);
+		if (parent != null) {
+			file = parent.createFile(mime, name);
+		}
 
 		if (length == 0) {
 			return;
@@ -107,21 +120,18 @@ public class DirectoryWriter extends Thread {
 			} else {
 				Log.e(LOG_TAG, "Can't create file mime=" + mime + " name=" + name);
 			}
-			byte[] buf = new byte[512 * 1024];
 			long pos = 0;
 			reporter.report(name, 0, 0);
-			do {
-				int read = in.read(buf, 0, (int) Math.min(length - pos, buf.length));
-				if (read > 0) {
-					if (out != null) {
-						out.write(buf, 0, read);
-					}
-					pos += read;
-					reporter.report(name, pos, length);
-				} else if (read < 0) {
-					throw new EOFException("read=" + read + " length=" + length);
+			while (pos < length) {
+				readAtLeast(0);
+				if (out != null) {
+					out.write(current.array(), current.arrayOffset(), current.remaining());
 				}
-			} while (pos < length);
+				pos += current.remaining();
+				bufferPool.push(current);
+				current = null;
+				reporter.report(name, pos, length);
+			}
 		} finally {
 			if (out != null) {
 				out.close();
@@ -129,19 +139,41 @@ public class DirectoryWriter extends Thread {
 		}
 	}
 
+	private void readAtLeast(int size) throws InterruptedException {
+		if (current == null) {
+			current = in.read();
+		}
+		if (current.remaining() == 0) {
+			bufferPool.push(current);
+			current = in.read();
+		}
+		if (current.remaining() >= size) {
+			return;
+		}
+
+		int sum = 0;
+		List<ByteBuffer> list = new ArrayList<>();
+		list.add(current);
+		while (sum < size) {
+			ByteBuffer next = in.read();
+			list.add(next);
+			sum += next.remaining();
+		}
+
+		current = ByteBuffer.allocate(sum);
+		for (ByteBuffer b : list) {
+			current.put(b.array(), b.arrayOffset(), b.remaining());
+			bufferPool.push(b);
+		}
+	}
+
 	@Override
 	public void run() {
 		try {
 			do {
-				int read;
-				ByteBuffer lengths = ByteBuffer.allocate(Integer.BYTES + Long.BYTES).order(ByteOrder.BIG_ENDIAN);
-				read = in.read(lengths.array());
-				if (read != Integer.BYTES + Long.BYTES) {
-					Log.e(LOG_TAG, "EOF when reading header");
-					return;
-				}
-				int nameLen = lengths.getInt();
-				long fileLen = lengths.getLong();
+				readAtLeast(Integer.BYTES + Long.BYTES);
+				int nameLen = current.getInt();
+				long fileLen = current.getLong();
 				if (nameLen == 0 && fileLen == 0) {
 					Log.d(LOG_TAG, "protocol bye");
 					break; // bye
@@ -150,13 +182,9 @@ public class DirectoryWriter extends Thread {
 					Log.wtf(LOG_TAG, "BUG: invalid header, nameLen=" + nameLen + " fileLen=" + fileLen);
 					return;
 				}
-				byte[] name = new byte[nameLen];
-				read = in.read(name);
-				if (read != nameLen) {
-					Log.e(LOG_TAG, "can't read name");
-					return;
-				}
-				String path = new String(name, "UTF-8");
+				readAtLeast(nameLen);
+				String path = new String(current.array(), current.arrayOffset(), nameLen, "UTF-8");
+				current.position(current.position() + nameLen);
 				writeFile(path, fileLen);
 			} while (true);
 			success = true;
@@ -166,6 +194,8 @@ public class DirectoryWriter extends Thread {
 			Log.e(LOG_TAG, "DirectoryWriter early EOF", e);
 		} catch (IOException e) {
 			Log.e(LOG_TAG, "DirectoryWriter", e);
+		} catch (InterruptedException e) {
+			Log.e(LOG_TAG, "DirectoryWriter Interrupted", e);
 		}
 	}
 }

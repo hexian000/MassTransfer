@@ -20,6 +20,7 @@ import static me.hexian000.masstransfer.MassTransfer.*;
 
 public abstract class TransferService extends Service {
 	final static int TcpBufferSize = 512 * 1024;
+	final static int BufferSize = 512 * 1024;
 	private static PowerManager.WakeLock wakeLock = null;
 	private static WifiManager.WifiLock wifiLock = null;
 	final Handler handler = new Handler();
@@ -34,7 +35,7 @@ public abstract class TransferService extends Service {
 		releaseLocks();
 		PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
 		if (powerManager != null) {
-			wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, LOG_TAG);
+			wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, LOG_TAG + ":TransferService");
 			wakeLock.acquire(10 * 60 * 1000L /*10 minutes*/);
 			Log.d(LOG_TAG, "WakeLock acquired for 10 minutes");
 		}
@@ -159,9 +160,9 @@ public abstract class TransferService extends Service {
 
 	protected class Progress implements ProgressReporter {
 		public String text;
-		public long now, max;
+		long now, max;
 
-		public synchronized Progress get() {
+		synchronized Progress get() {
 			Progress p = new Progress();
 			p.text = text;
 			p.now = now;

@@ -9,10 +9,8 @@ import android.content.ContentResolver;
 import android.support.v4.provider.DocumentFile;
 import android.util.Log;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -23,23 +21,25 @@ public class DirectoryReader extends Thread {
 	private final ContentResolver resolver;
 	private final DocumentFile root;
 	private final String[] files;
-	private final OutputStream out;
+	private final Channel out;
+	private final BufferPool bufferPool;
 	private boolean success = false;
 
-	public DirectoryReader(ContentResolver resolver, DocumentFile root, String[] files, OutputStream out,
-			ProgressReporter reporter) {
+	public DirectoryReader(ContentResolver resolver, DocumentFile root, String[] files, Channel out,
+			ProgressReporter reporter, BufferPool bufferPool) {
 		this.resolver = resolver;
 		this.root = root;
 		this.files = files;
 		this.out = out;
 		this.reporter = reporter;
+		this.bufferPool = bufferPool;
 	}
 
 	public boolean isSuccess() {
 		return success;
 	}
 
-	private void sendDir(final DocumentFile dir, final String basePath) throws IOException {
+	private void sendDir(final DocumentFile dir, final String basePath) throws IOException, InterruptedException {
 		if (!dir.exists()) {
 			return;
 		}
@@ -53,15 +53,15 @@ public class DirectoryReader extends Thread {
 		if (basePath.length() > 0) {
 			pathStr = basePath + "/" + pathStr;
 		}
-		byte[] path = pathStr.getBytes("UTF-8");
-		ByteArrayOutputStream header = new ByteArrayOutputStream();
-		ByteBuffer lengths = ByteBuffer.allocate(Integer.BYTES + Long.BYTES).order(ByteOrder.BIG_ENDIAN);
-		lengths.putInt(path.length);
 		Log.d(LOG_TAG, "Now at: " + pathStr);
-		lengths.putLong(-1); // directory
-		header.write(lengths.array());
-		header.write(path);
-		out.write(header.toByteArray());
+		byte[] path = pathStr.getBytes("UTF-8");
+		final ByteBuffer header = bufferPool.pop();
+		header.order(ByteOrder.BIG_ENDIAN)
+				.putInt(path.length)
+				.putLong(-1) // directory
+				.put(path)
+				.flip();
+		out.write(header);
 		for (DocumentFile f : dir.listFiles()) {
 			if (f.isFile()) {
 				sendFile(f, pathStr);
@@ -71,7 +71,7 @@ public class DirectoryReader extends Thread {
 		}
 	}
 
-	private void sendFile(final DocumentFile file, final String basePath) throws IOException {
+	private void sendFile(final DocumentFile file, final String basePath) throws IOException, InterruptedException {
 		if (!file.exists() || !file.canRead()) {
 			return;
 		}
@@ -87,31 +87,35 @@ public class DirectoryReader extends Thread {
 		}
 		final byte[] path = pathStr.getBytes("UTF-8");
 		final long length = file.length();
-		out.write(ByteBuffer.allocate(Integer.BYTES + Long.BYTES)
-				.order(ByteOrder.BIG_ENDIAN)
+		final ByteBuffer header = bufferPool.pop();
+		header.order(ByteOrder.BIG_ENDIAN)
 				.putInt(path.length)
 				.putLong(length)
-				.array());
-		out.write(path);
+				.put(path)
+				.flip();
+		out.write(header);
 		final String name = file.getName();
 		Log.d(LOG_TAG, "sendFile: " + name + " length=" + length);
 		try (final InputStream in = resolver.openInputStream(file.getUri())) {
 			if (in == null) {
 				throw new IOException("can't open input stream");
 			}
-			final byte[] buf = new byte[512 * 1024];
 			long pos = 0;
 			reporter.report(name, 0, 0);
 			if (length > 0) {
 				int read;
-				do {
-					read = in.read(buf);
-					if (read > 0) {
-						pos += read;
-						out.write(buf, 0, read);
-						reporter.report(name, pos, length);
+				while (true) {
+					ByteBuffer buf = bufferPool.pop();
+					read = in.read(buf.array(), 0, buf.capacity());
+					if (read < 1) {
+						bufferPool.push(buf);
+						break;
 					}
-				} while (read >= 0);
+					buf.limit(read);
+					pos += read;
+					out.write(buf);
+					reporter.report(name, pos, length);
+				}
 			}
 		}
 	}
@@ -130,15 +134,18 @@ public class DirectoryReader extends Thread {
 				}
 			}
 			reporter.report(null, 0, 0);
-			ByteBuffer lengths = ByteBuffer.allocate(Integer.BYTES + Long.BYTES).order(ByteOrder.BIG_ENDIAN);
-			lengths.putInt(0);
-			lengths.putLong(0);
-			out.write(lengths.array()); // bye
+			ByteBuffer buffer = bufferPool.pop();
+			buffer.putInt(0)
+					.putLong(0)
+					.limit(Integer.BYTES + Long.BYTES);
+			out.write(buffer); // bye
 			out.close();
 			success = true;
 			Log.d(LOG_TAG, "DirectoryReader finished normally");
 		} catch (IOException e) {
 			Log.e(LOG_TAG, "DirectoryReader", e);
+		} catch (InterruptedException e) {
+			Log.e(LOG_TAG, "DirectoryReader Interrupted", e);
 		}
 	}
 }

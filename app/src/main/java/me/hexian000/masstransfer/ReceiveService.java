@@ -10,16 +10,17 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.provider.DocumentFile;
 import android.util.Log;
-import com.Ostermiller.util.CircularByteBuffer;
 import me.hexian000.masstransfer.io.AverageRateCounter;
+import me.hexian000.masstransfer.io.BufferPool;
+import me.hexian000.masstransfer.io.Channel;
 import me.hexian000.masstransfer.io.DirectoryWriter;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.nio.ByteBuffer;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -97,6 +98,7 @@ public class ReceiveService extends TransferService {
 	}
 
 	private class ReceiveThread extends Thread {
+		private final BufferPool bufferPool = new BufferPool(BufferSize);
 		ServerSocket listener = null;
 		Socket socket = null;
 
@@ -189,14 +191,13 @@ public class ReceiveService extends TransferService {
 		private void streamCopy(Socket socket) throws InterruptedException, IOException {
 			final int bufferSize = Math.max(MassTransfer.HeapSize / 2, 2 * 1024 * 1024);
 			Log.d(LOG_TAG, "receive buffer size: " + MassTransfer.formatSize(bufferSize));
-			final CircularByteBuffer buffer = new CircularByteBuffer(bufferSize);
+			final Channel channel = new Channel(bufferSize);
 			final Progress progress = new Progress();
 			final DirectoryWriter writer = new DirectoryWriter(getContentResolver(), root,
-					buffer.getInputStream(), progress);
+					channel, progress, bufferPool);
 			writer.start();
 			Timer timer = new Timer();
-			try (InputStream in = socket.getInputStream();
-			     OutputStream out = buffer.getOutputStream()) {
+			try (InputStream in = socket.getInputStream()) {
 				AverageRateCounter rate = new AverageRateCounter(5);
 				timer.schedule(new TimerTask() {
 
@@ -206,7 +207,7 @@ public class ReceiveService extends TransferService {
 						String text = p.text;
 						if (text != null) {
 							text += "\n";
-							if (receiveFinished || buffer.getAvailable() > buffer.getCapacity() / 2) {
+							if (receiveFinished || channel.getAvailable() > channel.getCapacity() / 2) {
 								text += getResources().getString(R.string.bottleneck_local);
 							} else {
 								text += getResources().getString(R.string.bottleneck_network);
@@ -235,18 +236,19 @@ public class ReceiveService extends TransferService {
 						});
 					}
 				}, 1000, 1000);
-				byte[] packet = new byte[8 * 1024];
 				int read;
-				do {
-					read = in.read(packet);
-					if (read > 0) {
-						out.write(packet, 0, read);
-						rate.increase(read);
+				while (true) {
+					ByteBuffer packet = bufferPool.pop();
+					read = in.read(packet.array());
+					if (read < 1) {
+						break;
 					}
-				} while (read >= 0);
+					packet.limit(read);
+					channel.write(packet);
+					rate.increase(read);
+				}
 				receiveFinished = true;
-				out.flush();
-				out.close();
+				channel.close();
 				writer.join();
 				result = writer.isSuccess();
 				Log.d(LOG_TAG, "receive thread finished normally");
