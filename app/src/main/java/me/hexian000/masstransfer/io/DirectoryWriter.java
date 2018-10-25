@@ -21,6 +21,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -166,6 +167,7 @@ public class DirectoryWriter extends Thread {
 			bufferPool.push(b);
 		}
 		current.flip();
+		current.order(ByteOrder.BIG_ENDIAN);
 	}
 
 	@Override
