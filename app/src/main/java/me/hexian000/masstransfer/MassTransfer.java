@@ -37,6 +37,7 @@ public class MassTransfer extends Application {
 			{
 				NotificationChannel channel = new NotificationChannel(CHANNEL_TRANSFER_RESULT,
 						res.getString(R.string.channel_transfer_result), NotificationManager.IMPORTANCE_DEFAULT);
+				channel.setSound(null, null);
 
 				manager.createNotificationChannel(channel);
 			}
