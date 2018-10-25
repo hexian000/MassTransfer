@@ -17,9 +17,8 @@
     <string name="notification_finishing">Finishing</string>
     <string name="transfer_success">Transfer Success</string>
     <string name="transfer_failed">Transfer Failed</string>
-    <string name="bottleneck_local">Bottleneck: local</string>
-    <string name="bottleneck_network">Bottleneck: network</string>
     <string name="channel_transfer_result">Transfer Result</string>
     <string name="send_button">Send</string>
     <string name="send_cancel_button">Stop sending</string>
+    <string name="buffer_indicator">Buffer: %s/%s</string>
 </resources>

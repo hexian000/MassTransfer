@@ -17,9 +17,8 @@
     <string name="notification_finishing">正在完成</string>
     <string name="transfer_success">传输成功</string>
     <string name="transfer_failed">传输失败</string>
-    <string name="bottleneck_local">瓶颈：本地</string>
-    <string name="bottleneck_network">瓶颈：网络</string>
     <string name="channel_transfer_result">传输结果</string>
     <string name="send_button">发送</string>
     <string name="send_cancel_button">停止发送</string>
+    <string name="buffer_indicator">缓冲区：%s/%s</string>
 </resources>

@@ -19,6 +19,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
+import java.util.Locale;
 import java.util.StringJoiner;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -149,11 +150,13 @@ public class SendService extends TransferService {
 						String text = p.text;
 						if (text != null) {
 							text += "\n";
-							if (channel.getAvailable() < channel.getCapacity() / 2) {
-								text += getResources().getString(R.string.bottleneck_network);
-							} else {
-								text += getResources().getString(R.string.bottleneck_local);
-							}
+							final int max = channel.getCapacity();
+							final int used = max - channel.getAvailable();
+							text += String.format(
+									Locale.getDefault(),
+									getResources().getString(R.string.buffer_indicator),
+									MassTransfer.formatSize(used),
+									MassTransfer.formatSize(max));
 						} else {
 							text = getResources().getString(R.string.notification_finishing);
 						}

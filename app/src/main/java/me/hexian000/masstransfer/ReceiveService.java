@@ -21,6 +21,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
+import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -207,11 +208,13 @@ public class ReceiveService extends TransferService {
 						String text = p.text;
 						if (text != null) {
 							text += "\n";
-							if (receiveFinished || channel.getAvailable() < channel.getCapacity() / 2) {
-								text += getResources().getString(R.string.bottleneck_local);
-							} else {
-								text += getResources().getString(R.string.bottleneck_network);
-							}
+							final int max = channel.getCapacity();
+							final int used = max - channel.getAvailable();
+							text += String.format(
+									Locale.getDefault(),
+									getResources().getString(R.string.buffer_indicator),
+									MassTransfer.formatSize(used),
+									MassTransfer.formatSize(max));
 						} else {
 							text = getResources().getString(R.string.notification_finishing);
 						}
