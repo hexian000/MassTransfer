@@ -239,7 +239,7 @@ public class ReceiveService extends TransferService {
 				int read;
 				while (true) {
 					ByteBuffer packet = bufferPool.pop();
-					read = in.read(packet.array());
+					read = in.read(packet.array(), packet.arrayOffset(), packet.capacity());
 					if (read < 1) {
 						break;
 					}

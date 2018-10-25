@@ -167,7 +167,6 @@ public class DirectoryWriter extends Thread {
 			bufferPool.push(b);
 		}
 		current.flip();
-		current.order(ByteOrder.BIG_ENDIAN);
 	}
 
 	@Override
@@ -175,6 +174,7 @@ public class DirectoryWriter extends Thread {
 		try {
 			do {
 				readAtLeast(Integer.BYTES + Long.BYTES);
+				current.order(ByteOrder.BIG_ENDIAN);
 				int nameLen = current.getInt();
 				long fileLen = current.getLong();
 				if (nameLen == 0 && fileLen == 0) {

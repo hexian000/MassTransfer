@@ -133,7 +133,7 @@ public class SendService extends TransferService {
 		}
 
 		private void streamCopy(Socket socket) {
-			final Channel channel = new Channel(64 * 1024 * 1024); // 64MB
+			final Channel channel = new Channel(8 * 1024 * 1024); // 8MB
 			final Progress progress = new Progress();
 			final DirectoryReader reader = new DirectoryReader(getContentResolver(), root, files,
 					channel, progress, bufferPool);
