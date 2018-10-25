@@ -22,7 +22,7 @@ import java.util.TimerTask;
 import static me.hexian000.masstransfer.MassTransfer.LOG_TAG;
 
 public class PeerListActivity extends Activity {
-	final Handler handler = new Handler();
+	private final Handler handler = new Handler();
 	private List<String> items;
 	private ArrayAdapter adapter;
 	private Timer timer;
@@ -73,11 +73,6 @@ public class PeerListActivity extends Activity {
 			timer = null;
 		}
 		super.onPause();
-	}
-
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
 	}
 
 	@Override

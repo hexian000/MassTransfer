@@ -15,7 +15,6 @@ public class MainActivity extends Activity {
 	private static final int REQUEST_RECEIVE = 2;
 	private static final int REQUEST_CHOOSE = 3;
 	final Handler handler = new Handler();
-	private String[] fileList;
 	private Uri uri;
 	private Button sendButton, receiveButton;
 
@@ -52,7 +51,7 @@ public class MainActivity extends Activity {
 		}
 		break;
 		case REQUEST_CHOOSE: {
-			fileList = result.getStringArrayExtra("files");
+			String[] fileList = result.getStringArrayExtra("files");
 			if (fileList == null) {
 				break;
 			}
