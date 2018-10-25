@@ -125,7 +125,7 @@ public class DirectoryWriter extends Thread {
 			while (pos < length) {
 				readAtLeast(0);
 				if (out != null) {
-					out.write(current.array(), current.arrayOffset(), current.remaining());
+					out.write(current.array(), current.arrayOffset() + current.position(), current.remaining());
 				}
 				pos += current.remaining();
 				bufferPool.push(current);
@@ -162,7 +162,7 @@ public class DirectoryWriter extends Thread {
 
 		current = ByteBuffer.allocate(sum);
 		for (ByteBuffer b : list) {
-			current.put(b.array(), b.arrayOffset(), b.remaining());
+			current.put(b.array(), b.arrayOffset() + b.position(), b.remaining());
 			bufferPool.push(b);
 		}
 	}
@@ -183,7 +183,11 @@ public class DirectoryWriter extends Thread {
 					return;
 				}
 				readAtLeast(nameLen);
-				String path = new String(current.array(), current.arrayOffset(), nameLen, "UTF-8");
+				String path = new String(
+						current.array(),
+						current.arrayOffset() + current.position(),
+						nameLen,
+						"UTF-8");
 				current.position(current.position() + nameLen);
 				writeFile(path, fileLen);
 			} while (true);
