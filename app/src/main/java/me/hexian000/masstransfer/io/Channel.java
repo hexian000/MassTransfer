@@ -21,7 +21,7 @@ public class Channel {
 	}
 
 	public int getAvailable() {
-		return capacity - available.availablePermits();
+		return available.availablePermits();
 	}
 
 	public int getCapacity() {

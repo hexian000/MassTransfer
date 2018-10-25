@@ -149,7 +149,7 @@ public class SendService extends TransferService {
 						String text = p.text;
 						if (text != null) {
 							text += "\n";
-							if (channel.getAvailable() > channel.getCapacity() / 2) {
+							if (channel.getAvailable() < channel.getCapacity() / 2) {
 								text += getResources().getString(R.string.bottleneck_network);
 							} else {
 								text += getResources().getString(R.string.bottleneck_local);
