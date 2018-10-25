@@ -190,7 +190,7 @@ public class ReceiveService extends TransferService {
 		}
 
 		private void streamCopy(Socket socket) throws InterruptedException, IOException {
-			final int bufferSize = Math.max(MassTransfer.HeapSize / 2, 64 * 1024 * 1024);
+			final int bufferSize = 112 * 1024 * 1024;
 			Log.d(LOG_TAG, "receive buffer size: " + MassTransfer.formatSize(bufferSize));
 			final Channel channel = new Channel(bufferSize);
 			final Progress progress = new Progress();

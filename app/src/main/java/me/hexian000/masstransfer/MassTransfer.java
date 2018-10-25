@@ -1,12 +1,10 @@
 package me.hexian000.masstransfer;
 
-import android.app.ActivityManager;
 import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.res.Resources;
 import android.os.Build;
-import android.util.Log;
 
 import java.text.DecimalFormat;
 
@@ -18,7 +16,6 @@ public class MassTransfer extends Application {
 	public final static int TCP_PORT = 14645;
 	public final static int IPTOS_THROUGHPUT = 0x08;
 	private final static DecimalFormat prettyFormat = new DecimalFormat("#.##");
-	public static int HeapSize = 0;
 	public MainActivity mainActivity = null;
 	public ReceiveService receiveService = null;
 	public SendService sendService = null;
@@ -53,17 +50,6 @@ public class MassTransfer extends Application {
 			return prettyFormat.format(size / 1024.0 / 1024.0) + "MB";
 		} else { // GB
 			return prettyFormat.format(size / 1024.0 / 1024.0 / 1024.0) + "GB";
-		}
-	}
-
-	@Override
-	public void onCreate() {
-		super.onCreate();
-		ActivityManager activityManager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
-		if (activityManager != null) {
-			Log.d(LOG_TAG, "HeapSize: " + activityManager.getMemoryClass() + "MB " +
-					"LargeHeapSize: " + activityManager.getLargeMemoryClass() + "MB");
-			HeapSize = activityManager.getLargeMemoryClass() * 1024 * 1024;
 		}
 	}
 }
