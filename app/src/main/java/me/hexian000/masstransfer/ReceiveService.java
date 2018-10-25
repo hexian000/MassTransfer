@@ -189,7 +189,7 @@ public class ReceiveService extends TransferService {
 		}
 
 		private void streamCopy(Socket socket) throws InterruptedException, IOException {
-			final int bufferSize = Math.max(MassTransfer.HeapSize / 2, 2 * 1024 * 1024);
+			final int bufferSize = Math.max(MassTransfer.HeapSize / 2, 64 * 1024 * 1024);
 			Log.d(LOG_TAG, "receive buffer size: " + MassTransfer.formatSize(bufferSize));
 			final Channel channel = new Channel(bufferSize);
 			final Progress progress = new Progress();
@@ -236,10 +236,9 @@ public class ReceiveService extends TransferService {
 						});
 					}
 				}, 1000, 1000);
-				int read;
 				while (true) {
 					ByteBuffer packet = bufferPool.pop();
-					read = in.read(packet.array(), packet.arrayOffset(), packet.capacity());
+					int read = in.read(packet.array(), packet.arrayOffset(), packet.capacity());
 					if (read < 1) {
 						break;
 					}

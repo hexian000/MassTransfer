@@ -106,7 +106,7 @@ public class DirectoryReader extends Thread {
 				int read;
 				while (true) {
 					ByteBuffer buf = bufferPool.pop();
-					read = in.read(buf.array(), buf.arrayOffset(), buf.capacity());
+					read = in.read(buf.array(), buf.arrayOffset() + buf.position(), buf.capacity());
 					if (read < 1) {
 						bufferPool.push(buf);
 						break;

@@ -124,13 +124,19 @@ public class DirectoryWriter extends Thread {
 			long pos = 0;
 			reporter.report(name, 0, 0);
 			while (pos < length) {
-				readAtLeast(0);
-				if (out != null) {
-					out.write(current.array(), current.arrayOffset() + current.position(), current.remaining());
+				if (current.remaining() < 1) {
+					bufferPool.push(current);
+					current = in.read();
+					if (current == null) {
+						throw new EOFException("early EOF in writeFile");
+					}
 				}
-				pos += current.remaining();
-				bufferPool.push(current);
-				current = null;
+				int len = (int) Math.min(length - pos, current.remaining());
+				if (out != null) {
+					out.write(current.array(), current.arrayOffset() + current.position(), len);
+				}
+				pos += len;
+				current.position(current.position() + len);
 				reporter.report(name, pos, length);
 			}
 		} finally {
@@ -140,26 +146,25 @@ public class DirectoryWriter extends Thread {
 		}
 	}
 
-	private void readAtLeast(int size) throws InterruptedException {
+	private void readAtLeast(int size) throws InterruptedException, EOFException {
 		if (current == null) {
 			current = in.read();
-		}
-		if (current.remaining() == 0) {
-			bufferPool.push(current);
-			current = in.read();
+			if (current == null) {
+				throw new EOFException("early EOF in readAtLeast");
+			}
 		}
 		if (current.remaining() >= size) {
 			return;
 		}
 
-		int sum = 0;
+		int sum = current.remaining();
 		List<ByteBuffer> list = new ArrayList<>();
 		list.add(current);
-		while (sum < size) {
+		do {
 			ByteBuffer next = in.read();
 			list.add(next);
 			sum += next.remaining();
-		}
+		} while (sum < size);
 
 		current = ByteBuffer.allocate(sum);
 		for (ByteBuffer b : list) {
