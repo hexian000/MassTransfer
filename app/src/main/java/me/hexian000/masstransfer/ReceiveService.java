@@ -31,7 +31,6 @@ import static me.hexian000.masstransfer.MassTransfer.LOG_TAG;
 public class ReceiveService extends TransferService {
 	private DiscoverService mService;
 	private ServiceConnection mConnection;
-	private boolean receiveFinished;
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
@@ -163,7 +162,6 @@ public class ReceiveService extends TransferService {
 					socket.setTrafficClass(IPTOS_THROUGHPUT);
 					socket.setReceiveBufferSize(TcpBufferSize);
 					socket.setSoTimeout(30000);
-					receiveFinished = false;
 					streamCopy(socket);
 				} catch (SocketTimeoutException e) {
 					Log.e(LOG_TAG, "socket timeout");
@@ -249,7 +247,6 @@ public class ReceiveService extends TransferService {
 					channel.write(packet);
 					rate.increase(read);
 				}
-				receiveFinished = true;
 				channel.close();
 				writer.join();
 				result = writer.isSuccess();
