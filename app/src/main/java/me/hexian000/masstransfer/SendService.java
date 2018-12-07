@@ -186,7 +186,7 @@ public class SendService extends TransferService {
 					if (packet == null) {
 						break;
 					}
-					rate.increase(packet.remaining());
+					rate.increase(packet.limit());
 					out.write(packet.array(), packet.arrayOffset() + packet.position(), packet.remaining());
 					bufferPool.push(packet);
 				}

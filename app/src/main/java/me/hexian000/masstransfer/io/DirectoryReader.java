@@ -26,7 +26,7 @@ public class DirectoryReader extends Thread {
 	private boolean success = false;
 
 	public DirectoryReader(ContentResolver resolver, DocumentFile root, String[] files, Channel out,
-			ProgressReporter reporter, BufferPool bufferPool) {
+	                       ProgressReporter reporter, BufferPool bufferPool) {
 		this.resolver = resolver;
 		this.root = root;
 		this.files = files;
@@ -103,16 +103,21 @@ public class DirectoryReader extends Thread {
 			long pos = 0;
 			reporter.report(name, 0, 0);
 			if (length > 0) {
-				int read;
 				while (true) {
 					ByteBuffer buf = bufferPool.pop();
-					read = in.read(buf.array(), buf.arrayOffset() + buf.position(), buf.capacity());
-					if (read < 1) {
+					while (buf.remaining() > 0) {
+						int read = in.read(buf.array(), buf.arrayOffset() + buf.position(), buf.remaining());
+						if (read < 0) {
+							break;
+						}
+						buf.position(buf.position() + read);
+					}
+					buf.flip();
+					if (buf.limit() < 1) {
 						bufferPool.push(buf);
 						break;
 					}
-					buf.limit(read);
-					pos += read;
+					pos += buf.limit();
 					out.write(buf);
 					reporter.report(name, pos, length);
 				}

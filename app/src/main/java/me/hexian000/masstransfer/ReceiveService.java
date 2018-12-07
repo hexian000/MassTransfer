@@ -10,6 +10,7 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.provider.DocumentFile;
 import android.util.Log;
+
 import me.hexian000.masstransfer.io.AverageRateCounter;
 import me.hexian000.masstransfer.io.BufferPool;
 import me.hexian000.masstransfer.io.Channel;
@@ -239,13 +240,20 @@ public class ReceiveService extends TransferService {
 				}, 1000, 1000);
 				while (true) {
 					ByteBuffer packet = bufferPool.pop();
-					int read = in.read(packet.array(), packet.arrayOffset(), packet.capacity());
-					if (read < 1) {
+					while (packet.remaining() > 0) {
+						int read = in.read(packet.array(), packet.arrayOffset() + packet.position(), packet.remaining());
+						if (read < 0) {
+							break;
+						}
+						packet.position(packet.position() + read);
+					}
+					packet.flip();
+					if (packet.limit() < 1) {
+						bufferPool.push(packet);
 						break;
 					}
-					packet.limit(read);
+					rate.increase(packet.limit());
 					channel.write(packet);
-					rate.increase(read);
 				}
 				channel.close();
 				writer.join();
