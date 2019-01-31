@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -195,7 +196,7 @@ public class DirectoryWriter extends Thread {
 						current.array(),
 						current.arrayOffset() + current.position(),
 						nameLen,
-						"UTF-8");
+						StandardCharsets.UTF_8);
 				current.position(current.position() + nameLen);
 				writeFile(path, fileLen);
 			} while (true);

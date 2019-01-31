@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 
 import static me.hexian000.masstransfer.MassTransfer.LOG_TAG;
 
@@ -54,7 +55,7 @@ public class DirectoryReader extends Thread {
 			pathStr = basePath + "/" + pathStr;
 		}
 		Log.d(LOG_TAG, "Now at: " + pathStr);
-		byte[] path = pathStr.getBytes("UTF-8");
+		byte[] path = pathStr.getBytes(StandardCharsets.UTF_8);
 		final ByteBuffer header = bufferPool.pop();
 		header.order(ByteOrder.BIG_ENDIAN)
 				.putInt(path.length)
@@ -85,7 +86,7 @@ public class DirectoryReader extends Thread {
 		if (basePath.length() > 0) {
 			pathStr = basePath + "/" + pathStr;
 		}
-		final byte[] path = pathStr.getBytes("UTF-8");
+		final byte[] path = pathStr.getBytes(StandardCharsets.UTF_8);
 		final long length = file.length();
 		final ByteBuffer header = bufferPool.pop();
 		header.order(ByteOrder.BIG_ENDIAN)
