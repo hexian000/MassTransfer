@@ -72,7 +72,7 @@ public abstract class TransferService extends Service {
 		}
 
 		builder.setContentIntent(null)
-				.setContentTitle(getResources().getString(title))
+				.setContentTitle(getString(title))
 				.setSmallIcon(R.drawable.ic_send_black_24dp)
 				.setWhen(System.currentTimeMillis())
 				.setProgress(0, 0, true)
@@ -82,24 +82,26 @@ public abstract class TransferService extends Service {
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 			// Android 8.0+
-			NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+			final NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 			if (manager != null) {
 				MassTransfer.createNotificationChannels(manager, getResources());
 				builder.setChannelId(CHANNEL_TRANSFER_STATE);
 			}
 		} else {
 			// Android 7.1
-			builder.setPriority(Notification.PRIORITY_DEFAULT).setLights(0, 0, 0).setVibrate(null).setSound(null);
+			builder.setPriority(Notification.PRIORITY_DEFAULT)
+					.setLights(0, 0, 0)
+					.setVibrate(null)
+					.setSound(null);
 		}
 
-		Intent cancel = new Intent(this, this.getClass());
+		final Intent cancel = new Intent(this, this.getClass());
 		cancel.setAction("cancel");
 		builder.addAction(new Notification.Action.Builder(null, getResources().getString(R.string.cancel),
 				PendingIntent.getService(this, startId, cancel, 0)).build())
 				.setContentText(getResources().getString(R.string.notification_starting));
 
-		Notification notification = builder.build();
-		startForeground(startId, notification);
+		startForeground(startId, builder.build());
 	}
 
 	@CallSuper
@@ -112,7 +114,7 @@ public abstract class TransferService extends Service {
 	}
 
 	void postUpdateButton() {
-		MainActivity mainActivity = ((MassTransfer) getApplicationContext()).mainActivity;
+		final MainActivity mainActivity = ((MassTransfer) getApplicationContext()).mainActivity;
 		if (mainActivity != null) {
 			mainActivity.handler.post(mainActivity::updateButtons);
 		}
@@ -129,7 +131,7 @@ public abstract class TransferService extends Service {
 	}
 
 	void showResult() {
-		Notification.Builder builder = new Notification.Builder(this.getApplicationContext());
+		final Notification.Builder builder = new Notification.Builder(this.getApplicationContext());
 
 		if (result) {
 			builder.setContentTitle(getResources().getString(R.string.transfer_success))
@@ -150,6 +152,7 @@ public abstract class TransferService extends Service {
 			if (manager != null) {
 				builder.setChannelId(CHANNEL_TRANSFER_RESULT);
 			}
+			builder.setTimeoutAfter(10000);
 		} else {
 			// Android 7.1
 			builder.setPriority(Notification.PRIORITY_DEFAULT);

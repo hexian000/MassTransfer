@@ -8,7 +8,12 @@ The app do only transfer files between Android
 
 For example: You can share files over Wi-Fi or Wi-Fi direct or hotspot between Android phones using **Mass Transfer**.
 
-Goal: "reasonable fast" & "as simple as possible"
+Features:
+
+1. This app does only one thing.
+2. Minimum size. (apk < 100KB usually)
+3. Requires the least permission.
+4. Fast
 
 ## User Instructions
 

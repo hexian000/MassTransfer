@@ -8,6 +8,12 @@
       <option name="XML_ALIGN_ATTRIBUTES" value="false" />
       <option name="XML_SPACE_INSIDE_EMPTY_TAG" value="true" />
     </XML>
+    <codeStyleSettings language="JAVA">
+      <indentOptions>
+        <option name="USE_TAB_CHARACTER" value="true" />
+        <option name="SMART_TABS" value="true" />
+      </indentOptions>
+    </codeStyleSettings>
     <codeStyleSettings language="XML">
       <option name="FORCE_REARRANGE_MODE" value="1" />
       <indentOptions>
