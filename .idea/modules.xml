@@ -3,6 +3,8 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/MassTransfer.iml" filepath="$PROJECT_DIR$/MassTransfer.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/MassTransfer-app.iml" filepath="$PROJECT_DIR$/app/MassTransfer-app.iml" group="MassTransfer/app" />
+      <module fileurl="file://$PROJECT_DIR$/StudioProjects-MassTransfer.iml" filepath="$PROJECT_DIR$/StudioProjects-MassTransfer.iml" group="MassTransfer" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>
