@@ -12,10 +12,11 @@ package me.hexian000.masstransfer.io;
  */
 
 import android.content.ContentResolver;
-import android.support.annotation.NonNull;
-import android.support.v4.provider.DocumentFile;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
+
+import androidx.annotation.NonNull;
+import androidx.documentfile.provider.DocumentFile;
 
 import java.io.EOFException;
 import java.io.IOException;

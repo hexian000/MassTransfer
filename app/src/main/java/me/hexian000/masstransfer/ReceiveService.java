@@ -7,14 +7,10 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.net.Uri;
 import android.os.IBinder;
-import android.support.annotation.Nullable;
-import android.support.v4.provider.DocumentFile;
 import android.util.Log;
 
-import me.hexian000.masstransfer.io.AverageRateCounter;
-import me.hexian000.masstransfer.io.BufferPool;
-import me.hexian000.masstransfer.io.Channel;
-import me.hexian000.masstransfer.io.DirectoryWriter;
+import androidx.annotation.Nullable;
+import androidx.documentfile.provider.DocumentFile;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,6 +21,11 @@ import java.nio.ByteBuffer;
 import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import me.hexian000.masstransfer.io.AverageRateCounter;
+import me.hexian000.masstransfer.io.BufferPool;
+import me.hexian000.masstransfer.io.Channel;
+import me.hexian000.masstransfer.io.DirectoryWriter;
 
 import static me.hexian000.masstransfer.MassTransfer.IPTOS_THROUGHPUT;
 import static me.hexian000.masstransfer.MassTransfer.LOG_TAG;

@@ -4,13 +4,10 @@ import android.app.Notification;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.IBinder;
-import android.support.annotation.Nullable;
-import android.support.v4.provider.DocumentFile;
 import android.util.Log;
-import me.hexian000.masstransfer.io.AverageRateCounter;
-import me.hexian000.masstransfer.io.BufferPool;
-import me.hexian000.masstransfer.io.Channel;
-import me.hexian000.masstransfer.io.DirectoryReader;
+
+import androidx.annotation.Nullable;
+import androidx.documentfile.provider.DocumentFile;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -24,7 +21,14 @@ import java.util.StringJoiner;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import static me.hexian000.masstransfer.MassTransfer.*;
+import me.hexian000.masstransfer.io.AverageRateCounter;
+import me.hexian000.masstransfer.io.BufferPool;
+import me.hexian000.masstransfer.io.Channel;
+import me.hexian000.masstransfer.io.DirectoryReader;
+
+import static me.hexian000.masstransfer.MassTransfer.IPTOS_THROUGHPUT;
+import static me.hexian000.masstransfer.MassTransfer.LOG_TAG;
+import static me.hexian000.masstransfer.MassTransfer.TCP_PORT;
 
 public class SendService extends TransferService {
 	private String host;

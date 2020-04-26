@@ -10,13 +10,17 @@ import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Handler;
 import android.os.PowerManager;
-import android.support.annotation.CallSuper;
-import android.support.annotation.StringRes;
-import android.support.v4.provider.DocumentFile;
 import android.util.Log;
+
+import androidx.annotation.CallSuper;
+import androidx.annotation.StringRes;
+import androidx.documentfile.provider.DocumentFile;
+
 import me.hexian000.masstransfer.io.ProgressReporter;
 
-import static me.hexian000.masstransfer.MassTransfer.*;
+import static me.hexian000.masstransfer.MassTransfer.CHANNEL_TRANSFER_RESULT;
+import static me.hexian000.masstransfer.MassTransfer.CHANNEL_TRANSFER_STATE;
+import static me.hexian000.masstransfer.MassTransfer.LOG_TAG;
 
 public abstract class TransferService extends Service {
 	final static int TcpBufferSize = 512 * 1024;
