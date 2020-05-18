@@ -65,6 +65,7 @@ public class ChooseActivity extends Activity {
 			}
 			dirList.sort(String::compareToIgnoreCase);
 			fileList.sort(String::compareToIgnoreCase);
+			files.clear();
 			files.addAll(dirList);
 			files.addAll(fileList);
 
