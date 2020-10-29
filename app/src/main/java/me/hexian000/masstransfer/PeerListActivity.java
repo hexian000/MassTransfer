@@ -24,7 +24,7 @@ import static me.hexian000.masstransfer.MassTransfer.LOG_TAG;
 public class PeerListActivity extends Activity {
 	private final Handler handler = new Handler();
 	private List<String> items;
-	private ArrayAdapter adapter;
+	private ArrayAdapter<String> adapter;
 	private Timer timer;
 	private DiscoverService discoverService;
 	private final ServiceConnection serviceConnection = new ServiceConnection() {
@@ -93,7 +93,7 @@ public class PeerListActivity extends Activity {
 
 			Intent startIntent = getIntent();
 			Intent intent = new Intent(this, SendService.class);
-			intent.putExtra("host", (String) adapter.getItem(i));
+			intent.putExtra("host", adapter.getItem(i));
 			if (Intent.ACTION_SEND.equals(startIntent.getAction()) ||
 					Intent.ACTION_SEND_MULTIPLE.equals(startIntent.getAction())) {
 				intent.setAction(startIntent.getAction());

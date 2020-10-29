@@ -3,8 +3,21 @@ package me.hexian000.masstransfer;
 import android.util.Log;
 
 import java.io.IOException;
-import java.net.*;
-import java.util.*;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.InterfaceAddress;
+import java.net.NetworkInterface;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 
 final class Discoverer {
 	private final static int BROADCAST_INTERVAL = 100;
@@ -108,7 +121,7 @@ final class Discoverer {
 		peers.clear();
 	}
 
-	private class AnnounceInterface {
+	private static class AnnounceInterface {
 		InetAddress broadcast;
 		DatagramSocket socket;
 	}

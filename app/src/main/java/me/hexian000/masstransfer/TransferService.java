@@ -165,7 +165,7 @@ public abstract class TransferService extends Service {
 		notificationManager.notify(startId, builder.build());
 	}
 
-	protected class Progress implements ProgressReporter {
+	protected static class Progress implements ProgressReporter {
 		public String text;
 		long now, max;
 

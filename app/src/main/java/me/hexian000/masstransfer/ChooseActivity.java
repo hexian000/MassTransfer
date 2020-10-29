@@ -29,7 +29,7 @@ public class ChooseActivity extends Activity {
 	private Handler handler;
 	private ProgressBar progressBar;
 	private ListView listView;
-	private ArrayAdapter adapter;
+	private ArrayAdapter<String> adapter;
 	private List<String> files;
 
 	@Override
@@ -127,8 +127,7 @@ public class ChooseActivity extends Activity {
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case R.id.ok: {
+		if (item.getItemId() == R.id.ok) {
 			Intent intent = new Intent();
 			intent.setData(getIntent().getData());
 			SparseBooleanArray positions = listView.getCheckedItemPositions();
@@ -142,12 +141,10 @@ public class ChooseActivity extends Activity {
 			setResult(RESULT_OK, intent);
 			finish();
 		}
-		break;
-		}
 		return super.onOptionsItemSelected(item);
 	}
 
-	private class ItemViewHolder {
+	private static class ItemViewHolder {
 		final ImageView imageView;
 		final TextView textView;
 
