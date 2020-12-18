@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.SparseBooleanArray;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -85,7 +86,7 @@ public class ChooseActivity extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.choose_activity);
-		handler = new Handler();
+		handler = new Handler(Looper.myLooper());
 		progressBar = findViewById(R.id.ListLoading);
 		listView = findViewById(R.id.List);
 		files = new ArrayList<>();

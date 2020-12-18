@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -14,7 +15,7 @@ public class MainActivity extends Activity {
 	private static final int REQUEST_SEND = 1;
 	private static final int REQUEST_RECEIVE = 2;
 	private static final int REQUEST_CHOOSE = 3;
-	final Handler handler = new Handler();
+	final Handler handler = new Handler(Looper.myLooper());
 	private Uri uri;
 	private Button sendButton, receiveButton;
 

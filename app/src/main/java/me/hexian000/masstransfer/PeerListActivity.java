@@ -9,6 +9,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -22,7 +23,7 @@ import java.util.TimerTask;
 import static me.hexian000.masstransfer.MassTransfer.LOG_TAG;
 
 public class PeerListActivity extends Activity {
-	private final Handler handler = new Handler();
+	private final Handler handler = new Handler(Looper.myLooper());
 	private List<String> items;
 	private ArrayAdapter<String> adapter;
 	private Timer timer;

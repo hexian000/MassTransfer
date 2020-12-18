@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.PowerManager;
 import android.util.Log;
 
@@ -27,7 +28,7 @@ public abstract class TransferService extends Service {
 	final static int BufferSize = 512 * 1024;
 	private static PowerManager.WakeLock wakeLock = null;
 	private static WifiManager.WifiLock wifiLock = null;
-	final Handler handler = new Handler();
+	final Handler handler = new Handler(Looper.myLooper());
 	DocumentFile root = null;
 	Notification.Builder builder;
 	NotificationManager notificationManager = null;
