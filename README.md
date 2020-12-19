@@ -2,7 +2,7 @@
 
 # Mass Transfer
 
-[![Build Status](https://travis-ci.org/hexian000/MassTransfer.svg?branch=master)](https://travis-ci.org/hexian000/MassTransfer)
+[![Build Status](https://circleci.com/gh/hexian000/MassTransfer.svg?style=shield)](https://app.circleci.com/pipelines/github/hexian000/MassTransfer)
 
 The app do only transfer files between Android
 
