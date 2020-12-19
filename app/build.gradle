@@ -2,6 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 30
+    buildToolsVersion '30.0.3'
     defaultConfig {
         applicationId "me.hexian000.masstransfer"
         minSdkVersion 24
@@ -11,16 +12,12 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled true
-            zipAlignEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
          }
     }
     compileOptions {
-        targetCompatibility JavaVersion.VERSION_1_8
-        sourceCompatibility JavaVersion.VERSION_1_8
-    }
-    productFlavors {
+        sourceCompatibility = 1.8
+        targetCompatibility = 1.8
     }
     applicationVariants.all { variant ->
         variant.outputs.all {
